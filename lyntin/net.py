@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.17 2004/04/29 21:37:08 willhelm Exp $
+# $Id: net.py,v 1.18 2004/07/25 15:53:35 odbrazen Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -228,10 +228,8 @@ class SocketCommunicator:
 
     # this is the regex that we use to split the incoming text.
     delimiters = ( IAC+GA, IAC+TELOPT_EOR, "\n" )
-    #
-    # The group is non-greedy matching of any sequence followed by one
-    # of the delimiters above:
-    self._line_regex = re.compile("(.*?(?:" + "|".join(delimiters) + "))",
+    # make a regexp matching any of the delimiters above
+    self._line_regex = re.compile("(" + "|".join(delimiters) + ")",
                                   re.MULTILINE | re.DOTALL)
 
     # "The server can do delimited prompts" flag
@@ -370,10 +368,16 @@ class SocketCommunicator:
           if newdata == "":
             continue
 
-          lines = re.split(self._line_regex, 
-                           (data + newdata).replace("\r", ""))
-          map(self.handleData, filter(None, lines[:-1]))
-          data = lines[-1]
+          last_index = 0
+          alldata = (data+newdata).replace("\r","")
+          # incrementally walk through each line in the data,
+          # adjusting last_index to the end of the previous match
+          for (m) in self._line_regex.finditer(alldata):
+            oneline = alldata[last_index:m.end()]
+            last_index = m.end()
+            self.handleData(oneline)
+          # keep the remainder (empty if alldata ended with a delimiter)
+          data = alldata[last_index:]
 
         elif newdata == '':
           # if we got back an empty string, then something's amiss
