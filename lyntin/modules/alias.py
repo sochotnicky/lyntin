@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.5 2003/10/19 23:11:51 willhelm Exp $
+# $Id: alias.py,v 1.6 2004/03/30 22:35:42 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -28,7 +28,6 @@ Aliases are currently handled via string finding and not regular
 expressions.  At some point in the future, this will be changed to
 regular expressions to better handle a wider variety of aliases.
 """
-import string
 from lyntin import manager, utils, exported
 from lyntin.modules import modutils
 
@@ -173,15 +172,6 @@ class AliasData:
       l.append( { "alias": m, "expansion": self._aliases[m] } )
 
     return l
-
-  def getCount(self):
-    """
-    Returns the alias count.
-
-    @return: the number of aliases managed
-    @rtype: int
-    """
-    return len(self._aliases)
 
 
 class AliasManager(manager.Manager):

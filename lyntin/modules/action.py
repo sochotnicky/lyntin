@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.21 2004/03/30 00:27:14 willhelm Exp $
+# $Id: action.py,v 1.22 2004/03/30 22:35:42 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -29,7 +29,7 @@ The compiled regular expressions gets recompiled every time a variable
 changes--this allows us to handle Lyntin variables in the action trigger
 statements.
 """
-import re, string, copy
+import re
 from lyntin import manager, utils, event, exported, ansi
 from lyntin.modules import modutils
 
@@ -271,15 +271,6 @@ class ActionData:
         data.append("disable tag={%s}" % mem)
 
     return data
-
-  def getCount(self):
-    """
-    Returns how many aliases we're managing.
-
-    @return: the number of actions being managed.
-    @rtype: int
-    """
-    return len(self._actions)
 
   def enable(self, tag):
     """

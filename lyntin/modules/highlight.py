@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.9 2004/03/30 00:23:22 willhelm Exp $
+# $Id: highlight.py,v 1.10 2004/03/30 22:35:42 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -16,7 +16,6 @@ Note, if Lyntin's ansi is turned off, though, highlights won't happen.
 We might at some point want to highlight things with [[ ... ]] or 
 something like that when ansi is off.
 """
-import string
 from lyntin import ansi, manager, utils, config, exported
 from lyntin.modules import modutils
 
@@ -26,12 +25,6 @@ class HighlightData:
     self._highlights = {}
     self._currcolor = list(ansi.DEFAULT_COLOR)
     self._colorleftover = ''
-
-  def __copy__(self):
-    hm = HighlightManager()
-    for mem in self._highlights.keys():
-      hm.addHighlight(self._highlights[mem][0], mem)
-    return hm
 
   def addHighlight(self, style, text):
     """
@@ -115,7 +108,7 @@ class HighlightData:
       # color and leftover color attributes
       self._currcolor, self._colorleftover = ansi.figure_color(textlist, self._currcolor, self._colorleftover)
 
-      text = string.join(textlist, "")
+      text = "".join(textlist)
 
     return text
 
