@@ -4,9 +4,9 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.18 2004/04/06 15:44:23 willhelm Exp $
+# $Id: tintincmds.py,v 1.19 2004/04/09 17:59:17 willhelm Exp $
 #######################################################################
-import string, os
+import os
 from lyntin import net, utils, engine, constants, config, exported, event
 from lyntin.modules import modutils
 
@@ -147,7 +147,7 @@ def history_cmd(ses, args, input):
   for i in range(0, len(historylist)):
     historylist[i] = "%d %s" % ((i+1), historylist[i])
   historylist.reverse()
-  exported.write_message("History:\n" + string.join(historylist, "\n"))
+  exported.write_message("History:\n" + "\n".join(historylist))
 
 commands_dict["history"] = (history_cmd, "count:int=30")
 
@@ -202,7 +202,7 @@ def info_cmd(ses, args, input):
   category: commands
   """
   data = exported.myengine.getStatus(ses)
-  data = string.join(data, "\n")
+  data = "\n".join(data)
   exported.write_message(data, ses)
 
 commands_dict["info"] = (info_cmd, "")
