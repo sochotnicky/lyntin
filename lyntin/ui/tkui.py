@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.19 2004/03/30 00:22:00 willhelm Exp $
+# $Id: tkui.py,v 1.20 2004/04/18 08:24:51 glasssnake Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -481,8 +481,7 @@ class CommandEntry(Entry):
 
     self.bind("<KeyPress-Up>", self.insertPrevCommand)
     self.bind("<KeyPress-Down>", self.insertNextCommand)
-    self.unbind("<KeyPress-Tab>")
-    self.bind("<KeyPress-Tab>", self.insertTab)
+    self.bind("<KeyPress-Tab>", self.do_completion)
     self.bind("<KeyPress-Prior>", self.callPrior)
     self.bind("<KeyPress-Next>", self.callNext)
 
@@ -532,9 +531,16 @@ class CommandEntry(Entry):
       self.bind("<KeyPress-KP_End>", self.callKP1)
       self.bind("<KeyPress-KP_Enter>", self.createInputEvent)
 
+    self.bind("<KeyPress>", self.reset_completion)
+
     self.hist_index = -1
     self._partk = partk
-        
+
+  def reset_completion(self, tkevent):
+    """ If the key is not Tab, then reset current completion """
+    if not tkevent.keysym == "Tab":
+      self._partk.reset_completion()
+
   def createInputEvent(self, tkevent):
     """ Handles the <KeyPress-Return> event."""
     val = fix_unicode(self.get())
@@ -581,7 +587,7 @@ class CommandEntry(Entry):
     if tkevent.keysym == "F1":
       self._partk.handleinput(exported.get_config("commandchar") + "help")
       return "break"
-      
+
     if self._executeBinding("VK_%s" % tkevent.keysym) == 1:
       return "break"
 
@@ -678,10 +684,14 @@ class CommandEntry(Entry):
     """ Clears the text widget."""
     self.delete(0, 'end')
         
-  def insertTab(self, tkevent):
-    """ Handles the <KeyPress-Tab> event."""
-    # self.insert(INSERT, '\t')
-    pass
+  def do_completion(self, tkevent):
+    """ Handles the <KeyPress-Tab> event, trying to make a completion."""
+    (text, position) = self._partk.get_completion(self.get(),
+                                                  self.index('insert'))
+    self.delete(0, 'end')
+    self.insert(0, text)
+    self.icursor(position)
+    return "break"
         
   def callPrior(self, tkevent):
     """ Handles the <KeyPress-Prior> event."""

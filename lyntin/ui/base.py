@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.8 2004/04/16 22:05:48 willhelm Exp $
+# $Id: base.py,v 1.9 2004/04/18 08:24:51 glasssnake Exp $
 #######################################################################
 """
 Holds the base ui class for Lyntin as well as the get_ui function
@@ -51,6 +51,7 @@ class BaseUI:
     then go on to do the initializing you need to do.
     """
     self.shutdownflag = 0
+    self.reset_completion()
     import lyntin.exported
     lyntin.exported.hook_register("shutdown_hook", self.shutdown)
 
@@ -147,6 +148,67 @@ class BaseUI:
     from lyntin import event
     input = utils.chomp(input)
     event.InputEvent(input).enqueue()
+
+  def get_completion(self, text='', position=None):
+    """
+    This method should be called when some hotkey (usually "Tab", but it
+    is up to the UI module) is being pressed.
+
+    @param text: the text to be completed
+    @type  text: string
+
+    @param position: cursor position in the text
+    @type  position: int
+
+    @returns: next possible completion pair (newtext, newposition)
+    @rtype:   (string, int)
+    """
+    complist = self.get_completion_list(text, position)
+    completion = complist[0]
+    complist[:1] = []
+    complist.append(completion)
+    return completion
+
+  def get_completion_list(self, text='', position=None):
+    """
+    Returns the completion list. Rebuilds the list if it is empty.
+
+    @param text: the text to be completed
+    @type  text: string
+
+    @param position: cursor position in the text
+    @type  position: int
+    
+    @returns: all possible completion pairs list [(newtext, newposition)]
+    @rtype:   [(string, int)]
+    """
+    if not self.completion_list_:
+      #
+      # Rebuild the completion list if it is empty after reset.
+      #
+      if position==None or position<0 or position>len(text):
+        position = len(text)
+      #
+      # Gather all the completions from registered completers:
+      #
+      exported.hook_spam("completer_hook",
+                         { 'text': text, 'position': position },
+                         self._completion_mapping_helper
+                        )
+      # put an anchor at the end of list
+      self.completion_list_.append((text, position))
+    return self.completion_list_
+
+  def reset_completion(self):
+    """
+    Resets the completion in progress. The next call to "get_completion"
+    will reinitialize the completion list.
+    """
+    self.completion_list_ = []
+    
+  def _completion_mapping_helper(self, x, y):
+    self.completion_list_ += y
+    return x
 
 # Local variables:
 # mode:python
