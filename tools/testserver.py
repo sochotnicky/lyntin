@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: testserver.py,v 1.1 2003/10/07 00:50:42 willhelm Exp $
+# $Id: testserver.py,v 1.2 2005/01/07 14:50:40 glasssnake Exp $
 #######################################################################
 """
 This new test-server is a patchwork of stuff from the existing test server
@@ -13,8 +13,8 @@ and code I wrote for the Varium mud server way back when.  It is actually
 a functional mini-mud now.
 """
 import socket, sys, Queue, select, string
-import connection, utils
-from utils import wrap_text
+import connection, toolsutils
+from toolsutils import wrap_text
 
 my_world = None
 
@@ -165,7 +165,7 @@ class World:
       names = map(lambda x:x._name, self._ms._conns)
       for mem in self._npcs:
         names.append(mem._name)
-      out += utils.wrap_text(string.join(names, ', '), 70, 0, 0)
+      out += testutils.wrap_text(string.join(names, ', '), 70, 0, 0)
       out += "\n"
 
       return out

@@ -5,15 +5,15 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: connection.py,v 1.1 2003/10/07 00:50:42 willhelm Exp $
+# $Id: connection.py,v 1.2 2005/01/07 14:50:40 glasssnake Exp $
 #######################################################################
 """
 This new test-server is a patchwork of stuff from the existing test server
 and code I wrote for the Varium mud server way back when.  It is actually
 a functional mini-mud now.
 """
-import string, testserver, utils
-from utils import color
+import string, testserver, toolsutils
+from toolsutils import color
 
 
 class Connection:
@@ -100,8 +100,8 @@ class Connection:
     """ Talk to your fellow mudders!"""
     if " " in input:
       text = input.split(" ", 1)[1]
-      self.write(utils.wrap_text("You say: %s" % text, 72, 5, 0) + "\n")
-      world.spamroom(utils.wrap_text("%s says: %s" % (self._name, text), 72, 5, 0) + "\n")
+      self.write(toolsutils.wrap_text("You say: %s" % text, 72, 5, 0) + "\n")
+      world.spamroom(toolsutils.wrap_text("%s says: %s" % (self._name, text), 72, 5, 0) + "\n")
     else:
       self.write("say what?\n")
 
@@ -158,7 +158,7 @@ class Connection:
              "has multiple interfaces as well--I use Lyntin at home with " +
              "the Tk interface as well as over telnet using the text " +
              "interface.\n")
-    output = utils.wrap_text(output, 70, 0, 0)
+    output = toolsutils.wrap_text(output, 70, 0, 0)
     self.write(output)
 
 # Local variables:
