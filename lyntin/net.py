@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.3 2003/05/27 02:06:39 willhelm Exp $
+# $Id: net.py,v 1.4 2003/06/07 03:58:10 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -85,12 +85,21 @@ class SocketCommunicator:
     self._shutdownflag = 0
     self._session = None
 
-    self._line_buffer = ''
-
     self._debug = 0
 
     # this is the prompt regex that we use to split the incoming text.
     self._prompt_regex = self._buildPromptRegex()
+
+    # this is the regex that we use to split the incoming text.
+    delimiters = ( IAC+GA, IAC+TELOPT_EOR, "\n" )
+    #
+    # The group is non-greedy matching of any sequence followed by one
+    # of the delimiters above:
+    self._line_regex = re.compile("(.*?(?:" + "|".join(delimiters) + "))",
+                                  re.MULTILINE | re.DOTALL)
+
+    # "The server can do delimited prompts" flag
+    self._good_prompts = 0
 
     # handle termtype issues
     if __init__.options.has_key("term"):
@@ -190,38 +199,40 @@ class SocketCommunicator:
     """
     Polls the socket for data.
     """
-    readers, e, w = select.select([self._sock], [], [], .1)
+    readers, e, w = select.select([self._sock], [], [], .2)
     if readers:
       return readers[0].recv(1024)
     else:
       return None
-  
+
   def run(self):
     """
     Polls a socket and returns any data sitting there.
     """
     try:
-      data = None
+      data = ''
       while not self._shutdownflag:
-          newdata = self._pollForData()
-          if newdata == '':
-            if self._shutdownflag == 0 and self._session: 
-              self._session.shutdown(())
-            break
+        newdata = self._pollForData()
 
-          if newdata:
-            if data:
-              data = data + newdata
-            else:
-              data = newdata
-              
+        if newdata:
+          lines = re.split(self._line_regex, data + newdata)
+          map(self.handleData, filter(None, lines[:-1]))
+          data = lines[-1]
+
+        elif newdata == '': 
           if data:
-            if data.endswith("\n") or not newdata:
-              # actually handle whatever we've gotten because
-              # we got a full line, or we polled for more and there was none.
+            self.handleData(data)
+          if self._shutdownflag == 0 and self._session: 
+            self._session.shutdown(())
+          break
 
-              self.handleData(data)
-              data = None
+        elif not self._good_prompts and data:
+          # Now we have rest of the input which is neither delimited prompt
+          # nor complete line, and we yet did not see this server 
+          # delimiting it's prompts with telnet GA or EOR option.
+          # We'll handle these data because the socket read was timed out.
+          self.handleData(data)
+          data = ''
 
     except SystemExit:
       if self._session:
@@ -291,39 +302,21 @@ class SocketCommunicator:
     """
     global BELL
 
-    data = self._nego_buffer + data
-
     # handle the bell
     count = data.count(BELL)
     for i in range(count):
       event.SpamEvent(hookname="bell_hook", argmap={"session": self._session}).enqueue()
     data = data.replace(BELL, "")
 
-    # handle IAC GA, IAC TELOPT_EOR, and text prompts
-    if __init__.promptdetection == 1:
-      splitdata = self._prompt_regex.split(data)
+    # handle telnet option stuff
+    if IAC in data:
+      data = self.handleNego(data)
+
+    if not __init__.promptdetection or data.endswith("\n"):
+      event.MudEvent(self._session, data).enqueue() 
     else:
-      splitdata = [data]
+      event.SpamEvent(exported.get_hook("prompt_hook"), (self._session, data)).enqueue()
 
-    # we split on prompts so that we serialize MudEvents with prompt_hook
-    # calls.  this allows inline prompt detection in the stream.
-    for d in splitdata:
-      if __init__.promptdetection and self._prompt_regex.match(d):
-        event.SpamEvent(hookname="prompt_hook", argmap={"session": self._session,"prompt": d}).enqueue()
-      else:
-        
-        # handle telnet option stuff
-        if IAC in d:
-          d = self.handleNego(d)
-
-        # the rest of it is mud data
-        event.MudEvent(self._session, d).enqueue()
-
-    index = data.rfind("\n")
-    if index == -1:
-      self._line_buffer = data
-    else:
-      self._line_buffer = data[index:]
 
   def handleNego(self, data):
     """
@@ -350,6 +343,9 @@ class SocketCommunicator:
 
       elif data[i+1] == GA or data[i+1] == TELOPT_EOR:
         data = data[:i] + data[i+2:]
+        # if data is a prompt delimited with some telnet option, 
+        # then we'll mark the server as "server with good prompting" 
+        self._good_prompts = 1
 
       elif data[i+1] == IAC:
         data = data[:i] + data[i+1:]
