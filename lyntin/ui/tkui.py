@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.9 2003/08/06 22:59:44 willhelm Exp $
+# $Id: tkui.py,v 1.10 2003/08/08 00:15:25 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -195,6 +195,12 @@ class Tkui(base.BaseUI):
 
     # run the tk mainloop here
     self._tk.mainloop()
+
+  def wantMainThread(self):
+    # The tkui needs the main thread of execution so we return
+    # a 1 here.
+    return 1
+
 
   def dequeue(self):
     qsize = self._event_queue.qsize()

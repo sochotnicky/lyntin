@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
+# $Id: base.py,v 1.6 2003/08/08 00:15:25 willhelm Exp $
 #######################################################################
 """
 Holds the base ui class for Lyntin as well as the get_ui function
@@ -33,17 +33,12 @@ def get_ui(uiname):
     path = __file__[:index]
 
   if uiname + ".py" not in os.listdir(path):
-    print "ui '%s' does not exist." % uiname
-    return None
+    raise ValueError("ui '%s' does not exist." % uiname)
 
-  try:
-    path = "lyntin.ui." + uiname
-    _module = __import__(path)
-    _module = sys.modules[path]
-    return _module.get_ui_instance()
-
-  except Exception, e:
-    print "get_ui: %s" % e
+  path = "lyntin.ui." + uiname
+  _module = __import__(path)
+  _module = sys.modules[path]
+  return _module.get_ui_instance()
 
 class BaseUI:
   """
@@ -73,6 +68,17 @@ class BaseUI:
     go into your main loop.
     """
     pass
+
+  def wantMainThread(self):
+    """
+    This should return 0 (if you don't want the main thread of
+    execution for the ui) or a 1 (if you do want the main thread
+    of execution for the ui).  This defaults to 0.
+
+    @returns: 0 or 1
+    @rtype: boolean
+    """
+    return 0
 
   def write(self, args):
     """

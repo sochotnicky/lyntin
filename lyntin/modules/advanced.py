@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: advanced.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: advanced.py,v 1.2 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -14,7 +14,7 @@ module exists, it executes it in this module.
 It also holds load_cmd which does a lot of other magic stuff.
 """
 import sys
-from lyntin import exported, __init__ 
+from lyntin import exported, config
 
 usermodule = None
 execdictglobals = None
@@ -158,8 +158,8 @@ def load_cmd(ses, args, input):
 
     _module.__dict__["lyntin_import"] = 1
     exported.write_message("load successful.")
-    if mod not in __init__.lyntinmodules:
-      __init__.lyntinmodules.append(mod)
+    if mod not in config.lyntinmodules:
+      config.lyntinmodules.append(mod)
 
   except:
     exported.write_traceback("load: had problems with %s." % mod)

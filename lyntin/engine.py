@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.6 2003/08/06 23:14:46 willhelm Exp $
+# $Id: engine.py,v 1.7 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -890,14 +890,17 @@ def main(defaultui="text"):
     exported.write_message(constants.STARTUPTEXT)
     myengine.writePrompt()
 
-    # spin off an engine thread
-    myengine.startthread("engine", myengine.runengine)
-
     # start the timer thread
     myengine.startthread("timer", myengine.runtimer)
     
-    # start the ui mainloop
-    myengine._ui.runui()
+    # we ask the ui if they want the main thread of execution and
+    # handle accordingly
+    if myengine._ui.wantMainThread() == 0:
+      myengine.startthread("ui", myengine._ui.runui)
+      myengine.runengine()
+    else:
+      myengine.startthread("engine", myengine.runengine)
+      myengine._ui.runui()
 
   except SystemExit:
     # we do this because the engine is blocking on events....

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: config.py,v 1.1 2003/08/06 22:59:44 willhelm Exp $
+# $Id: config.py,v 1.2 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This module holds the configuration mechanisms and a series of functions
@@ -74,4 +74,3 @@ def fixdir(d):
     d = d + os.sep
 
   return d
-

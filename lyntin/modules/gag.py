@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.1 2003/06/26 23:27:18 willhelm Exp $
+# $Id: gag.py,v 1.2 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
 """
 import string
-from lyntin import ansi, manager, utils, __init__, exported
+from lyntin import ansi, manager, utils, config, exported
 from lyntin.modules import modutils
 
 class GagData:
@@ -152,7 +152,7 @@ class GagData:
     else:
       listing = utils.expand_text(text, self._gags.keys())
 
-    listing = ["%sgag {%s} {%s}" % (__init__.commandchar, mem, utils.escape(self._gags[mem])) for mem in listing]
+    listing = ["%sgag {%s} {%s}" % (config.commandchar, mem, utils.escape(self._gags[mem])) for mem in listing]
 
     return string.join(listing, "\n")
 
@@ -178,7 +178,7 @@ class GagData:
     else:
       listing = utils.expand_text(text, self._antigags)
 
-    listing = ["%santigag {%s}" % (__init__.commandchar, mem) for mem in listing]
+    listing = ["%santigag {%s}" % (config.commandchar, mem) for mem in listing]
 
     return string.join(listing, "\n")
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: alias.py,v 1.3 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -29,7 +29,7 @@ expressions.  At some point in the future, this will be changed to
 regular expressions to better handle a wider variety of aliases.
 """
 import string
-from lyntin import manager, utils, __init__, exported
+from lyntin import manager, utils, config, exported
 from lyntin.modules import modutils
 
 class AliasData:
@@ -165,7 +165,7 @@ class AliasData:
     data = []
     for mem in listing:
       data.append("%salias {%s} {%s}" %
-          (__init__.commandchar, mem, utils.escape(self._aliases[mem])))
+          (config.commandchar, mem, utils.escape(self._aliases[mem])))
 
     return string.join(data, "\n")
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: action.py,v 1.3 2003/08/08 00:15:24 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -29,7 +29,7 @@ changes--this allows us to handle Lyntin variables in the action trigger
 statements.
 """
 import re, string, copy
-from lyntin import manager, utils, event, __init__, exported, ansi
+from lyntin import manager, utils, event, config, exported, ansi
 from lyntin.modules import modutils
 
 # the placement variable regular expression
@@ -216,7 +216,7 @@ class ActionData:
       actup = self._actions[mem]
 
       data.append("%saction {%s} {%s} priority={%d} onetime={%s}" % 
-              (__init__.commandchar, utils.escape(mem), 
+              (config.commandchar, utils.escape(mem), 
                utils.escape(actup[2]), actup[3], actup[4]))
 
     return string.join(data, "\n")
