@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.16 2003/11/18 00:47:12 willhelm Exp $
+# $Id: tkui.py,v 1.17 2003/11/20 23:28:57 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -530,6 +530,7 @@ class CommandEntry(Entry):
       self.bind("<KeyPress-KP_Begin>", self.callKP5)
       self.bind("<KeyPress-KP_Next>", self.callKP3)
       self.bind("<KeyPress-KP_End>", self.callKP1)
+      self.bind("<KeyPress-KP_Enter>", self.createInputEvent)
 
     self.hist_index = -1
     self._partk = partk
