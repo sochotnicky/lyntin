@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: unittest.py,v 1.1 2003/10/07 00:50:42 willhelm Exp $
+# $Id: unittest.py,v 1.2 2003/10/07 00:53:26 willhelm Exp $
 #######################################################################
 """
 This module has its own main method.  It's used to unit test functions in
@@ -12,19 +12,18 @@ Lyntin.  Don't mind it--it just hangs out here.
 """
 failures = 0
 
-import sys
-
 def _pass_fail(desc, testoutput, realoutput):
   """ Used for testing purposes."""
   global failures
 
   if testoutput == realoutput:
     # print "   pass:", testoutput
-    print "   pass:", desc
+    # print "   pass:", desc
+    pass
   else:
     print "   fail:", desc
-    print "'" + str(testoutput) + "'"
-    print "'" + str(realoutput) + "'"
+    print "expected: '" + str(testoutput) + "'"
+    print "actual:   '" + str(realoutput) + "'"
     failures += 1
 
 
@@ -32,6 +31,9 @@ if __name__ == '__main__':
   import sys
 
   sys.path.insert(0, "../")
+
+  from lyntin import constants
+  print constants.VERSION
 
   from lyntin.utils import split_commands
   _pass_fail("split_commands 1", split_commands('test'), 
