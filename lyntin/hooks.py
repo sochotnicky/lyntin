@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.6 2003/08/28 01:46:47 willhelm Exp $
+# $Id: hooks.py,v 1.7 2003/09/09 02:49:10 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -13,10 +13,6 @@ Examples of this would be the "startup_hook" and "shutdown_hook".
 Any functions that hook into these hooks will be executed upon 
 startup or shutdown of Lyntin.  Lyntin also uses these hooks to 
 implement its functionality.
-
-For example, the Tk ui uses the "startup_hook" to register with
-the "to_user_hook", add the tkui help topic, and start the ui
-user listener thread.
 
 Hooks and the Hook class are defined in the "hooks" module as is
 a whole lot of documentation on which hooks exist, and what is
