@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.14 2003/09/11 00:23:53 willhelm Exp $
+# $Id: engine.py,v 1.15 2003/09/11 00:33:50 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -947,8 +947,6 @@ def main(defaultoptions={}):
       if os.environ.has_key("HOME"):
         config.options["datadir"] = os.environ["HOME"]
     config.options["datadir"] = utils.fixdir(config.options["datadir"])
-
-    print repr(config.options)
 
     import atexit
     atexit.register(shutdown)
