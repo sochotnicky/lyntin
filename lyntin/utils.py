@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: utils.py,v 1.3 2003/06/01 14:36:36 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -572,6 +572,43 @@ def wrap_text(textlist, wraplength=50, indent=0, firstline=0):
     return (indent * " ") + ''.join(textlist)
   else:
     return ''.join(textlist)
+
+
+def build_graph(data_dict):
+   """
+   Takes in a dict of keys to values and prints out a graph accordingly.
+   """
+   if not data_dict:
+      return "No data available."
+
+   values = data_dict.values()
+   values.sort()
+   min = values[0]
+   max = values[-1]
+
+   if min == max:
+      return "All values are %d." % min
+
+   if (max - min) < 60:
+      divisor = 1
+   elif (max - min) < 140:
+      divisor = 2
+   else:
+      divisor = (max - min) / 60
+
+   keys = data_dict.keys()
+   keys.sort(lambda x,y: cmp(len(x), len(y)))
+   maxlength = len(keys[-1])
+
+   graph = []
+   graph.append("  " + " ".ljust(maxlength+8) + ("%d" % min) + ("-" * (((max - min) / divisor) - 2)) + ("%d" % max))
+
+   keys.sort()
+   for k in keys:
+      v = data_dict[k]
+      graph.append("  " + k.ljust(maxlength+1) + "- " + ("%d" % v).ljust(5) + "|" + ("=" * ((v - min) / divisor)))
+
+   return "\n".join(graph)
 
 
 def columnize(textlist, screenwidth=72, indent=0):
