@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.15 2003/09/19 00:23:40 willhelm Exp $
+# $Id: tkui.py,v 1.16 2003/11/18 00:47:12 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -195,6 +195,8 @@ class Tkui(base.BaseUI):
          "to press the enter key to do whatever you typed again.")
     exported.add_config("saveinputhighlight", tc)
 
+    self._quit = 0
+
   def runui(self):
     global HELP_TEXT
     exported.add_help("tkui", HELP_TEXT)
@@ -209,6 +211,10 @@ class Tkui(base.BaseUI):
     # a 1 here.
     return 1
 
+  def quit(self):
+    if not self._quit:
+      self._quit = 1
+      self._topframe.quit()
 
   def dequeue(self):
     qsize = self._event_queue.qsize()
@@ -499,7 +505,9 @@ class CommandEntry(Entry):
     self.bind("<KeyPress-F10>", self.callBinding)
     self.bind("<KeyPress-F11>", self.callBinding)
     self.bind("<KeyPress-F12>", self.callBinding)
-    self.bind("<Destroy>", self.deathHandler)
+
+    # this next line totally hoses win32
+    # self.bind("<Destroy>", self.deathHandler)
 
     if os.name!="posix":
       self.bind("<KeyPress-8>", self.callKP8)
