@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: message.py,v 1.1 2003/08/01 00:14:52 willhelm Exp $
+# $Id: message.py,v 1.2 2004/09/19 07:17:18 glasssnake Exp $
 #######################################################################
 """
 Holds the ui's Message class.  This gets passed around Lyntin and
@@ -27,7 +27,7 @@ class Message:
   """
   Encapsulates a message to be written to the user.
   """
-  def __init__(self, data, messagetype=LTDATA, ses=None):
+  def __init__(self, data, messagetype=LTDATA, ses=None, **hints):
     """
     Initialize.
 
@@ -43,6 +43,7 @@ class Message:
     self.session = ses
     self.data = data
     self.type = messagetype
+    self.hints = hints
 
   def __repr__(self):
     """

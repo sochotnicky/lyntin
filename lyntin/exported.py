@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.16 2004/07/23 18:26:26 glasssnake Exp $
+# $Id: exported.py,v 1.17 2004/09/19 07:17:18 glasssnake Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -469,7 +469,7 @@ def write_ui(text):
   else:
     print text
 
-def write_message(text, ses=None):
+def write_message(text, ses=None, **hints):
   """
   Calls engine.myengine.writeMessage which writes LTDATA message.
   If there is no engine instance available, it prints it to sysout.
@@ -482,7 +482,7 @@ def write_message(text, ses=None):
   """
   text = str(text)
   if myengine:
-    myengine.writeUI(message.Message(text + "\n", message.LTDATA, ses))
+    myengine.writeUI(message.Message(text + "\n", message.LTDATA, ses, **hints))
   else:
     print "message:", text
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.21 2004/05/03 18:44:26 willhelm Exp $
+# $Id: tintincmds.py,v 1.22 2004/09/19 07:17:18 glasssnake Exp $
 #######################################################################
 import os, os.path
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -524,6 +524,20 @@ def showme_cmd(ses, args, input):
      
 commands_dict["showme"] = (showme_cmd, "input=", "limitparsing=0")
 
+def wshowme_cmd(ses, args, input):
+  """
+  Writes the text into the named window, if the current ui supports named window
+s.
+  If named windows are unsupported, writes the text into the main window.
+
+  examples:
+    #action {^%0 annihilates you!} {#wshowme Alert {EJECT! EJECT! EJECT!}}
+
+  category: commands
+  """
+  exported.write_message(args["text"], ses, window=args["window"])
+
+commands_dict['wshowme'] = ( wshowme_cmd, "window= text=" )
 
 def snoop_cmd(ses, args, input):
   """
