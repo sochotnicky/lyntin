@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.3 2003/06/08 16:14:30 willhelm Exp $
+# $Id: variable.py,v 1.4 2003/06/10 13:01:38 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -260,8 +260,9 @@ class VariableManager(manager.Manager):
       return self._variables[ses].getVariable(name, default)
     return default
 
-  def defaultResolver(self, tuple):
-    ses, command = tuple
+  def defaultResolver(self, args):
+    ses = args["session"]
+    command = args["commandname"]
     if self._variables.has_key(ses):
       return self._variables[ses].defaultResolver(command)
     return None

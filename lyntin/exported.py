@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: exported.py,v 1.3 2003/06/10 13:01:37 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -471,7 +471,7 @@ def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x, emptyfunc=lambda x:
   except StopSpammingException, e:
     return None
   except DoneSpammingException, d:
-    return d, output
+    return d.output
 
   return donefunc(argmap)
 
