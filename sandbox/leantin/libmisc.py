@@ -1,5 +1,5 @@
 from __future__ import generators
-import UserDict, time, os
+import UserDict, time, os, os.path
 
 try:
   from Tkinter import *
@@ -45,28 +45,21 @@ class DeltaDict(UserDict.UserDict):
     return changes
 
 class LineBuffer(object):
-  def __init__(self):
+  def __init__(self, **opts):
     self.pending = '' # incoming data, possibly without terminating newlines
-    self.lines = [] # list of full lines, including newline
+    self.prompt = opts.get('prompt', None)
     return
 
   def add(self, inp):
     """figure out where the newlines are, return any new full lines"""
     self.pending += inp.replace('\r', '') # might screw windows folk, I'm OK with that.
     parts = self.pending.split('\n')
+    self.pending = parts[-1] # likely empty
     for (newline) in parts[:-1]:
-      self.lines.append(newline + '\n') # restore the newline
-    self.pending = parts[-1]
-
-    if (len(parts) > 1):      
-      for (p) in parts[:-1]:
-        yield p+'\n'
-
-  def __getitem__(self, ind):
-    return self.lines[ind]
-
-  def chunk(self, start, cnt):
-    return ''.join(self.lines[-start-cnt:-start])
+      if (self.prompt is not None and newline.startswith(self.prompt)):
+        newline = newline[len(self.prompt):]
+      yield newline+"\n" # restore the newline
+    return
 
 def color_delta(amt):
   escape = chr(27)
@@ -131,7 +124,7 @@ class Cron(object):
       outstr += "   %s\n" % (str(ob))
     return outstr
 
-  def suicide(self):
+  def done(self):
     self.__obs = []
 
 class Bump(Cron):
@@ -199,7 +192,15 @@ def rotate_logs(canonical_name):
     i -= 1
   return
 
-class Shutdown(object):
+class Flag(object):
+  """Flag objects are used to share true/false flags like 'shutdown'
+     fob = Flag()
+     fob.flag_true() # set the flag (and children) to true
+     fob.flag_false() # set the flag (and children) to ture
+     kid = Flag()
+     fob.also_flag(kid)
+     fob.flag_true() # fob and kid are set to true
+  """
   def __init__(self):
     self.value = 0
     self.children = []
@@ -207,12 +208,34 @@ class Shutdown(object):
   def __nonzero__(self):
     return self.value
 
-  def also_shutdown(self, guy):
+  def also_flag(self, guy):
     self.children.append(guy)
     return
 
-  def shutdown(self):
-    for (child) in self.children:
-      child.shutdown()
+  def flag_true(self):
     self.value = 1
+    for (child) in self.children:
+      child.flag_true()
     return
+  def flag_false(self):
+    self.value = 0
+    for (child) in self.children:
+      child.flag_false()
+    return
+
+def ensure_path_built(pathname):
+  """for the given pathname, create the directories if they do not already exist"""
+
+  # common case, see if the whole thing already exists
+  if (os.access(pathname, os.R_OK)):
+    return
+
+  path = os.path.normpath(pathname) # remove redundant slashes
+  try:
+    os.mkdir(path, 0770)
+  except (OSError,):
+    (subdir, dummy) = os.path.split(path)
+    ensure_path_built(subdir) # recurse down our subdirs
+    os.mkdir(path, 0770) # if it fails again, allow the error to propagate
+
+  return
