@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.23 2004/10/06 13:59:08 willhelm Exp $
+# $Id: tintincmds.py,v 1.24 2004/12/14 04:35:09 willhelm Exp $
 #######################################################################
 import os, os.path
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -161,7 +161,7 @@ def if_cmd(ses, args, input):
 
   examples:
     #if {$myhpvar < 100} {#showme PANIC!}
-    #if {$myhpvar < 100 && $myspvar < 100} {#showme PANIC!}
+    #if {$myhpvar < 100 and $myspvar < 100} {#showme PANIC!}
     #if {'$name' == 'Joe'} {#showme That joe is a jerk.}
 
   When you're comparing variable values with other strings, make sure 
@@ -538,36 +538,6 @@ s.
 
 commands_dict['wshowme'] = ( wshowme_cmd, "window= text=" )
 
-def snoop_cmd(ses, args, input):
-  """
-  Sets the session specified into or out of snooping mode.  When
-  a session is in snoop mode, you will see mud data from that session
-  regardless of what session is the current session.
-
-  examples:
-    #snoop a          -- tells you whether a is in snoop mode
-    #snoop a on       -- sets snoop mode for a
-
-  category: commands
-  """
-  snoopsession = args["session"]
-  mode = args["mode"]
-
-  ses = exported.get_session(snoopsession)
-  if ses == None:
-    exported.write_error("snoop: session '%s' does not exist." % snoopsession)
-    return
-
-  if mode != None:
-    ses.setSnoop(mode)
-
-  if exported.get_config("snoop", ses, 1) == 1:
-    exported.write_message("snoop: snooping is enabled for %s." % snoopsession)
-  else:
-    exported.write_message("snoop: snooping is disabled for %s." % snoopsession)
-
-
-commands_dict["snoop"] = (snoop_cmd, "session mode:booleanornone=")
 
 def textin_cmd(ses, args, input):
   """
