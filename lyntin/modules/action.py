@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.6 2003/08/11 14:56:32 glasssnake Exp $
+# $Id: action.py,v 1.7 2003/08/14 15:01:19 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -191,7 +191,7 @@ class ActionData:
         except:
           exported.write_traceback()
 
-        if onetime:
+        if onetime and self._actions.has_key(action):
           del self._actions[action]
 
 
@@ -490,7 +490,7 @@ def action_cmd(ses, args, input):
   except:
     exported.write_traceback("action: exception thrown.", ses)
 
-commands_dict["action"] = (action_cmd, "trigger= action= priority:int=5 onetime:boolean=false quiet:boolean=false tag=")
+commands_dict["action"] = (action_cmd, "trigger= action= tag= priority:int=5 onetime:boolean=false quiet:boolean=false")
 
 def unaction_cmd(ses, args, input):
   """
@@ -520,7 +520,7 @@ def action_enable_cmd(ses, args, input):
   if not args["quiet"]:
     exported.write_message("Enabling actions tagged as {%s}" % tag)
   
-commands_dict["aenable"] = (action_enable_cmd, "tag= quiet:boolean=false")
+commands_dict["enable"] = (action_enable_cmd, "tag= quiet:boolean=false")
   
 
 def action_disable_cmd(ses, args, input):
@@ -534,7 +534,7 @@ def action_disable_cmd(ses, args, input):
   if not args["quiet"]:
     exported.write_message("Disabling actions tagged as {%s}" % tag)
   
-commands_dict["adisable"] = (action_disable_cmd, "tag= quiet:boolean=false")
+commands_dict["disable"] = (action_disable_cmd, "tag= quiet:boolean=false")
 
 
 def action_tags_cmd(ses, args, input):
