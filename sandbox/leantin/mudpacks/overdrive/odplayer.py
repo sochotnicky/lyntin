@@ -13,10 +13,19 @@ class ODPlayer(mudbasic.Player):
     self.active_spells = []
     self.drunk = None
     self.food = None
+    self.vitals = Vitals(listen=1, filter=1)
+
     # make a list for the loader to attach to the catch q
     self.catcher_add_these = [self.stats, self.skills, self.spells, self.armors, self.who]
     return
 
+  def sess_init(self, sess):
+    for (ob) in self.catcher_add_these:
+      sess.icatch.add(ob)
+    self.vitals.add_callback(sess.turncron.tick_tock)
+    sess.icatch.add(self.vitals)
+    return
+  
   def status_line(self):
     line1 = 'HP: %3d/%3d  MP:%3d/%3d Exp %d %d  %s/%s' % (self.vitals.stats['hp'],
                                                           self.vitals.stats['max_hp'],
