@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: ui.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: base.py,v 1.1 2003/07/31 23:59:02 willhelm Exp $
 #######################################################################
 """
 Holds the ui components in lyntin as well as the Message
@@ -13,7 +13,6 @@ to the user through the ui.  Messages have types and the ui
 will display the message differently depending on the type.
 """
 import string, re, sys
-import lyntin.__init__, lyntin.exported
 from lyntin import event, utils
 
 
@@ -49,6 +48,7 @@ class Message:
     self.session = ses
     self.data = data
     self.type = messagetype
+    self._exported_module = None
 
   def __repr__(self):
     """
@@ -80,6 +80,7 @@ class BaseUI:
     then go on to do the initializing you need to do.
     """
     self.shutdownflag = 0
+    import lyntin.exported
     lyntin.exported.hook_register("shutdown_hook", self.shutdown)
 
   def startui(self):
@@ -155,8 +156,12 @@ class BaseUI:
     @returns: 1 if we should show text, 0 if not
     @rtype: boolean
     """
+    if not self._exported_module:
+      from lyntin import exported
+      self._exported_module = exported
+
     if ses == None or getattr(ses, "_snoop", None) == None \
-        or lyntin.exported.get_current_session() == ses or ses.getSnoop() == 1:
+        or self._exported_module.get_current_session() == ses or ses.getSnoop() == 1:
       return 1
     return 0
 
@@ -170,8 +175,6 @@ class BaseUI:
     @type  input: string
     """
     input = utils.chomp(input)
-    if input == '':
-      input = lyntin.__init__.commandchar + "cr"
     event.InputEvent(input).enqueue()
 
 # Local variables:

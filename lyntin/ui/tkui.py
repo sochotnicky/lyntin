@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.4 2003/07/09 13:16:30 willhelm Exp $
+# $Id: tkui.py,v 1.5 2003/07/31 23:59:02 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -15,7 +15,7 @@ from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
 from lyntin import ansi, event, engine, exported, utils
-from lyntin.ui import ui
+from lyntin.ui import base
 import lyntin.__init__
 
 UNICODE_ENCODING = "latin-1"
@@ -126,13 +126,13 @@ class _WriteWindowEvent(_Event):
   def execute(self, tkui):
     tkui.writeWindow_internal(self._windowname, self._message)
 
-class Tkui(ui.BaseUI):
+class Tkui(base.BaseUI):
   """
   This is a ui class which handles the complete Tk user interface.
   """
   def __init__(self):
     """ Initializes."""
-    ui.BaseUI.__init__(self)
+    base.BaseUI.__init__(self)
 
     # internal ui queue
     self._event_queue = Queue.Queue()
@@ -353,14 +353,14 @@ class Tkui(ui.BaseUI):
     """
     This writes text to the text buffer for viewing by the user.
 
-    This is overridden from the 'ui.BaseUI'.
+    This is overridden from the 'base.BaseUI'.
     """
     self._event_queue.put(_OutputEvent(args))
 
   def write_internal(self, args):
     mess = args[0]
     if type(mess) == types.StringType:
-      mess = ui.Message(mess, ui.LTDATA)
+      mess = base.BaseUI(mess, base.LTDATA)
 
     line = mess.data
     ses = mess.session
@@ -372,7 +372,7 @@ class Tkui(ui.BaseUI):
     color, leftover = buffer_write(mess, self._txt, self._currcolors, 
                                    self._unfinishedcolor)
 
-    if mess.type == ui.MUDDATA:
+    if mess.type == base.MUDDATA:
       self._unfinishedcolor[ses] = leftover
       self._currcolors[ses] = color
 
@@ -828,13 +828,13 @@ class NamedWindow:
     """
     This writes text to the text buffer for viewing by the user.
 
-    This is overridden from the 'ui.BaseUI'.
+    This is overridden from the 'base.BaseUI'.
     """
     if type(message) == types.TupleType:
       message = message[0]
 
     if type(message) == types.StringType:
-      message = ui.Message(message, ui.LTDATA)
+      message = base.Message(message, base.LTDATA)
 
     line = message.data
     ses = message.session
@@ -845,7 +845,7 @@ class NamedWindow:
     color, leftover = buffer_write(message, self._txt, self._currcolors, 
                                    self._unfinishedcolor)
 
-    if message.type == ui.MUDDATA:
+    if message.type == base.MUDDATA:
       self._unfinishedcolor[ses] = leftover
       self._currcolors[ses] = color
 
@@ -934,7 +934,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
   line = message.data
   ses = message.session
 
-  if message.type == ui.ERROR:
+  if message.type == base.ERROR:
     if line.endswith("\n"):
       line = "%s%s%s\n" % (ansi.get_color("b blue"), 
                           line[:-1], 
@@ -944,7 +944,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
                         line[:-1], 
                         ansi.get_color("default"))
 
-  elif message.type == ui.USERDATA:
+  elif message.type == base.USERDATA:
     if lyntin.__init__.mudecho == 1:
       if line.endswith("\n"):
         line = "%s%s%s\n" % (ansi.get_color("b blue"), 
@@ -958,7 +958,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
       # if echo is not on--we don't print this
       return currentcolor, unfinishedcolor
 
-  elif message.type == ui.LTDATA:
+  elif message.type == base.LTDATA:
     if line.endswith("\n"):
       line = "# %s\n" % line[:-1].replace("\n", "\n# ")
     else:
@@ -992,7 +992,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
   # unfinished color as well--in case we got a part of an ansi 
   # color code in a mud message, and the other part is in another 
   # message.
-  if message.type == ui.MUDDATA:
+  if message.type == base.MUDDATA:
     color = currentcolor.get(ses, list(DEFAULT_COLOR))
     leftover = unfinishedcolor.get(ses, "")
 

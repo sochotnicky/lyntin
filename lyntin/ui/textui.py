@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: textui.py,v 1.3 2003/07/31 23:59:02 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
@@ -12,7 +12,7 @@ Holds the text ui class.
 import re, sys, os, select, types
 import lyntin.__init__
 from lyntin import ansi, engine, event, utils, exported
-from lyntin.ui import ui
+from lyntin.ui import base
 
 
 HELP_TEXT = """
@@ -52,7 +52,7 @@ def get_ui_instance():
     myui = Textui()
   return myui
 
-class Textui(ui.BaseUI):
+class Textui(base.BaseUI):
   """
   This is the text ui.  It's super basic and should run almost
   anywhere.  It lacks several useful functions that the Tkui
@@ -60,7 +60,7 @@ class Textui(ui.BaseUI):
   """
   def __init__(self):
     """ Initialize the textui."""
-    ui.BaseUI.__init__(self)
+    base.BaseUI.__init__(self)
     self._do_i_echo = 1
     exported.hook_register("startup_hook", self.startui)
     exported.hook_register("shutdown_hook", self.shutdown)
@@ -244,7 +244,7 @@ class Textui(ui.BaseUI):
     message = args["message"]
 
     if type(message) == types.StringType:
-      message = ui.Message(message, ui.LTDATA)
+      message = base.Message(message, base.LTDATA)
 
     line = message.data
     ses = message.session
@@ -258,8 +258,8 @@ class Textui(ui.BaseUI):
     if ses != None and ses != exported.get_current_session():
       pretext = "[" + ses.getName() + "] "
 
-    if message.type == ui.ERROR or message.type == ui.LTDATA:
-      if message.type == ui.ERROR:
+    if message.type == base.ERROR or message.type == base.LTDATA:
+      if message.type == base.ERROR:
         pretext = "error: " + pretext
       else:
         pretext = "lyntin: " + pretext
@@ -270,7 +270,7 @@ class Textui(ui.BaseUI):
       sys.stdout.write(line + "\n")
       return
 
-    elif message.type == ui.USERDATA:
+    elif message.type == base.USERDATA:
       # we don't print user data in the textui
       return
 
