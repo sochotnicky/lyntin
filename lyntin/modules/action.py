@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.4 2003/08/09 11:11:34 glasssnake Exp $
+# $Id: action.py,v 1.5 2003/08/11 10:22:04 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -96,27 +96,37 @@ class ActionData:
     self._actions.clear()
     self._disabled = {}
 
-  def removeActions(self, text):
+  def removeActions(self, text, mytag):
     """
-    Removes actions that match the given text from the list and
-    returns the list of actions that were removed so the calling
-    function knows what actually happened.
+    Removes actions that match the given text and have given tag 
+    from the list and returns the list of actions that were removed
+    so the calling function knows what actually happened.
 
     @param text: all actions that match this text pattern will 
         be removed.  the text pattern is "expanded" by 
         "utils.expand_text"
     @type  text: string
 
-    @return: list of tuples (trigger, response) of the action
+    @param mytag: all actions with given tag will be removed.
+    @type  mytag: string
+
+    @return: list of tuples (trigger, response, tag) of the action
         that were removed.
-    @rtype: (string, string)
+    @rtype: (string, string, string)
     """
-    badactions = utils.expand_text(text, self._actions.keys())
+    actions = self._actions
+    keys = []
+    if text:
+      keys = utils.expand_text(text, actions.keys())
+    elif mytag:  
+      keys = actions.keys()
 
     ret = []
-    for mem in badactions:
-      ret.append((self._actions[mem][0], self._actions[mem][2]))
-      del self._actions[mem]
+    for mem in keys:
+      (trigger, compiled, response, priority, onetime, tag) = actions[mem]
+      if not mytag or mytag == tag:
+        ret.append((trigger, response, tag))
+        del actions[mem]
 
     return ret
 
@@ -278,9 +288,9 @@ class ActionManager(manager.Manager):
     if self._actions.has_key(ses):
       self._actions[ses].clear()
 
-  def removeActions(self, ses, text):
+  def removeActions(self, ses, text, tag=None):
     if self._actions.has_key(ses):
-      return self._actions[ses].removeActions(text)
+      return self._actions[ses].removeActions(text, tag)
     return []
 
   def getActions(self, ses):
@@ -472,14 +482,15 @@ def unaction_cmd(ses, args, input):
   examples:
     #unaction {missed you.}
     #unaction missed*
+    #unaction tag={indoor}
 
   category: commands
   """
   am = exported.get_manager("action")
-  func = am.removeActions
+  func = lambda x, y: am.removeActions(x, y, args["tag"])
   modutils.unsomething_helper(args, func, ses, "action", "actions")
 
-commands_dict["unaction"] = (unaction_cmd, "str= quiet:boolean=false")
+commands_dict["unaction"] = (unaction_cmd, "str= tag= quiet:boolean=false")
 
 
 def action_enable_cmd(ses, args, input):
