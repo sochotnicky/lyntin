@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.28 2004/04/18 15:11:47 willhelm Exp $
+# $Id: engine.py,v 1.29 2004/04/20 18:06:30 glasssnake Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -605,11 +605,12 @@ class Engine:
       # it's a little bit of finagling here to make sure
       # that the common session is the last one we would
       # switch to
-      keys.remove("common")
-      if len(keys) == 0:
-        self._current_session = self._sessions["common"]
-      else:
-        self._current_session = self._sessions[keys[0]]
+      name = self._current_session.getName()
+      keys.remove(name)
+      if not name == "common":
+        keys.remove("common")
+        keys.append("common")        
+      self._current_session = self._sessions[keys[0]]
 
     # if they pass in a name, we switch to that session.
     elif self._sessions.has_key(name):
