@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: scheduler.py,v 1.3 2003/06/08 16:13:23 willhelm Exp $
+# $Id: scheduler.py,v 1.4 2003/08/05 19:32:30 glasssnake Exp $
 #######################################################################
 """
 This module defines the ScheduleManager which manages scheduling 
@@ -274,16 +274,16 @@ def schedule_cmd(ses, args, input):
 
   examples:
 
-    #schedtime {5} {#showme blah}
+    #schedule {5} {#showme blah}
 
   will kick off 5 ticks from now (a tick is approx one second) and
   will execute "#showme blah".
 
-    #schedtime {1m30s} {#showme blah}
+    #schedule {1m30s} {#showme blah}
 
   will kick off in 1 minute and 30 seconds.
 
-    #schedtime {10} {#showme blah} {true}
+    #schedule {10} {#showme blah} {true}
 
   will kick off every 10 seconds.
 
