@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.2 2003/08/06 22:59:44 willhelm Exp $
+# $Id: helpmanager.py,v 1.3 2003/08/21 02:56:59 willhelm Exp $
 #######################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
@@ -78,7 +78,7 @@ class HelpManager(manager.Manager):
     categorylist, helpname = _split_name(fqn)
 
     if not helptext or not helpname:
-      raise ValueError, "Help name and text are required."
+      raise ValueError("Help name and text are required.")
 
     directives, helptext = _parse_directives(helptext)
 
@@ -133,14 +133,14 @@ class HelpManager(manager.Manager):
         breadcrumbs.append(place)
         place = place[mem]
       else:
-        raise ValueError, "Topic '%s' does not exist." % fqn
+        raise ValueError("Topic '%s' does not exist." % fqn)
 
     if place.has_key(name):
       del place[name]
       self._trimTree(self._help_tree)
 
     else:
-      raise ValueError, "Topic '%s' does not exist." % fqn
+      raise ValueError("Topic '%s' does not exist." % fqn)
 
 
   def _trimTree(self, tree):
@@ -176,7 +176,7 @@ class HelpManager(manager.Manager):
         of nodes under this fqn (if it's a category)
     @rtype: (string, list of strings)
 
-    @raise ValueError: if the fqn doesn't exist
+    @raises ValueError: if the fqn doesn't exist
     """
     categorylist, name = _split_name(fqn)
     categorylist.append(name)
@@ -188,9 +188,9 @@ class HelpManager(manager.Manager):
         if tree.has_key(mem):
           tree = tree[mem]
         else:
-          raise ValueError, "FQN '%s' doesn't exist." % fqn
+          raise ValueError("FQN '%s' doesn't exist." % fqn)
       else:
-        raise ValueError, "FQN '%s' doesn't exist." % fqn
+        raise ValueError("FQN '%s' doesn't exist." % fqn)
 
     if type(tree) == types.DictType:
       list = []
