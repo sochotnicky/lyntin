@@ -272,14 +272,14 @@ class scroller:
   def _set_startline(self, startline):
     self.startline_ = max(0, min( len(self.lines_)-self.h_, startline))
    
-  def redraw(self, startline=-1, scroll=0):
+  def redraw(self, scroll=0, **kargs):
     #
     # Redraws window with lines from attached list, starting from
     # self.startline_.
     #
-    if startline > 0:
-      self._set_startline(startline)
-    elif scroll:
+    if 'startline' in kargs:
+      self._set_startline(kargs['startline'])
+    else:
       self._set_startline(self.startline_+scroll)
 
     current_y = 0
@@ -795,11 +795,11 @@ class Cursesui(base.BaseUI):
             scrollback = 1 # create scrollback window at next iteration
             out = None
           else: 
-            scrollback.redraw( scroll = -(scroll_h-2) )
+            scrollback.redraw( scroll = -(scroll_h/2+1) )
           continue
         if ch == curses.KEY_NPAGE:
           if scrollback:
-            scrollback.redraw( scroll = scroll_h-2 )
+            scrollback.redraw( scroll = scroll_h/2+1 )
           continue
 
         if ch == curses.ascii.ESC and scrollback:
