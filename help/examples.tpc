@@ -1,0 +1,13 @@
+Examples of commands in Lyntin::
+
+   say hello
+   get all;put all in chest
+   #3k {get all;put all in chest}
+   #alias gg {get all;put all in chest}
+   #alias gg {get all;put all in chest} quiet={true}
+   #alias k {kill %1;follow %1;#action {pummels you} {%2}}
+   #3k {say you people are irritating;#zap}
+   #5 {get all from chest;donate all}
+   say you rock!  \;)
+
+category: readme

@@ -1,0 +1,31 @@
+#clear
+#nop This is a quick test script for variables.
+#nop === Initializing variable test
+#unvar *
+#nop TEST 1: building and removing variables
+#nop === Building some variables
+#variable a b
+#variable {bcd} {dcb}
+#variable {efg} gfe
+#nop === Showing all variables (include builtins)
+#variable
+#nop === Attempting to expand variables.
+#nop $TIMESTAMP - builtin
+#nop $a (b) $bcd (dcb) $efg (gfe) \$efg (dollar sign efg)
+#nop === Showing info (3 variable(s).)
+#info
+#unvar g*
+#nop === Showing info (2 variable(s).)
+#info
+#unvar *
+#nop === Showing info (0 variable(s).)
+#info
+#nop === Completed.
+#nop TEST 2: variable expansion
+#unvar *
+#var a b
+#nop === creates var: {a} {b}
+#var $a c
+#nop === creates var: {b} {c}
+#var a $b
+#nop === creates var: {a} {c}

@@ -1,0 +1,91 @@
+>>> #clear
+
+clear: session common cleared.
+>>> #nop This is a quick test script for gags.
+
+>>> #nop === Initializing gag test
+
+>>> #ungag {*}
+
+ungag: No gags removed.
+>>> #nop === Building some gags
+
+>>> #gag onebiggag
+
+gag: {onebiggag} added.
+>>> #gag {gag this}
+
+gag: {gag this} added.
+>>> #gag {dee}
+
+gag: {dee} added.
+>>> #gag three more gags
+
+gag: {three} added.
+gag: {more} added.
+gag: {gags} added.
+>>> #nop === Showing all gags
+
+>>> #gag
+
+#substitute {gag this} {.}
+#substitute {onebiggag} {.}
+#substitute {three} {.}
+#substitute {gags} {.}
+#substitute {dee} {.}
+#substitute {more} {.}
+>>> #nop === Showing info (6 gag(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 6 gag(s).
+   variable: 0 variable(s).
+>>> #ungag g*
+
+ungag: {gag this} {.} removed.
+ungag: {gags} {.} removed.
+>>> #nop === Showing info (4 gag(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 4 gag(s).
+   variable: 0 variable(s).
+>>> #ungag *
+
+ungag: {onebiggag} {.} removed.
+ungag: {three} {.} removed.
+ungag: {dee} {.} removed.
+ungag: {more} {.} removed.
+>>> #nop === Showing info (0 gag(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).

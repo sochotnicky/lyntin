@@ -1,0 +1,99 @@
+>>> #clear
+
+clear: session common cleared.
+>>> #nop This is a quick test script for speedwalk stuff
+
+>>> #showme ===> Initializing speedwalk test <===
+
+===> Initializing speedwalk test <===
+>>> #unswdir *
+
+unswdir: No swdirs removed.
+>>> #unswexclude *
+
+unswexclude: No swexcludes removed.
+>>> #showme ===> Building some speedwalk stuff <===
+
+===> Building some speedwalk stuff <===
+>>> #swdir a alpha
+
+swdir: {a} {alpha} added.
+>>> #swdir b beta
+
+swdir: {b} {beta} added.
+>>> #swexclude aa
+
+swexclude: {aa} added.
+>>> #swexclude ab
+
+swexclude: {ab} added.
+>>> #showme ===> Showing all things <===
+
+===> Showing all things <===
+>>> #swdir
+
+#swdir {a} {alpha}
+#swdir {b} {beta}
+>>> #showme ===> Showing swdirs that start with a (should show 1) <===
+
+===> Showing swdirs that start with a (should show 1) <===
+>>> #swdir {a*}
+
+#swdir {a} {alpha}
+>>> #showme ===> Showing info (2 swdir(s).) <===
+
+===> Showing info (2 swdir(s).) <===
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 2 dir(s). 2 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #unswdir b*
+
+unswdir: No swdirs removed.
+>>> #showme ===> Showing info (1 swdir(s).) <===
+
+===> Showing info (1 swdir(s).) <===
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 2 dir(s). 2 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #unswdir *
+
+unswdir: No swdirs removed.
+>>> #showme ===> Showing info (0 swdir(s).) <===
+
+===> Showing info (0 swdir(s).) <===
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 2 dir(s). 2 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #showme ===> Completed. <===
+
+===> Completed. <===

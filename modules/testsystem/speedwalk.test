@@ -1,0 +1,23 @@
+#clear
+#nop This is a quick test script for speedwalk stuff
+#showme ===> Initializing speedwalk test <===
+#unswdir *
+#unswexclude *
+#showme ===> Building some speedwalk stuff <===
+#swdir a alpha
+#swdir b beta
+#swexclude aa
+#swexclude ab
+#showme ===> Showing all things <===
+#swdir
+#showme ===> Showing swdirs that start with a (should show 1) <===
+#swdir {a*}
+#showme ===> Showing info (2 swdir(s).) <===
+#info
+#unswdir b*
+#showme ===> Showing info (1 swdir(s).) <===
+#info
+#unswdir *
+#showme ===> Showing info (0 swdir(s).) <===
+#info
+#showme ===> Completed. <===

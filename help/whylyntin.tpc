@@ -1,0 +1,25 @@
+Lyntin is written entirely in Python--a nicely written and very 
+portable programming language.  Thusly Lyntin is platform 
+independent.  Lyntin is exposes the Python interpreter allow you 
+more freedom than mere 'if you see this then send this' aliases 
+and triggers.  They can be Python functions which do anything 
+from setting a variable to forking a web spider.  In addition, 
+your code can interface with Lyntin's code.  
+
+Lyntin is great if:
+
+1. you want a mud client that you can see the source code to
+   and adjust it to suit your needs
+2. you want a mud client that has a sophisticated API for 
+   enhancing and building bots/agents/triggers more advanced than
+   "if you see this then do this"
+3. you want a mud client that works on all your machines,
+   has a text ui, a tk gui, and can also work over ssh/telnet
+
+Lyntin is not great if:
+
+1. you prefer wizards and menus to the command line
+2. you hate Python
+3. you want fancy bells and whistles in the ui
+
+category: readme

@@ -1,0 +1,23 @@
+"lyntin.py --help" lists command line arguments and what they do.
+
+Type "#help help" for help on how to use the in-game help system.
+
+Read through the "#help readme" topics.  These will help as they 
+will walk you through how Lyntin works, how to get additional 
+help, where to go for answers, and what to do if you find a bug.  
+These are also exported into the README file.
+
+You should read through the topics in "#help commands" for all 
+the currently registered Lyntin commands.
+
+Each user interface has its own help topic--these will be on the 
+top level of the help structure.
+
+To start, the "#session" command will allow you to start a 
+session.  When you're done, "#end" will close Lyntin.
+
+All documentation that comes with Lyntin is also available on the
+Lyntin web-site.  If you find problems with the documentation or
+have fixes for it, let us know on the lyntin-devl mailing list.
+
+category: readme

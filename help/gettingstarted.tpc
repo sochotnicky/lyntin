@@ -1,0 +1,16 @@
+Lyntin incorporates the _look and feel_ of Tintin, so if you've used
+Tintin or a variant it should be pretty easy to make the transition.  
+It offers all the major features of Tintin, including multiple 
+sessions, but leaves a few minor things out.
+
+There are *in-game* help files covering the commands and most 
+other things we could think of which can be accessed with the "#help"
+command.
+
+All the documentation comes with Lyntin and is also available on
+the Lyntin website in HTML form.  If you find problems with the 
+documentation or have fixes for it, let us know.
+
+Lyntin has a series of command line flags which change its behavior.
+
+category: readme
