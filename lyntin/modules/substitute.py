@@ -4,11 +4,10 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: substitute.py,v 1.3 2003/06/26 23:27:18 willhelm Exp $
 #######################################################################
 """
-This module defines the SubstituteManager which handles substitutes and
-gags.
+This module defines the SubstituteManager which handles substitutes.
 """
 import string
 from lyntin import ansi, manager, utils, __init__, exported
@@ -119,23 +118,9 @@ class SubstituteData:
         if text.find(mem) != -1:
           return text
 
-      # check for subs/gags
+      # check for subs
       for mem in self._substitutes.keys():
-        if self._substitutes[mem] == ".":
-          # handling gags
-          if ansi.filter_ansi(text).find(mem) != -1:
-            tokens = ansi.split_ansi_from_text(text)
-            text = []
-            for mem in tokens:
-              if ansi.is_color_token(mem):
-                text.append(mem)
-            return "".join(text)
-        else:
-          # handling regular substitutes
-          if self._substitutes[mem] == r"\.":
-            text = text.replace(mem, ".")
-          else:
-            text = text.replace(mem, self._substitutes[mem])
+        text = text.replace(mem, self._substitutes[mem])
 
     return text 
 
@@ -197,20 +182,13 @@ class SubstituteData:
     """
     Returns a one liner of number of substitutes we're managing.
 
-    @returns: string describing how many substitutes and gags we're managing
+    @returns: string describing how many substitutes we're managing
     @rtype: string
     """
-    gags = 0
-    subs = 0
-
-    for mem in self._substitutes.keys():
-      if self._substitutes[mem] == ".":
-        gags += 1
-      else:
-        subs += 1
+    subs = len(self._substitutes.keys())
     antisubs = len(self._antisubs)
 
-    return "%d substitute(s). %d gag(s). %d antisub(s)" % (subs, gags, antisubs)
+    return "%d substitute(s).  %d antisub(s)" % (subs, antisubs)
 
 
 class SubstituteManager(manager.Manager):
@@ -259,7 +237,7 @@ class SubstituteManager(manager.Manager):
   def getStatus(self, ses):
     if self._subs.has_key(ses):
       return self._subs[ses].getStatus()
-    return "0 substitute(s). 0 gag(s). 0 antisub(s)."
+    return "0 substitute(s). 0 antisub(s)."
 
   def addSession(self, newsession, basesession=None):
     if basesession:
@@ -372,7 +350,7 @@ def antisubstitute_cmd(ses, args, input):
   Allows you to create antisubstitutes.
 
   For any line that contains an antisubstitute, we won't do substitutions
-  or gags on it.
+  on it.
 
   category: commands
   """
@@ -405,65 +383,6 @@ def unantisubstitute_cmd(ses, args, input):
   modutils.unsomething_helper(args, func, ses, "antisubstitute", "antisubstitutes")
 
 commands_dict["unantisubstitute"] = (unantisubstitute_cmd, "str= quiet:boolean=false")
-
-def gag_cmd(ses, args, input):
-  """
-  With no arguments, prints out all gags.
-  With arguments, creates a gag.
-
-  Incoming lines from the mud which contain gagged text will
-  be removed and not shown on the ui.
-
-  Gags get converted to regular expressions.  Feel free to use
-  regular expression matching syntax as you see fit.
-
-  As with all commands, braces get stripped off and each complete
-  argument creates a gag.  gag accepts multiple gags at once, and
-  accepts a quiet argument to supress reporting of what has been
-  gagged.  
-
-  examples:
-    #gag {has missed you.}    <-- will prevent any incoming line
-                                  with "has missed you" to be shown.
-    #gag has missed you       <-- will gag any text with "has",
-                                  "missed", or "you"
-
-  category: commands
-  """
-  gaggedtext = args["text"]
-  quiet = args["quiet"]
-
-  sm = exported.get_manager("substitute")
-
-  if not gaggedtext:
-    data = sm.getInfo(ses)
-    if data == '':
-      data = "gag: no gags defined."
-
-    exported.write_message(data, ses)
-    return
-
-  for togag in gaggedtext:
-    sm.addSubstitute(ses, togag, ".")
-    if not quiet:
-      exported.write_message("gag: {%s} added." % togag, ses)
-
-commands_dict["gag"] = (gag_cmd, "text* quiet:boolean=false")
-
-
-def ungag_cmd(ses, args, input):
-  """
-  Allows you to remove gags.
-
-  category: commands
-  """
-  sm = exported.get_manager("substitute")
-
-  func = sm.removeSubstitutes
-  modutils.unsomething_helper(args, func, ses, "gag", "gags")
-
-commands_dict["ungag"] = (ungag_cmd, "str= quiet:boolean=false")
-
 
 sm = None
 
