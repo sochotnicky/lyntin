@@ -6,7 +6,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-Tue, 29 Apr 2003 02:04:47 +0000
+Sat, 04 Oct 2003 23:39:44 +0000
 
 For more up-to-date information and documentation, please check the 
 web-site: http://Lyntin.sourceforge.net/
@@ -22,12 +22,12 @@ between them.
 WINDOWS
 -------
 
-Windows users should use either \\ or / to denote directory 
+Windows users should use either \ or / to denote directory 
 separaters.
 
 ex::
 
-   #write c:\\commandfile
+   #write c:\commandfile
    #write c:/commandfile
 
 
@@ -86,82 +86,99 @@ have fixes for it, let us know on the lyntin-devl mailing list.
 
 
 
-COMMAND LINE ARGUMENTS
-======================
+LYNTIN COMMAND HANDLING
+=======================
 
-syntax: lyntin.py [[OPTIONS] | [--help] | [--version]]
+Lyntin uses Lyntin commands to allow you to manipulate the Lyntin 
+client and setup your session with aliases, variables, actions, 
+and such.  Commands start with the command character--by default 
+this is "#".  It can be changed with the "#config" command.  The 
+command character can also do some other special things:
 
-  --help
-       displays this text and exits.
+1. You can execute commands in another session by typing the 
+   command character and then the sesion name: "#3k say hello" 
+   will say hello in the 3k session.
 
-  -v or --version
-       prints out the version information and exits.
+2. You can switch to another session by typing the command 
+   character and then the session name: "#3k" will switch to the 
+   3k session.
 
+3. You can execute a command in all sessions by typing the 
+   command character then all: "#all say hello" will say hello in 
+   all sessions.
 
-OPTIONS:
+4. You can execute a command a number of times by typing the 
+   command character then a number, then the command: 
+   "#5 say hello" will send "say hello" to the current session 
+   5 times.
 
-  -d or --datadir
-       If you don't set your datadir, Lyntin will set the 
-       datadir to the HOME environment variable.  Using this 
-       option allows you to set it manually.  You can specify 
-       only one --datadir flag.  Specifying additional ones 
-       will overwrite the last one.
+Commands are separated by the semicolon.  Semicolons can be 
+escaped with the \ character.
 
-  -e or --evalmode
-       Lyntin has two user input evaluation modes: lyntin and 
-       tintin.  This allows you to set the mode at the command 
-       line.
+Command arguments can be enclosed with { }.  This enables you to 
+specify arguments that have multiple words in them.
 
-  -m or --moduledir
-       Lyntin dynamically loads everything in the lyntin/modules 
-       dir, but will additionally dynamically load modules in dirs 
-       specified by this flag.  You can specify multiple 
-       --moduledir flags.
-         
-  -r or --read or --readfile
-       Reads a file in at startup populating the common session 
-       with aliases, actions, and whatnot.  You can specify 
-       multiple files to read with multiple --read flags.
-
-  --nosnoop
-       Lyntin defaults to snooping.  This sets it so Lyntin will
-       default to no snooping.
-
-  -u or --ui
-       Launches a specific ui for Lyntin.  Lyntin comes with two 
-       ui's: 'text' and 'tk'.  Other ui's can be dropped into the 
-       ui/ subdirectory and this switch can be used for starting 
-       them as well.
+{, } and \ can all be escaped with the \ character: \{, \}, and \.
 
 
 
-A NOTE ABOUT EVALMODES
-======================
+VARIABLE EVALUATION
+===================
 
-There are two user input evaluation modes in Lyntin: Lyntin mode 
-and Tintin mode.  You can switch modes using the command-line 
-argument:
+Variables get evaluated according to a new methodology we developed
+after disliking the Tintin way of doing things.  This new methodology
+provides maximum flexibility and provides for some things that
+the Tintin variable evaluation did not provide for.
 
-   --evalmode [mode]
+  * Variables and placement variables with a single $ or % are
+    evaluated/expanded.  One layer of $s or %s is then stripped 
+    off when this evaluation occurs.
 
-with valid modes being "tintin" and "lyntin".  You can also switch
-it ingame using the #config command:
+  * Variable expansion is always done on user input before 
+    commands are evaluted.  This means variables can be used as 
+    arguments to any commands, etc.
 
-   #config evalmode [mode]
+  * Variable expansion happens again when certain expressions are
+    evaluated, such as action triggers, alias expansion, etc.
+    Essentially, when any stored value gets expanded its variables
+    will get expanded (typically whenever tintinmode would do its 
+    sole expansion.) 
 
-with valid modes being "tintin" and "lyntin".
+  * Placement vars in actions and aliases support an expanded 
+    syntax based on python array slices.  %0:1 will evaluate to 
+    the first and second arguments, while %0: will be all 
+    arguments, and %:-1 will be all but the last argumen, etc.
 
-The evalmodes differ in how variables, placement variables, and
-command arguments are expanded as well as the time at which 
-they're expanded.  Tintin mode emulates how Tintin works.  Lyntin 
-mode is born from our own preferred user input evaluation.
+Examples:
 
-Lyntin defaults to lyntin mode--so if you're a Tintin user and 
-want to user your Tintin command files, you should make sure to 
-start Lyntin up in tintin mode.
+1. #action {$Myvar} {woo} 
 
-Note: Lyntin 4.0 will no longer have the tintin evalmode and the 
-idea of evalmodes will go away.
+Will trigger whenever the value Myvar holds when this is entered 
+(the original value of Myvar - it will not change if Myvar's 
+value changes)
+
+2. #action {$$Myvar} {woo}
+
+Will trigger whenever the current value of Myvar passes by.
+
+3. #action {$$$Myvar} {woo}
+
+Will trigger whenever the literal string $Myvar is seen.  Place 
+more $s in if you wish to trigger on more of them, the first 2 
+will be stripped by the variable expansion processes. 
+
+4. #alias {hello} {$moo}
+
+Will bind hello to $moo's current value.
+
+5. #alias {hello} {$$moo}
+
+Will bind hello to always expand to moo's current value at the
+time of expansion.
+
+6. #alias {hello} {$$$moo}
+
+Will bind hello to expand to the literal string "$moo"
 
 
 

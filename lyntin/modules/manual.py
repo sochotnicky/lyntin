@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manual.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: manual.py,v 1.2 2003/10/04 23:40:20 willhelm Exp $
 #######################################################################
 """
 This module holds the README manual text.
@@ -221,7 +221,7 @@ gettingstarted = """
 Lyntin incorporates the _look and feel_ of Tintin, so if you've used
 Tintin or a variant it should be pretty easy to make the transition.  
 It offers all the major features of Tintin, including multiple 
-sessions, but leaves a few minor things out.
+sessions, but leaves some things out.
 
 There are *in-game* help files covering the commands and most 
 other things we could think of which can be accessed with the "#help"

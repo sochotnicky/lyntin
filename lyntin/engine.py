@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.18 2003/10/03 02:17:48 willhelm Exp $
+# $Id: engine.py,v 1.19 2003/10/04 23:40:20 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -883,9 +883,11 @@ def main(defaultoptions={}):
   instantiates a ui, does some setup, spins off an engine thread, and
   goes into the ui's mainloop.
 
-  @param defaultui: the default ui to use.  for instance, the default
-      ui for Win32 systems should probably be the tkui.
-  @type  defaultui: string
+  @param defaultoptions: the boot options to use.  we update the 
+      config.options dict with these options--this is the easiest
+      way to override the ui, moduledir, datadir, et al from a
+      Lyntin run script.
+  @type  defaultoptions: dict
   """
   global myengine
   startuperrors = []
