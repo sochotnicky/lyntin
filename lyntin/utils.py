@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
+# $Id: utils.py,v 1.6 2003/08/21 02:53:57 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -159,7 +159,7 @@ def http_get(url):
   """
   import httplib
   if url.find("http://") == -1:
-    raise ValueError, "This is not a valid url."
+    raise ValueError("This is not a valid url.")
 
   filename = url[7:]
 
@@ -175,7 +175,7 @@ def http_get(url):
   status, reason, headers = sock.getreply()
 
   if status != 200:
-    raise ValueError, "HTTP error: %d %s" % (status, reason)
+    raise ValueError("HTTP error: %d %s" % (status, reason))
 
   return sock.getfile()
 
@@ -653,12 +653,12 @@ def parse_timespan(timespan):
   match=TIMESPAN_REGEXP.match(timespan)
 
   if not match:
-    raise ValueError, "Invalid timespan string."
+    raise ValueError("Invalid timespan string.")
     
   timespec = match.groupdict()
 
   if not timespec["days"] and not timespec["hours"] and not timespec["minutes"] and not timespec["seconds"]:
-    raise ValueError, "Invalid timespan string."
+    raise ValueError("Invalid timespan string.")
 
   days = timespec["days"]
   if not days:
@@ -714,7 +714,7 @@ def parse_time(timearg):
       timespan = parse_timespan(timearg)
       return time.time() + timespan
     except:
-      raise ValueError, "Invalid time string."
+      raise ValueError("Invalid time string.")
 
   timespec = match.groupdict()
   currenttime = time.localtime()
@@ -725,7 +725,7 @@ def parse_time(timearg):
   ampm=timespec.get("ampm",None)
   if hour > 12:
     if ampm:
-      raise ValueError, "Invalid time string: ampm specified with hours > 12."
+      raise ValueError("Invalid time string: ampm specified with hours > 12.")
     else:
       ampm="p"
   else:
@@ -733,7 +733,7 @@ def parse_time(timearg):
       hour = hour + 12
 
   if hour < 1 or hour > 24:
-    raise ValueError, "Invalid time string: hours are out of range."
+    raise ValueError("Invalid time string: hours are out of range.")
 
   minute = timespec.get("minute",None)
   if minute == None:
@@ -759,7 +759,7 @@ def parse_time(timearg):
   try:
     return time.mktime(timetuple)
   except Exception, e:
-    raise ValueError, "Invalid time string: %s" % e
+    raise ValueError("Invalid time string: %s" % e)
 
 
 def convert_boolean(text):

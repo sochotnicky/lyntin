@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.7 2003/08/06 22:59:44 willhelm Exp $
+# $Id: net.py,v 1.8 2003/08/21 02:54:19 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -194,7 +194,7 @@ class SocketCommunicator:
       self._sock = sock
       self._sessionname = sessionname
     else:
-      raise Exception, "Connection already exists."
+      raise Exception("Connection already exists.")
 
   def _pollForData(self):
     """
@@ -289,7 +289,7 @@ class SocketCommunicator:
       except Exception, e:
         if self._shutdownflag == 0 and self._session:
           self._session.shutdown(())
-          raise Exception, e
+          raise Exception(e)
 
       return None
     return e
