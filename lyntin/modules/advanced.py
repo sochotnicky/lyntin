@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: advanced.py,v 1.4 2004/04/03 10:36:47 glasssnake Exp $
+# $Id: advanced.py,v 1.5 2004/04/03 21:07:05 glasssnake Exp $
 #######################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -91,17 +91,21 @@ def python_cmd(ses, words, input):
 
     old_stdout = sys.stdout
     old_stderr = sys.stderr
+    old_stdin = sys.stdin
     sys_stdout = StringIO.StringIO()
     sys_stderr = StringIO.StringIO()
+    sys_stdin = StringIO.StringIO()
     try:
       sys.stdout = sys_stdout
       sys.stderr = sys_stderr
+      sys.stdin = sys_stdin
       
       exec compiled in dictglobals, execdictlocals
 
     finally:
       sys.stdout = old_stdout
       sys.stderr = old_stderr
+      sys.stdin = old_stdin
       
     error = sys_stderr.getvalue()
     if error:
@@ -112,6 +116,10 @@ def python_cmd(ses, words, input):
       text = text[:-1]
     if text:  
       exported.write_message(text)  
+
+  except (OverflowError, SyntaxError, ValueError, NameError):
+    import traceback
+    exported.write_error("".join(traceback.format_exception_only( *(sys.exc_info()[:2]) )))
 
   except:
     exported.write_traceback("@: error in raw python stuff.")
