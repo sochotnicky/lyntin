@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: modutils.py,v 1.2 2004/03/30 00:23:22 willhelm Exp $
+# $Id: modutils.py,v 1.3 2004/04/03 10:26:40 glasssnake Exp $
 #######################################################################
 """
 This module holds helper functions for building other Lyntin modules.
@@ -76,13 +76,13 @@ def unsomething_helper(args, func, ses=None, sing="", plur=""):
       (ex: "aliases")
   @type  plur: string
   """
-  str = args["str"]
+  text = args["str"]
   quiet = args["quiet"]
 
   if ses:
-    removedthings = func(ses, str)
+    removedthings = func(ses, text)
   else:
-    removedthings = func(str)
+    removedthings = func(text)
 
   if not quiet:
     if len(removedthings) == 0:
@@ -91,7 +91,7 @@ def unsomething_helper(args, func, ses=None, sing="", plur=""):
       data = []
       for mem in removedthings:
         if type(mem) == types.TupleType or type(mem) == types.ListType:
-          mem = "{%s}" % ("} {".join(mem))
+          mem = "{%s}" % ("} {".join(map(str, mem)))
           data.append("un%s: %s removed." % (sing, mem))
         else:
           data.append("un%s: {%s} removed." % (sing, mem))
