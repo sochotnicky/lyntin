@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.6 2003/08/06 22:59:44 willhelm Exp $
+# $Id: exported.py,v 1.7 2003/08/21 02:56:27 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -12,7 +12,7 @@ very rarely even though we might change Lyntin's internals.  If
 it does change it'll be between major Lyntin versions.
 """
 import sys, traceback
-from lyntin import config, utils, constants
+from lyntin import utils, constants
 from lyntin.ui import message
 
 LAST = 99
@@ -236,7 +236,7 @@ def get_num_errors():
   @return: the number of unhandled errors Lyntin has encountered so far
   @rtype: int
   """
-  return config.errorcount
+  return get_engine()._errorcount
  
 def set_num_errors(num):
   """
@@ -246,7 +246,7 @@ def set_num_errors(num):
   @param num: the number of errors to set
   @type  num: int
   """
-  config.errorcount = num
+  get_engine()._errorcount = num
 
 def write_ui(text):
   """
