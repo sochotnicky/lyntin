@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
+# $Id: textui.py,v 1.8 2003/10/18 16:39:30 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
@@ -69,6 +69,7 @@ class Textui(base.BaseUI):
 
     self._tio = 0
     self._rline = 0
+    self._echo = 1
 
   def runui(self):
     global HELP_TEXT
@@ -118,7 +119,8 @@ class Textui(base.BaseUI):
       
   def shutdown(self, args):
     """ Shuts down the textui and makes sure that we're echoing!"""
-    self.turnonecho()
+    if self._echo == 0:
+      self.turnonecho()
 
   def turnonecho(self):
     """ Turns on echo if termios module is present."""
@@ -129,6 +131,7 @@ class Textui(base.BaseUI):
     new[3] = self._onecho_attr
     try:
       termios.tcsetattr(fd, termios.TCSADRAIN, new)
+      self._echo = 1
     except Exception, e:
       exported.write_error("textui: unable to turn on echo: %s" % e)
 
@@ -142,6 +145,7 @@ class Textui(base.BaseUI):
     new[3] = self._offecho_attr
     try:
       termios.tcsetattr(fd, termios.TCSADRAIN, new)
+      self._echo = 0
     except Exception, e:
       exported.write_error("textui: unable to turn off echo: %s" % e)
 

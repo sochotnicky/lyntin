@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.13 2003/10/17 02:11:25 willhelm Exp $
+# $Id: net.py,v 1.14 2003/10/18 16:39:30 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -199,7 +199,8 @@ def _cc(option):
   if len(option) == 3:
     return " ".join([_fcc(m) for m in option])
 
-  return " ".join(_fcc(option[0]), _fcc(option[1]), _fcc(option[2]), option[3:-2], _fcc(option[-2]), _fcc(option[-1]))
+  return " ".join([_fcc(option[0]), _fcc(option[1]), _fcc(option[2]), 
+                   option[3:-2], _fcc(option[-2]), _fcc(option[-1])])
 
 
 class SocketCommunicator:
