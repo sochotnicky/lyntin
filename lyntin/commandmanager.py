@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: commandmanager.py,v 1.6 2003/09/09 22:44:07 willhelm Exp $
+# $Id: commandmanager.py,v 1.7 2003/10/05 15:43:41 willhelm Exp $
 #######################################################################
 """
 Lyntin comes with a series of X{command}s for manipulating aliases, 
@@ -282,9 +282,9 @@ class CommandManager(manager.Manager):
                                 donefunc=exported.query_done)
 
             try:
-              dict = argumentparser.parse(words[1],resolver)
-              dict["command"]=mem
-              command(ses, dict, input)
+              argdict = argumentparser.parse(words[1], resolver)
+              argdict["command"]=mem
+              command(ses, argdict, input)
             except ValueError, e:
               exported.write_error("%s: %s\nsyntax: %s%s %s" % 
                                    (fixedmem, e, commandchar, fixedmem,

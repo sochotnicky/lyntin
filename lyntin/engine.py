@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.19 2003/10/04 23:40:20 willhelm Exp $
+# $Id: engine.py,v 1.20 2003/10/05 15:43:41 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -687,7 +687,7 @@ class Engine:
     if self._errorcount > 20:
       exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
-      sys.exit("Error count exceeded--shutting down.")
+      sys.exit(0)
 
 
   def shutdown(self, args):

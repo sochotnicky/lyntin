@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.5 2003/10/04 23:19:40 willhelm Exp $
+# $Id: gag.py,v 1.6 2003/10/05 15:43:41 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
@@ -16,7 +16,7 @@ from lyntin.modules import modutils
 class GagData:
   def __init__(self):
     self._gags = {}
-    self._antigags = []
+    self._antigags = {}
 
   def addGag(self, item):
     """
@@ -30,15 +30,15 @@ class GagData:
 
   def addAntiGag(self, item):
     """ Adds an antigag."""
-    if item not in self._antigags:
-      self._antigags.append(item)
+    compiled = utils.compile_regexp(item, 1)
+    self._antigags[item] = compiled
 
   def clear(self):
     """
     Removes all the gags.
     """
     self._gags.clear()
-    self._antigags = []
+    self._antigags.clear()
 
   def removeGags(self, text):
     """
@@ -69,12 +69,12 @@ class GagData:
     @returns: a list of antigags that were removed.
     @rtype: list of strings
     """
-    badgags = utils.expand_text(text, self._antigags)
+    badgags = utils.expand_text(text, self._antigags.keys())
 
     ret = []
     for mem in badgags:
       ret.append(mem)
-      self._antigags.remove(mem)
+      del self._antigags[mem]
 
     return ret
 
@@ -96,7 +96,7 @@ class GagData:
     @returns: list of all antigags
     @rtype: list of strings
     """
-    listing = self._antigags[:]
+    listing = self._antigags.keys()
     listing.sort()
     return listing
 
@@ -114,8 +114,8 @@ class GagData:
     """
     if len(text) > 0:
       # check for antigags first
-      for mem in self._antigags:
-        if text.find(mem) != -1:
+      for mem in self._antigags.values():
+        if mem.search(ansi.filter_ansi(text)):
           return text
 
       # check for gags
@@ -164,11 +164,11 @@ class GagData:
     @return: list of strings where each string represents a gag
     @rtype: list of strings
     """
-    data = self._antigags
+    data = self._antigags.keys()
     if text:
       data = utils.expand_text(text, data)
 
-    data = ["antigag {%s}" % (mem) for mem in data]
+    data = ["antigag {%s}" % mem for mem in data]
 
     return data
 
@@ -181,73 +181,75 @@ class GagData:
     @rtype: string
     """
     gags = len(self._gags.keys())
-    antigags = len(self._antigags)
+    antigags = len(self._antigags.keys())
 
     return "%d gag(s). %d antigag(s)" % (gags, antigags)
 
 
 class GagManager(manager.Manager):
   def __init__(self):
-    self._gags = {}
+    self._gagdata = {}
 
   def addGag(self, ses, item):
-    if not self._gags.has_key(ses):
-      self._gags[ses] = GagData()
-    self._gags[ses].addGag(item)
+    if not self._gagdata.has_key(ses):
+      self._gagdata[ses] = GagData()
+    self._gagdata[ses].addGag(item)
 
   def addAntiGag(self, ses, item):
-    if not self._gags.has_key(ses):
-      self._gags[ses] = GagData()
-    self._gags[ses].addAntiGag(item)
+    if not self._gagdata.has_key(ses):
+      self._gagdata[ses] = GagData()
+    self._gagdata[ses].addAntiGag(item)
 
   def clear(self, ses):
-    if self._gags.has_key(ses):
-      self._gags[ses].clear()
+    if self._gagdata.has_key(ses):
+      self._gagdata[ses].clear()
 
   def removeGags(self, ses, text):
-    if self._gags.has_key(ses):
-      return self._gags[ses].removeGags(text)
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].removeGags(text)
     return []
 
   def removeAntiGags(self, ses, text):
-    if self._gags.has_key(ses):
-      return self._gags[ses].removeAntiGags(text)
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].removeAntiGags(text)
     return []
 
   def getGags(self, ses):
-    if self._gags.has_key(ses):
-      return self._gags[ses].getGags()
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].getGags()
     return []
 
   def getInfo(self, ses, text=''):
-    if self._gags.has_key(ses):
-      return self._gags[ses].getInfo(text)
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].getInfo(text)
     return []
 
   def getAntiGagsInfo(self, ses, text=''):
-    if self._gags.has_key(ses):
-      return self._gags[ses].getAntiGagsInfo(text)
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].getAntiGagsInfo(text)
     return []
 
   def getStatus(self, ses):
-    if self._gags.has_key(ses):
-      return self._gags[ses].getStatus()
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].getStatus()
     return "0 gag(s). 0 antigag(s)."
 
   def addSession(self, newsession, basesession=None):
     if basesession:
-      if self._gags.has_key(basesession):
-        sdata = self._gags[basesession]
+      if self._gagdata.has_key(basesession):
+        sdata = self._gagdata[basesession]
         for mem in sdata._gags.keys():
           self.addGag(newsession, mem)
+        for mem in sdata._antigags.keys():
+          self.addAntiGag(newsession, mem)
 
   def removeSession(self, ses):
-    if self._gags.has_key(ses):
-      del self._gags[ses]
+    if self._gagdata.has_key(ses):
+      del self._gagdata[ses]
 
   def expand(self, ses, text):
-    if self._gags.has_key(ses):
-      return self._gags[ses].expand(text)
+    if self._gagdata.has_key(ses):
+      return self._gagdata[ses].expand(text)
     return text
 
   def persist(self, args):
@@ -297,7 +299,7 @@ def antigag_cmd(ses, args, input):
     if not data:
       data = ["antigag: no antigags defined."]
 
-    exported.write_message("\n".join(data), ses)
+    exported.write_message("antigags\n" + "\n".join(data), ses)
     return
 
   gm.addAntiGag(ses, item)
@@ -351,7 +353,7 @@ def gag_cmd(ses, args, input):
     if not data:
       data = ["gag: no gags defined."]
 
-    exported.write_message("gags" + "\n" + "\n".join(data), ses)
+    exported.write_message("gags\n" + "\n".join(data), ses)
     return
 
   gm.addGag(ses, gaggedtext)

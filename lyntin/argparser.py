@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: argparser.py,v 1.5 2003/08/21 02:55:47 willhelm Exp $
+# $Id: argparser.py,v 1.6 2003/10/05 15:43:41 willhelm Exp $
 #######################################################################
 """
 This provides the ArgumentParser class which parses X{command argument}s
@@ -35,7 +35,7 @@ Supported options::
 
   limitparsing:int (default=-1): only parse this number of tokens 
             into dict, the rest of the input line goes into 
-            dict["input"]
+            argdict["input"]
 
   nodefaults:bool (default=off): turn off default lookups through variables.
 
@@ -128,19 +128,19 @@ class ArgumentParser:
 
     if optionParser == None:
       optionParser = ArgumentParser("otherOptions* otherValuedOptions**")
-    dict = optionParser.parse(argoptions)
+    argdict = optionParser.parse(argoptions)
 
-    for key in dict.keys():
+    for key in argdict.keys():
       if key=="otherOptions":
-        for otherOption in dict[key]:
+        for otherOption in argdict[key]:
           self.options[otherOption] = 1
           if len(otherOption)>3 and otherOption[0:2]=="no":
             self.options[otherOption[2:]] = 0
       elif key=="otherValuedOptions":
-        for otherKey in dict[key].keys():
-          self.options[otherKey] = dict[key][otherKey]
+        for otherKey in argdict[key].keys():
+          self.options[otherKey] = argdict[key][otherKey]
       else:
-        self.options[key] = dict[key]
+        self.options[key] = argdict[key]
 
     # set types for certain options
     self.options["limitparsing"] = int(self.options["limitparsing"])
@@ -259,7 +259,7 @@ class ArgumentParser:
         appropriate collection arguments specified, or if required arguments
         are missing, or if arguments passed in aren't valid
     """    
-    dict = {}
+    argdict = {}
 
     arguments = self.split(input, self.getOption("limitparsing"))
 
@@ -276,7 +276,7 @@ class ArgumentParser:
             parser = self.extraindexparser
           else:
             raise ParserException, "Unexpected argument received %s" % (key)
-          parser.parseInto(i,key,dict)
+          parser.parseInto(i, key, argdict)
         else:
           foundNamedArg = 1
           if self.parsers.has_key(key):
@@ -290,17 +290,17 @@ class ArgumentParser:
               parser = self.extranamedparser
             else:
               if len(matchedkeys) == 0:
-                raise ParserException, "Invalid named argument: %s=%s" % (key,val)
+                raise ParserException("Invalid named argument: %s=%s" % (key,val))
               else:
-                raise ParserException, "Ambiguous named argument: %s=%s %s" % (key, val, matchedkeys)
+                raise ParserException("Ambiguous named argument: %s=%s %s" % (key, val, matchedkeys))
             
-          parser.parseInto(key,val,dict)
+          parser.parseInto(key, val, argdict)
 
 
     # now check that everything has been specified, putting in defaults 
     # where available
     for key in self.parsers.keys():
-      if not dict.has_key(key):
+      if not argdict.has_key(key):
         # gotta be careful here with the extra defaultset value since
         # the parser may parse a string into None, or anything really
         default = None
@@ -320,9 +320,9 @@ class ArgumentParser:
         if not defaultset and not self.getOption("noparsing"):
           raise ParserException, "Must specify a value for argument %s" % (key)
         else:
-          dict[key] = default
+          argdict[key] = default
           
-    return dict
+    return argdict
 
   def split(self, input, maxsplit=-1, buildsyntaxline=0):
     """
@@ -489,7 +489,7 @@ class Parser:
     """
     self.typechecker = typechecker
 
-  def parseInto(self, key, val, dict):
+  def parseInto(self, key, val, argdict):
     """
     Populates the argument dictionary with the appropriate value.
 
@@ -499,15 +499,15 @@ class Parser:
     @param val: the argument value
     @type  val: string
 
-    @param dict: the argument dictionary to populate
-    @type  dict: dict
+    @param argdict: the argument dictionary to populate
+    @type  argdict: dict
 
     @raises ParserException: if multiple values were given for the argument
     """
-    if dict.has_key(self.argname):
+    if argdict.has_key(self.argname):
       raise ParserException, "Multiple values for argument %s given" % (self.argname)
     else:
-      dict[self.argname] = self.parse(val)
+      argdict[self.argname] = self.parse(val)
 
   def parse(self, val):
     """
@@ -561,7 +561,7 @@ class ExtraIndexParser(Parser):
     self.default = []
     self.defaultset = 1
     
-  def parseInto(self, key, val, dict):
+  def parseInto(self, key, val, argdict):
     """
     Populates the argument dictionary with the appropriate value.
 
@@ -571,16 +571,16 @@ class ExtraIndexParser(Parser):
     @param val: the argument value
     @type  val: string
 
-    @param dict: the argument dictionary to populate
-    @type  dict: dict
+    @param argdict: the argument dictionary to populate
+    @type  argdict: dict
 
     @raises ParserException: if multiple values were given for the argument
     """
     val = self.parse(val)
-    if dict.has_key(self.argname):
-      dict[self.argname].append(val)
+    if argdict.has_key(self.argname):
+      argdict[self.argname].append(val)
     else:
-      dict[self.argname] = [val]
+      argdict[self.argname] = [val]
 
 class ExtraNamedParser(Parser):
   """
@@ -603,7 +603,7 @@ class ExtraNamedParser(Parser):
     self.default = {}
     self.defaultset = 1
     
-  def parseInto(self, key, val, dict):
+  def parseInto(self, key, val, argdict):
     """
     Populates the argument dictionary with the appropriate value.
 
@@ -613,18 +613,18 @@ class ExtraNamedParser(Parser):
     @param val: the argument value
     @type  val: string
 
-    @param dict: the argument dictionary to populate
-    @type  dict: dict
+    @param argdict: the argument dictionary to populate
+    @type  argdict: dict
 
     @raises ParserException: if multiple values were given for the argument
     """
     val=self.parse(val)
-    if dict.has_key(self.argname):
-      if dict.has_key(key) or dict[self.argname].has_key(key):
+    if argdict.has_key(self.argname):
+      if argdict.has_key(key) or argdict[self.argname].has_key(key):
         raise ParserException, "Multiple values given for argument %s" % (key)
-      dict[self.argname][key] = (val)
+      argdict[self.argname][key] = (val)
     else:
-      dict[self.argname] = {key:val}
+      argdict[self.argname] = {key:val}
 
 
 typecheckers = {}
