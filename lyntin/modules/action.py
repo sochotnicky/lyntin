@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.12 2003/09/02 01:20:52 willhelm Exp $
+# $Id: action.py,v 1.13 2003/09/18 23:18:05 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -37,7 +37,6 @@ from lyntin.modules import modutils
 # the placement variable regular expression
 VARREGEXP = re.compile('%_?(\d+)')
 
-
 class ActionData:
   def __init__(self, ses):
     self._actions = {}
@@ -45,7 +44,7 @@ class ActionData:
     self._disabled = {}
     self._actionlist = None
 
-  def addAction(self, trigger, response, priority=5, onetime=0, tag=None):
+  def addAction(self, trigger, response, color=0, priority=5, onetime=0, tag=None):
     """
     Compiles a trigger pattern and adds the entire action to the
     hash.
@@ -55,6 +54,11 @@ class ActionData:
 
     @param response: what to do when the trigger pattern is found
     @type  response: string
+
+    @param color: whether (1) or not (0) we try matching the line with
+        the ansi colors still in it.  (i.e. if color==0, we filter the
+        ansi colors out before matching)
+    @type  color: boolean
 
     @param priority: the priority to run this action at.  actions
         are sorted by priority then by the trigger statement when
@@ -72,7 +76,7 @@ class ActionData:
     if not expansion:
       expansion = trigger
     compiled = utils.compile_regexp(expansion, 1)
-    self._actions[trigger] = (trigger, compiled, response, priority, onetime, tag)
+    self._actions[trigger] = (trigger, compiled, response, color, priority, onetime, tag)
     self._actionlist = None       # invalidating action list
     return 1
 
@@ -82,14 +86,14 @@ class ActionData:
     regular expressions for the actions in this session.
     """
     for mem in self._actions.keys():
-      (trigger, compiled, response, priority, onetime, tag) = self._actions[mem]
+      (trigger, compiled, response, color, priority, onetime, tag) = self._actions[mem]
       expansion = exported.expand_ses_vars(trigger, self._ses)
       if not expansion:
         expansion = trigger
 
       compiled = utils.compile_regexp(expansion, 1)
 
-      self._actions[trigger] = (trigger, compiled, response, priority, onetime, tag)
+      self._actions[trigger] = (trigger, compiled, response, color, priority, onetime, tag)
 
   def clear(self):
     """
@@ -126,7 +130,7 @@ class ActionData:
 
     ret = []
     for mem in keys:
-      (trigger, compiled, response, priority, onetime, tag) = actions[mem]
+      (trigger, compiled, response, color, priority, onetime, tag) = actions[mem]
       if not mytag or mytag == tag:
         ret.append((trigger, response, tag))
         del actions[mem]
@@ -156,7 +160,6 @@ class ActionData:
     @type  text: string
     """
     # FIXME - make sure this works even when lines are broken up.
-    # matched = [] # XXX What is it for? Seems dead code.
 
     actionlist = self._actionlist
     if not actionlist:
@@ -165,11 +168,19 @@ class ActionData:
       actionlist.sort(lambda x,y:cmp(x[3], y[3]))
       self._actionlist = actionlist
 
-    line = utils.filter_cm(ansi.filter_ansi(text))
+    colorline = utils.filter_cm(text)
+    nocolorline = ansi.filter_ansi(colorline)
+
     # go through all the lines in the data and see if we have
     # any matches
-    for (action, actioncompiled, response, priority, onetime, tag) in actionlist:
-      match = actioncompiled.search(line)
+    for (action, actioncompiled, response, color, priority, onetime, tag) in actionlist:
+      if color:
+        match = actioncompiled.search(colorline)
+        line = colorline
+      else:
+        match = actioncompiled.search(nocolorline)
+        line = nocolorline
+
       if match:
         # for every match we figure out what the expanded response
         # is and add it as an InputEvent in the queue.  the reason
@@ -238,8 +249,8 @@ class ActionData:
       actup = self._actions[mem]
       
       if not tag or actup[5] == tag:
-        data.append("action {%s} {%s} priority={%d} onetime={%s} tag={%s}" % 
-                (utils.escape(mem), utils.escape(actup[2]), actup[3], actup[4], actup[5]))
+        data.append("action {%s} {%s} color={%d} priority={%d} onetime={%s} tag={%s}" % 
+                (utils.escape(mem), utils.escape(actup[2]), actup[3], actup[4], actup[5], actup[6]))
 
     return data
 
@@ -476,6 +487,7 @@ def action_cmd(ses, args, input):
   """
   trigger = args["trigger"]
   action = args["action"]
+  color = args["color"]
   priority = args["priority"]
   onetime = args["onetime"]
   quiet = args["quiet"]
@@ -497,13 +509,13 @@ def action_cmd(ses, args, input):
     return
 
   try:
-    am.addAction(ses, trigger, action, priority, onetime, tag)
+    am.addAction(ses, trigger, action, color, priority, onetime, tag)
     if not quiet:
-      exported.write_message("action: {%s} {%s} priority={%d} tag={%s} added." % (trigger, action, priority, str(tag)), ses)
+      exported.write_message("action: {%s} {%s} color={%d} priority={%d} tag={%s} added." % (trigger, action, color, priority, str(tag)), ses)
   except:
     exported.write_traceback("action: exception thrown.", ses)
 
-commands_dict["action"] = (action_cmd, "trigger= action= tag= priority:int=5 onetime:boolean=false quiet:boolean=false")
+commands_dict["action"] = (action_cmd, "trigger= action= tag= color:boolean=false priority:int=5 onetime:boolean=false quiet:boolean=false")
 
 def unaction_cmd(ses, args, input):
   """
