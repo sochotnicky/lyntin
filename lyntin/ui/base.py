@@ -4,17 +4,46 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.3 2003/08/01 00:29:41 willhelm Exp $
+# $Id: base.py,v 1.4 2003/08/05 13:19:48 willhelm Exp $
 #######################################################################
 """
-Holds the ui components in lyntin as well as the Message
-class.  The Message class encapsulates a message to be displayed
-to the user through the ui.  Messages have types and the ui
-will display the message differently depending on the type.
+Holds the base ui class for Lyntin as well as the get_ui function
 """
-import string, re, sys
+import string, re, sys, os
 from lyntin import exported, utils
 from lyntin.ui import message
+
+
+def get_ui(uiname):
+  """
+  Attempts to retrieve the ui by that name.
+
+  @param uiname: the name of the ui passed in by the command line
+  @type  uiname: string
+
+  @return: a BaseUI subclass instance corresponding to the name
+      of the ui the user wants to instantiate.  or None if the ui
+      could not be found or instantiated.
+  @rtype: BaseUI subclass
+  """
+  index = __file__.rfind(os.sep)
+  if index == -1:
+    path = "." + os.sep
+  else:
+    path = __file__[:index]
+
+  if uiname + ".py" not in os.listdir(path):
+    print "ui '%s' does not exist." % uiname
+    return None
+
+  try:
+    path = "lyntin.ui." + uiname
+    _module = __import__(path)
+    _module = sys.modules[path]
+    return _module.get_ui_instance()
+
+  except Exception, e:
+    print "get_ui: %s" % e
 
 class BaseUI:
   """

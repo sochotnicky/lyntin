@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.7 2003/08/01 00:44:08 willhelm Exp $
+# $Id: tkui.py,v 1.8 2003/08/05 13:19:48 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -322,7 +322,7 @@ class Tkui(base.BaseUI):
 
   def echo(self, args):
     """ This turns echo on and off on the CommandEntry widget."""
-    yesno = args[0]
+    yesno = args["yesno"]
     if yesno==1:
       # echo on
       self._do_i_echo = 1
