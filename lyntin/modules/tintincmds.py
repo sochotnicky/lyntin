@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.19 2004/04/09 17:59:17 willhelm Exp $
+# $Id: tintincmds.py,v 1.20 2004/04/29 21:38:04 willhelm Exp $
 #######################################################################
 import os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -460,17 +460,15 @@ def session_cmd(ses, args, input):
     return
 
   try:
-    # create a SocketCommunicator
-    sock = net.SocketCommunicator(e)
-
     # create and register a session for this connection....
     if ses == None:
       ses = e.createSession(name)
 
+    sock = net.SocketCommunicator(e, ses, host, port)
     ses.setSocketCommunicator(sock)
+
     ses._host = host
     ses._port = port
-    sock.setSession(ses)
 
     e.changeSession(name)
 
