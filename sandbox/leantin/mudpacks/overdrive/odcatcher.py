@@ -3,6 +3,7 @@ import re
 # our imports
 import libmisc
 from catcher import Catcher
+import catcher
 
 class Skills(Catcher):
   command = 'skills'
@@ -203,3 +204,55 @@ class TooHeavy(Catcher):
 
   def parse(self, lines):
     return
+
+
+class Vitals(Catcher):
+  all_kinds = '(?:(?:SOUL)|(?:END)|(?:ENERGY)|(?:MANA))'
+  start = re.compile('-=>\s+HP:\s+(\d+)/(\d+)\s+%s:\s+(\d+)/(\d+)\s+EXP:\s+(\d+)/(\d+)\s+<=-' % (all_kinds))
+  end = start
+  #manual_vitals = re.compile('HP\s+:\s+(\d+)\s+(\d+)\s+%s\s+:\s+(\d+)\s+(\d+)()()' % (all_kinds))
+  statl = ('hp', 'max_hp', 'mp', 'max_mp', 'exp', 'next_level', 'to_level')
+  def __init__(self, **opts):
+    Catcher.__init__(self, **opts)
+    self.stats = {}
+    self.old = {}
+    self.output = None
+    for (stat) in Vitals.statl:
+      self.stats[stat] = 0
+      self.old[stat] = 0
+
+  def update_stat(self, name, value):
+    self.old[name] = self.stats[name] # push old value
+    self.stats[name] = value
+    self.stats['to_level'] = self.stats['next_level'] - self.stats['exp'] # be lazy, update regardless
+    return
+
+  def change(self, stat):
+    return self.stats[stat] - self.old[stat]
+
+  def bump_changed(self):
+    answer = self.change('mp') or self.change('hp') or self.change('exp')
+    return answer
+  
+  def __str__(self):
+    new_line = 'HP: %s/%d (%s) SOUL: %s/%3d (%s) EXP: (%s)\n' % (
+      libmisc.color_bold(self.stats['hp']), self.stats['max_hp'], libmisc.color_delta(self.change('hp')),
+      libmisc.color_bold(self.stats['mp']), self.stats['max_mp'], libmisc.color_delta(self.change('mp')),
+      libmisc.color_delta(self.change('exp')),
+    )
+    return new_line
+
+  def parse(self, lines):
+    txt = lines[0]
+    m = self.start.search(txt)
+    for (stat_name, value) in zip(Vitals.statl, map(int, m.groups())):
+      self.update_stat(stat_name, value)
+    # set our output that will be used in filter
+    self.output = str(self)
+    # if we haven't changed, change ourselves to MUFFLE, else FILTER
+    if (not self.bump_changed()):
+      self.action = catcher.MUFFLE
+    else:
+      self.action = catcher.FILTER
+
+  def done(self): pass
