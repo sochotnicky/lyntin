@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: variable.py,v 1.3 2003/06/08 16:14:30 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -20,6 +20,14 @@ class TimeStampBuiltin:
   """
   def __init__(self): pass
   def __str__(self): return time.asctime()
+
+class LogTimeStampBuiltin:
+  """
+  Allows us to do dynamic TIMESTAMPs as a global variable in the
+  form yyyymmddhhmmss.  Good for logfiles.
+  """
+  def __init__(self): pass
+  def __str__(self): return time.strftime('%Y%m%d%H%M%S')
 
 class VariableData:
   def __init__(self):
@@ -200,6 +208,7 @@ class VariableManager(manager.Manager):
 
     # add built-in variables
     self._global.addVariable("TIMESTAMP", TimeStampBuiltin())
+    self._global.addVariable("LOGTIMESTAMP", LogTimeStampBuiltin())
     self._global.addVariable("DATADIR", __init__.options["datadir"])
 
     import os

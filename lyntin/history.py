@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: history.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: history.py,v 1.2 2003/06/08 16:14:29 willhelm Exp $
 #######################################################################
 """
 The HistoryManager keeps track of the last 1000 lines of user input 
@@ -51,6 +51,9 @@ class HistoryManager(manager.Manager):
       try:
         returninput = self._history[int(index)]
       except:
+        for h in self._history:
+          if h[0:len(index)] == index:
+            return h
         return None
 
     # check to see if they want to do a substitution
