@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.16 2003/09/25 15:43:49 willhelm Exp $
+# $Id: engine.py,v 1.17 2003/09/28 21:00:59 glasssnake Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -215,6 +215,10 @@ class Engine:
 
     c.add("mudecho", config.BoolConfig("mudecho", 1, 0,
         "Whether (1) or not (0) we're echoing user input to the ui."))
+
+    c.add("datadir", config.StringConfig("datadir",
+                     config.options["datadir"], 0,
+          "Default directory to find config files etc."))           
 
     self._sessions["common"].setupCommonSession()
 
