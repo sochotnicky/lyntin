@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.16 2003/10/19 23:11:51 willhelm Exp $
+# $Id: action.py,v 1.17 2003/10/21 03:31:31 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -321,9 +321,8 @@ class ActionData:
     for action in self._actions.values():
       tags[action[6]] = 0
     tags.update(self._disabled)  
-    list = [ "%s tag={%s}" % ((" enabled", "disabled")[disabled], mem)
+    return [ "%s tag={%s}" % ((" enabled", "disabled")[disabled], mem)
              for (mem, disabled) in tags.items() ]
-    exported.write_message("\n".join(list))
 
 
 class ActionManager(manager.Manager):
@@ -389,7 +388,8 @@ class ActionManager(manager.Manager):
   def listTags(self, ses):
     actions = self._actions.get(ses)
     if actions:
-      actions.listTags()
+      return actions.listTags()
+    return []  
 
   def enable(self, ses, tag):
     actiondata = self._actions.get(ses)
@@ -613,7 +613,11 @@ def action_tags_cmd(ses, args, input):
   
   category: commands
   """
-  exported.get_manager("action").listTags(ses)
+  list = exported.get_manager("action").listTags(ses)
+  if list:
+    exported.lyntin_message("\n".join(list))
+  else:
+    exported.lyntin_message("No tags defined.")
 
 commands_dict["atags"] = (action_tags_cmd, "")  
 
