@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
+# $Id: helpmanager.py,v 1.5 2004/01/27 16:33:19 willhelm Exp $
 #######################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
@@ -52,8 +52,6 @@ class HelpManager(manager.Manager):
   the only option we support is "category".  This will be used if
   the fqn you supply to the addHelp call is lacking a category--for
   example 'alias'.
-
-  FIXME - needs more info here
   """
   def __init__(self, e):
     self._help_tree = {}
