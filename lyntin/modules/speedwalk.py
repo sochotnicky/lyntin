@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: speedwalk.py,v 1.3 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -34,7 +34,7 @@ really don't want them to be, we use #swexclude::
 # Originally written 2002 by Sebastian John
 
 import re, string
-from lyntin import manager, utils, __init__, exported
+from lyntin import manager, utils, config, exported
 from lyntin.modules import modutils
 
 class SpeedwalkHash:
@@ -133,7 +133,7 @@ class SpeedwalkHash:
     else:
       listing = utils.expand_text(text, self._dirs.keys())
     
-    cmdchar = __init__.commandchar
+    cmdchar = config.commandchar
     
     listing = ["%sswdir {%s} {%s}" % (cmdchar, mem, self._dirs[mem]) for mem in listing]
     
@@ -231,7 +231,7 @@ class SpeedwalkHash:
     else:
       listing = utils.expand_text(text, self._excludes)
     
-    cmdchar = __init__.commandchar
+    cmdchar = config.commandchar
     
     listing = ["%sswexclude {%s}" % (cmdchar, mem) for mem in listing]
     
@@ -353,7 +353,7 @@ class SpeedwalkManager(manager.Manager):
     verbatim = args["verbatim"]
     text = args["dataadj"]
     
-    if not self._hashes.has_key(ses) or __init__.speedwalk == 0 or verbatim == 1:
+    if not self._hashes.has_key(ses) or config.speedwalk == 0 or verbatim == 1:
       return text
 
     sdata = self._hashes[ses]

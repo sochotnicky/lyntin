@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.3 2003/06/26 23:27:18 willhelm Exp $
+# $Id: substitute.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This module defines the SubstituteManager which handles substitutes.
 """
 import string
-from lyntin import ansi, manager, utils, __init__, exported
+from lyntin import ansi, manager, utils, config, exported
 from lyntin.modules import modutils
 
 class SubstituteData:
@@ -147,7 +147,7 @@ class SubstituteData:
     else:
       listing = utils.expand_text(text, self._substitutes.keys())
 
-    listing = ["%ssubstitute {%s} {%s}" % (__init__.commandchar, mem, utils.escape(self._substitutes[mem])) for mem in listing]
+    listing = ["%ssubstitute {%s} {%s}" % (config.commandchar, mem, utils.escape(self._substitutes[mem])) for mem in listing]
 
     return string.join(listing, "\n")
 
@@ -173,7 +173,7 @@ class SubstituteData:
     else:
       listing = utils.expand_text(text, self._antisubs)
 
-    listing = ["%santisubstitute {%s}" % (__init__.commandchar, mem) for mem in listing]
+    listing = ["%santisubstitute {%s}" % (config.commandchar, mem) for mem in listing]
 
     return string.join(listing, "\n")
 

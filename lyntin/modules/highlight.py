@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: highlight.py,v 1.3 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -17,7 +17,7 @@ We might at some point want to highlight things with [[ ... ]] or
 something like that when ansi is off.
 """
 import string
-from lyntin import ansi, manager, utils, __init__, exported
+from lyntin import ansi, manager, utils, config, exported
 from lyntin.modules import modutils
 
 
@@ -227,14 +227,14 @@ class HighlightData:
     for mem in listing:
       if colorize == 1:
         data.append("%shighlight {%s%s%s} {%s}" % 
-                    (__init__.commandchar, 
+                    (config.commandchar, 
                      ansi.get_color(self._highlights[mem][0]),
                      self._highlights[mem][0], 
                      ansi.get_color("default"),
                      utils.escape(mem)))
       else:
         data.append("%shighlight {%s} {%s}" % 
-                    (__init__.commandchar, self._highlights[mem][0], 
+                    (config.commandchar, self._highlights[mem][0], 
                      utils.escape(mem)))
 
     return string.join(data, "\n")
@@ -317,7 +317,7 @@ class HighlightManager(manager.Manager):
     ses = args["session"]
     text = args["dataadj"]
 
-    if __init__.ansicolor == 0:
+    if config.ansicolor == 0:
       return ansi.filter_ansi(text)
     else:
       if self._highlights.has_key(ses):
@@ -388,7 +388,7 @@ def highlight_cmd(ses, args, input):
   stylelist = style.split(",")
   for mem in stylelist:
     if mem not in ansi.STYLEMAP:
-      exported.write_error("highlight: '%s' not a valid style.\n%shelp highlight for more information." % (mem, __init__.commandchar))
+      exported.write_error("highlight: '%s' not a valid style.\n%shelp highlight for more information." % (mem, config.commandchar))
       return
     
   exported.get_manager("highlight").addHighlight(ses, style, text)

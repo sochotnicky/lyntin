@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: __init__.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: __init__.py,v 1.2 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 The modules package holds all of the dynamically loaded Lyntin modules.
@@ -20,8 +20,7 @@ their moduledir and specify the moduledir at the command line using the
 """
 
 import glob, os, sys
-from lyntin import exported
-import lyntin.__init__
+from lyntin import exported, config
 
 
 def test_for_conflicts(name, module):
@@ -94,12 +93,12 @@ def load_modules():
         _module.load()
 
       _module.__dict__["lyntin_import"] = 1
-      lyntin.__init__.lyntinmodules.append(name)
+      config.lyntinmodules.append(name)
     except:
       exported.write_traceback("Module '%s' refuses to load." % name)
 
   # handle modules found in the moduledir
-  moduledirlist = lyntin.__init__.options["moduledir"]
+  moduledirlist = config.options["moduledir"]
   if moduledirlist:
     for moduledir in moduledirlist:
       # grab the contents of the moduledir directory
@@ -122,7 +121,7 @@ def load_modules():
           test_for_conflicts(mem, _module)
 
           _module.__dict__["lyntin_import"] = 1
-          lyntin.__init__.lyntinmodules.append(mem2)
+          config.lyntinmodules.append(mem2)
         except:
           exported.write_traceback("Module '%s' refuses to load." % mem)
 

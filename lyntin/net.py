@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.6 2003/08/01 00:14:52 willhelm Exp $
+# $Id: net.py,v 1.7 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
 connections with a mud and polling the connection for data.
 """
 import socket, select, re, os
-from lyntin import event, __init__, exported
+from lyntin import event, config, exported
 from lyntin.ui import message
 
 ### --------------------------------------------
@@ -103,8 +103,8 @@ class SocketCommunicator:
     self._good_prompts = 0
 
     # handle termtype issues
-    if __init__.options.has_key("term"):
-      self._termtype = __init__.options["term"][0]
+    if config.options.has_key("term"):
+      self._termtype = config.options["term"][0]
     elif os.environ.has_key("TERM"):
       self._termtype = os.environ["TERM"]
     else:
@@ -314,7 +314,7 @@ class SocketCommunicator:
     if IAC in data:
       data = self.handleNego(data)
 
-    if not __init__.promptdetection or data.endswith("\n"):
+    if not config.promptdetection or data.endswith("\n"):
       event.MudEvent(self._session, data).enqueue() 
     else:
       event.SpamEvent(exported.get_hook("prompt_hook"), (self._session, data)).enqueue()

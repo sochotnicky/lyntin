@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
+# $Id: session.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -13,7 +13,7 @@ to a mud--though it should be noted that sessions could also connect
 to any other TCP/IP service.
 """
 import re, copy, string, os
-from lyntin import exported, utils, ansi, __init__, event
+from lyntin import exported, utils, ansi, config, event
 
 ESC = chr(27)
 
@@ -25,10 +25,11 @@ class Session:
   All input and output goes through the Session object.
   Almost everything happens through the Session.
   """
-  def __init__(self):
+  def __init__(self, engine_instance):
     """
     Initialize.
     """
+    self._engine = engine_instance
     self._socket = None
     self._name = ""
     self._host = "none"
@@ -55,11 +56,11 @@ class Session:
     # current session.  it's command-line configurable what
     # the default is.
     # 0 if we don't show text, 1 if we do
-    self._snoop = __init__.options['snoopdefault']
+    self._snoop = config.options['snoopdefault']
 
     # register with the shutdown hook 
-    exported.hook_register("shutdown_hook", self.shutdown)
-    exported.hook_register("write_hook", self.getWriteFileInfo)
+    self._engine.hookRegister("shutdown_hook", self.shutdown)
+    self._engine.hookRegister("write_hook", self.getWriteFileInfo)
 
   def __repr__(self):
     return "session.Session %s" % self._name
@@ -172,16 +173,16 @@ class Session:
     data = []
 
     # saves speedwalking state
-    if __init__.speedwalk == 1:
-      data.append(__init__.commandchar + "config speedwalk on" + quiet)
+    if config.speedwalk == 1:
+      data.append(config.commandchar + "config speedwalk on" + quiet)
     else: 
-      data.append(__init__.commandchar + "config speedwalk off" + quiet)
+      data.append(config.commandchar + "config speedwalk off" + quiet)
 
     # saves ansi state
-    if __init__.ansicolor == 1:
-      data.append(__init__.commandchar + "config ansicolor on" + quiet)
+    if config.ansicolor == 1:
+      data.append(config.commandchar + "config ansicolor on" + quiet)
     else: 
-      data.append(__init__.commandchar + "config ansicolor off" + quiet)
+      data.append(config.commandchar + "config ansicolor off" + quiet)
 
     file.write(string.join(data, "\n") + "\n")
 
@@ -191,8 +192,7 @@ class Session:
     the list of managers registered with the engine and calls
     the clear method with itself.
     """
-    engine = exported.get_engine()
-    for mem in engine._managers.values():
+    for mem in self._engine_instance._managers.values():
       mem.clear(self)
 
     self._databuffer = []
@@ -313,7 +313,7 @@ class Session:
     Deals with printing a prompt if this is the common session.
     """
     if self.getName() == "common":
-      exported.get_engine().writePrompt()
+      self._engine.writePrompt()
 
   def handleUserData(self, input, internal=0 ):
     """

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.8 2003/08/05 13:19:48 willhelm Exp $
+# $Id: tkui.py,v 1.9 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -14,9 +14,8 @@ Lyntin, but largely re-coded in various areas.
 from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
-from lyntin import ansi, event, engine, exported, utils, constants
+from lyntin import ansi, event, engine, exported, utils, constants, config
 from lyntin.ui import base, message
-import lyntin.__init__
 
 UNICODE_ENCODING = "latin-1"
 
@@ -186,16 +185,16 @@ class Tkui(base.BaseUI):
     self.dequeue()
 
     exported.hook_register("mudecho_hook", self.echo)
-    exported.hook_register("startup_hook", self.startui)
     exported.hook_register("to_user_hook", self.write)
 
-  def startui(self, args):
-    """ Starts up the main thread."""
+  def runui(self):
     global HELP_TEXT
     exported.add_help("tkui", HELP_TEXT)
-    engine.myengine.startthread("ui", self._tk.mainloop)
     exported.write_message("For tk help type \"#help tkui\".")
     exported.add_command("colorcheck", colorcheck_cmd)
+
+    # run the tk mainloop here
+    self._tk.mainloop()
 
   def dequeue(self):
     qsize = self._event_queue.qsize()
@@ -531,7 +530,7 @@ class CommandEntry(Entry):
     This catches the event where the window is being closed.
     We can't stop it from closing, but we can try to shut down the app.
     """
-    self._partk.handleinput(lyntin.commandchar + "end")
+    self._partk.handleinput(config.commandchar + "end")
 
   def _executeBinding(self, binding):
     """ Returns the alias for this keybinding."""
@@ -552,7 +551,7 @@ class CommandEntry(Entry):
 
     # handle all the function keys except F1
     if tkevent.keysym == "F1":
-      self._partk.handleinput(lyntin.__init__.commandchar + "help")
+      self._partk.handleinput(config.commandchar + "help")
       return "break"
       
     if self._executeBinding("VK_%s" % tkevent.keysym) == 1:
@@ -945,7 +944,7 @@ def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
                         ansi.get_color("default"))
 
   elif msg.type == message.USERDATA:
-    if lyntin.__init__.mudecho == 1:
+    if config.mudecho == 1:
       if line.endswith("\n"):
         line = "%s%s%s\n" % (ansi.get_color("b blue"), 
                             line[:-1], 

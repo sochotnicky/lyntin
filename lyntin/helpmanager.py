@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: helpmanager.py,v 1.2 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
@@ -33,7 +33,7 @@ which then can be converted to a variety of other formats: HTML,
 XML, JoesMagicTextMarkup, ...
 """
 import types
-import utils, __init__, manager
+from lyntin import utils, config, manager
 
 class HelpManager(manager.Manager):
   """
@@ -357,7 +357,7 @@ def _split_name(fqn):
   if len(keys) > 0:
     categories = keys[:-1]
     name = keys[-1]
-    if len(name) > 0 and name[0] == __init__.commandchar:
+    if len(name) > 0 and name[0] == config.commandchar:
       name = name[1:]
     return (categories, name)
   else:

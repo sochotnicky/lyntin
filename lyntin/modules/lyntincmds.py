@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.3 2003/06/07 03:58:11 willhelm Exp $
+# $Id: lyntincmds.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This module holds commands that are new and unique to Lyntin.
 """
 import types, re
-from lyntin import net, utils, engine, constants, exported, __init__
+from lyntin import net, utils, engine, constants, exported, config
 from lyntin.modules import modutils
 
 commands_dict = {}
@@ -51,19 +51,19 @@ def config_cmd(ses, args, input):
 
   if not name:
 
-    globmap = {"ansicolor": bv(__init__.ansicolor) + " (boolean)",
-               "commandchar": __init__.commandchar + " (char)",
-               "mudecho": bv(__init__.mudecho) + " (boolean)",
-               "speedwalk": bv(__init__.speedwalk) + " (boolean)",
-               "debugmode": bv(__init__.debugmode) + " (boolean)",
-               "promptdetection": bv(__init__.promptdetection) + " (boolean)"}
+    globmap = {"ansicolor": bv(config.ansicolor) + " (boolean)",
+               "commandchar": config.commandchar + " (char)",
+               "mudecho": bv(config.mudecho) + " (boolean)",
+               "speedwalk": bv(config.speedwalk) + " (boolean)",
+               "debugmode": bv(config.debugmode) + " (boolean)",
+               "promptdetection": bv(config.promptdetection) + " (boolean)"}
 
     sesmap = {"ignoreactions": bv(ses._ignoreactions) + " (boolean)",
               "ignoresubs": bv(ses._ignoresubs) + " (boolean)",
               "verbatim": bv(ses._verbatim) + " (boolean)"}
 
     output = "Commandline:\n"
-    output += _fixmap(16, __init__.options) + "\n"
+    output += _fixmap(16, config.options) + "\n"
 
     output += "Global:\n"
     output += _fixmap(16, globmap) + "\n"
@@ -91,11 +91,11 @@ def config_cmd(ses, args, input):
 
   if name in ["variablechar", "commandchar"]:
     if not value:
-      value = getattr(__init__, name)
+      value = getattr(config, name)
       exported.write_message("config: %s set to '%s'." % (name, value), ses)
     else:
       if len(value) == 1:
-        setattr(__init__, name, value)
+        setattr(config, name, value)
         if not quiet:
           exported.write_message("config: %s set to '%s'." % (name, value), ses)
       else:
@@ -104,12 +104,12 @@ def config_cmd(ses, args, input):
 
   if name in ["ansicolor", "speedwalk", "debugmode", "promptdetection"]:
     if not value:
-      value = getattr(__init__, name)
+      value = getattr(config, name)
       exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
     else:
       value = utils.convert_boolean(value)
       if value == 1 or value == 0:
-        setattr(__init__, name, value)
+        setattr(config, name, value)
         if not quiet:
           exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
       else:
@@ -118,12 +118,12 @@ def config_cmd(ses, args, input):
 
   if name == "mudecho":
     if not value:
-      value = __init__.mudecho
+      value = config.mudecho
       exported.write_message("config: %s set to %s." % (name, bv(value)))
       return
 
     import event
-    old = __init__.mudecho
+    old = config.mudecho
     value = utils.convert_boolean(value)
 
     if value == 1:
@@ -246,8 +246,8 @@ def diagnostics_cmd(ses, args, input):
   message.append("   lyntin: %s" % (constants.VERSION[:constants.VERSION.find("\n")]))
 
   message.append("Lyntin Options:")
-  for mem in __init__.options.keys():
-    message.append("   %s: %s" % (mem, repr(__init__.options[mem])))
+  for mem in config.options.keys():
+    message.append("   %s: %s" % (mem, repr(config.options[mem])))
 
   exported.write_message("\n".join(message))
   exported.write_message("This information can be dumped to a "

@@ -4,14 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.5 2003/08/01 00:29:41 willhelm Exp $
+# $Id: textui.py,v 1.6 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
 """
 import re, sys, os, select, types
-import lyntin.__init__
-from lyntin import ansi, engine, event, utils, exported
+from lyntin import ansi, engine, event, utils, exported, config
 from lyntin.ui import base, message
 
 
@@ -62,7 +61,6 @@ class Textui(base.BaseUI):
     """ Initialize the textui."""
     base.BaseUI.__init__(self)
     self._do_i_echo = 1
-    exported.hook_register("startup_hook", self.startui)
     exported.hook_register("shutdown_hook", self.shutdown)
     exported.hook_register("to_user_hook", self.write)
     exported.hook_register("mudecho_hook", self.echo)
@@ -73,11 +71,9 @@ class Textui(base.BaseUI):
     self._tio = 0
     self._rline = 0
 
-  def startui(self, args):
-    """ Sets up the UI."""
+  def runui(self):
     global HELP_TEXT
     exported.add_help("textui", HELP_TEXT)
-    engine.myengine.startthread("ui", self.run)
     exported.write_message("For textui help, type \"#help textui\".")
 
     # termios is the module that allows us to change echo for a terminal
@@ -93,7 +89,7 @@ class Textui(base.BaseUI):
       self._onecho_attr = echonew[3]
       self._offecho_attr = echonew[3] & ~termios.ECHO
 
-    if lyntin.__init__.options.has_key("readline"):
+    if config.options.has_key("readline"):
       try:
         import readline
       except ImportError:
@@ -105,8 +101,8 @@ class Textui(base.BaseUI):
         # we do some stuff to grab the readlinerc file if they have one
         # so the user can set some readline oriented things which makes 
         # things a little nicer for the user.
-        if lyntin.__init__.options.has_key("datadir"):
-          d = lyntin.__init__.options["datadir"]
+        if config.options.has_key("datadir"):
+          d = config.options["datadir"]
         else:
           d = "." + os.sep
 
@@ -120,6 +116,9 @@ class Textui(base.BaseUI):
     if self._tio == 0 or self._rline == 1:
       exported.write_error("Warming: echo off is unavailable.  " +
                            "Your password will be visible.")
+
+    # go into the main loop
+    self.run()
       
   def shutdown(self, args):
     """ Shuts down the textui and makes sure that we're echoing!"""
@@ -264,7 +263,7 @@ class Textui(base.BaseUI):
         pretext = "lyntin: " + pretext
 
       line = pretext + utils.chomp(line).replace("\n", "\n" + pretext)
-      if lyntin.__init__.ansicolor == 1:
+      if config.ansicolor == 1:
         line = DEFAULT_ANSI + line
       sys.stdout.write(line + "\n")
       return
@@ -273,7 +272,7 @@ class Textui(base.BaseUI):
       # we don't print user data in the textui
       return
 
-    if lyntin.__init__.ansicolor == 0:
+    if config.ansicolor == 0:
       if pretext:
         if line.endswith("\n"):
           line = (pretext + line[:-1].replace("\n", "\n" + pretext) + "\n")

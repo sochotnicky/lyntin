@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: commandmanager.py,v 1.3 2003/08/01 00:14:52 willhelm Exp $
+# $Id: commandmanager.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Lyntin comes with a series of X{command}s for manipulating aliases, 
@@ -31,7 +31,7 @@ command examples.  Additionally, check out the Lyntin module repository
 on http://lyntin.sourceforge.net/ for more examples.
 """
 import inspect, re
-from lyntin import manager, __init__, exported, argparser, utils
+from lyntin import manager, config, exported, argparser, utils
 
 class _CommandData:
   """
@@ -140,7 +140,7 @@ class CommandManager(manager.Manager):
 
     if syntaxline:
       helptext = ("syntax: %s%s %s\n" % 
-             (__init__.commandchar, cd.getNameAdjusted(), syntaxline) + helptext)
+             (config.commandchar, cd.getNameAdjusted(), syntaxline) + helptext)
 
     fqn = exported.add_help(cd.getNameAdjusted(), helptext)
     cd.setFQN(fqn)
@@ -222,7 +222,7 @@ class CommandManager(manager.Manager):
     internal = args["internal"]
     input = args["dataadj"]
 
-    if len(input) > 1 and input.startswith(__init__.commandchar):
+    if len(input) > 1 and input.startswith(config.commandchar):
       input = input[1:]
 
       # splits out the command name from the rest of the command line
@@ -272,11 +272,11 @@ class CommandManager(manager.Manager):
               command(ses, dict, input)
             except ValueError, e:
               exported.write_error("%s: %s\nsyntax: %s%s %s" % 
-                                   (fixedmem, e, __init__.commandchar, fixedmem,
+                                   (fixedmem, e, config.commandchar, fixedmem,
                                     argumentparser.syntaxline))
             except argparser.ParserException, e:
               exported.write_error("%s: %s\nsyntax: %s%s %s" % 
-                                   (fixedmem, e, __init__.commandchar, fixedmem,
+                                   (fixedmem, e, config.commandchar, fixedmem,
                                     argumentparser.syntaxline))
           if internal == 0:
             ses.prompt()

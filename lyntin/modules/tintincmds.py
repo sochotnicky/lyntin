@@ -4,10 +4,10 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.6 2003/08/01 00:14:52 willhelm Exp $
+# $Id: tintincmds.py,v 1.7 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 import string, os
-from lyntin import net, utils, engine, constants, __init__, exported, event
+from lyntin import net, utils, engine, constants, config, exported, event
 from lyntin.modules import modutils
 
 """
@@ -344,7 +344,7 @@ def read_cmd(ses, args, input):
   filename = args["filename"]
 
   if os.sep not in filename and not filename.startswith("http://"):
-    filename = __init__.options['datadir'] + filename
+    filename = config.options['datadir'] + filename
 
   try:
     # http reading contributed by Sebastian John
@@ -367,8 +367,8 @@ def read_cmd(ses, args, input):
     exported.write_message("read: %s had no data." % filename, ses)
     return
 
-  if not contents[0].startswith(__init__.commandchar):
-    exported.lyntin_command("%sconfig commandchar %s" % (__init__.commandchar, contents[0][0]), internal=1, session=ses)
+  if not contents[0].startswith(config.commandchar):
+    exported.lyntin_command("%sconfig commandchar %s" % (config.commandchar, contents[0][0]), internal=1, session=ses)
 
   for mem in contents:
     mem = mem.strip()
@@ -545,7 +545,7 @@ def textin_cmd(ses, args, input):
   filename = args["file"]
 
   if os.sep not in filename:
-    filename = __init__.options['datadir'] + filename
+    filename = config.options['datadir'] + filename
    
   try:
     f = open(filename, "r")
@@ -599,7 +599,7 @@ def write_cmd(ses, args, input):
   f = None
 
   if os.sep not in filename:
-    filename = __init__.options['datadir'] + filename
+    filename = config.options['datadir'] + filename
 
   try:
     f = open(filename, "w")

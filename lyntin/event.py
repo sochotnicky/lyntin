@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.4 2003/08/05 13:17:08 willhelm Exp $
+# $Id: event.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -14,8 +14,8 @@ by the event handler thread when it pulls the event object off the
 event queue.  You can use the __init__ function to initialize
 your event as it is not used in the base Event class.
 """
-import string, os, sys, traceback
-from lyntin import __init__, exported, constants
+import sys
+from lyntin import config, exported, constants
 
 class Event:
   """
@@ -54,119 +54,6 @@ class Event:
     pass
 
 
-class StartupEvent(Event):
-  """
-  Starts up and initializes Lyntin.
-
-  When Lyntin is started, we try to do as much as we can
-  inside of the SstartupEvent and through the startup hook.
-  """
-  def __init__(self):
-    """
-    Initialize.  (does nothing)
-    """
-    pass
-
-  def execute(self):
-    """
-    This does the following Lyntin startup things:
-
-      1. instantiates and binds the ui.
-      2. if there's a .lyntinrc adds that to the readfile list.
-      3. loads the dynamically loading Lyntin modules.
-      4. reads in all the files in the readfile list.
-      5. starts the timer thread.
-      6. writes the startup message to the ui and the prompt.
-    """
-    import utils
-
-    uiinstance = None
-    try:
-      # instantiate a ui
-      uiname = __init__.options['ui']
-      modulename = uiname + "ui"
-
-      import ui.base
-
-      uiinstance = ui.base.get_ui(modulename)
-      if not uiinstance:
-        raise ValueError, "No ui instance."
-      exported.get_engine().setUI(uiinstance)
-      exported.write_message("UI started.")
-    except Exception, e:
-      print "Cannot start '%s': %s" % (uiname, e)
-      traceback.print_exc()
-      if not uiinstance:
-        try:
-          # if we had problems, we try to instantiate the textui
-          uiinstance = ui.base.get_ui("textui")
-          if not uiinstance:
-            raise ValueError, "No ui instance."
-          exported.get_engine().setUI(uiinstance)
-          exported.write_message("UI started.")
-        except Exception, e2:
-          print "Cannot start textui either: %s" % e2
-          traceback.print_exc()
-          sys.exit(0)
-      else:
-        sys.exit(0)
-
-
-    # tests to see if dirs provided exist
-    if __init__.options['datadir']:
-      if utils.exists_dir(__init__.options['datadir']) == 0:
-        exported.write_error("datadir '%s' does not exist." % __init__.options['datadir'])
-        __init__.options['datadir'] == ''
-
-    if __init__.options['moduledir']:
-      modlist = __init__.options['moduledir']
-      for mem in modlist:
-        if utils.exists_dir(mem) == 0:
-          exported.write_error("moduledir '%s' does not exist." % mem)
-          __init__.options['moduledir'].remove(mem)
-
-
-    # adds the .lyntinrc file to the readfile list if it exists.
-    if __init__.options['datadir']:
-      lyntinrcfile = __init__.options['datadir'] + ".lyntinrc"
-      try:
-        test = os.stat(lyntinrcfile)
-        # we want the .lyntinrc file read in first, so then other
-        # files can overwrite the contents therein
-        __init__.options['readfile'].insert(0, lyntinrcfile)
-      except OSError, e:
-        pass
-
-
-    # import modules listed in modulesinit
-    exported.write_message("Loading Lyntin modules.")
-
-    try:
-      import modules.__init__
-      modules.__init__.load_modules()
-    except:
-      exported.write_traceback("Modules did not load correctly.")
-      ShutdownEvent().enqueue()
-
-    # spam the startup hook 
-    exported.hook_spam("startup_hook", {})
-
-    # handle command files
-    for mem in __init__.options['readfile']:
-      exported.write_message("Reading in file " + mem)
-      # we have to escape windows os separators because \ has a specific
-      # meaning in the argparser
-      mem = mem.replace("\\", "\\\\")
-      exported.lyntin_command("%sread %s" % (__init__.commandchar, mem), internal=1)
-
-    # start the timer thread
-    exported.get_engine().startthread("timer", exported.get_engine().runtimer)
-
-    # we're done initialization!
-    exported.write_message(constants.STARTUPTEXT)
-    exported.get_engine().writePrompt()
-
-
 class ShutdownEvent(Event):
   """
   This calls sys.exit(0) which will trigger the Python atexit stuff.
@@ -197,7 +84,7 @@ class EchoEvent(Event):
   def execute(self):
     """ Runs the echo event through anything listening."""
     exported.hook_spam("mudecho_hook", {"yesno": self._state})
-    __init__.mudecho = self._state
+    config.mudecho = self._state
 
 
 class MudEvent(Event):
@@ -249,7 +136,7 @@ class InputEvent(Event):
     self._ses = ses
 
     if not self._input:
-      self._input = __init__.commandchar + "cr"
+      self._input = config.commandchar + "cr"
 
   def execute(self):
     """ Execute."""

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.4 2003/08/05 13:19:48 willhelm Exp $
+# $Id: base.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 Holds the base ui class for Lyntin as well as the get_ui function
@@ -65,11 +65,12 @@ class BaseUI:
     import lyntin.exported
     lyntin.exported.hook_register("shutdown_hook", self.shutdown)
 
-  def startui(self, args):
+  def runui(self):
     """
-    Initializes your user interface.  It's best to do all your 
-    initialization logic in startui including the call to start w
-    hatever thread will handle polling for user input.
+    The engine executes this expecting your mainloop to start and
+    you to take control of the main thread of execution.  Put
+    whatever other initialization you need to do here and then 
+    go into your main loop.
     """
     pass
 
@@ -93,16 +94,6 @@ class BaseUI:
     Prints a prompt to the user.  This is mostly for niceties so the 
     user knows that Lyntin is awaiting input.  It should just print
     a prompt.  Prompts only get printed by the common session.
-    """
-    pass
-
-  def run(self):
-    """
-    The ui's typically have their own thread to poll for user input.
-    If so, then you'll implement this method and toss it in a thread.
-    Then launch the thread in the startui method.  DON'T do it in 
-    __init__ because Lyntin won't have been bootstrapped enough at 
-    that point.
     """
     pass
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.5 2003/08/01 00:29:41 willhelm Exp $
+# $Id: exported.py,v 1.6 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -12,7 +12,7 @@ very rarely even though we might change Lyntin's internals.  If
 it does change it'll be between major Lyntin versions.
 """
 import sys, traceback
-from lyntin import __init__, utils
+from lyntin import config, utils, constants
 from lyntin.ui import message
 
 LAST = 99
@@ -236,7 +236,7 @@ def get_num_errors():
   @return: the number of unhandled errors Lyntin has encountered so far
   @rtype: int
   """
-  return __init__.errorcount
+  return config.errorcount
  
 def set_num_errors(num):
   """
@@ -246,7 +246,7 @@ def set_num_errors(num):
   @param num: the number of errors to set
   @type  num: int
   """
-  __init__.errorcount = num
+  config.errorcount = num
 
 def write_ui(text):
   """
@@ -396,12 +396,9 @@ def get_hook(hookname):
   @rtype: Hook
   """
   engine = get_engine()
-  if not engine._hooks.has_key(hookname):
-    engine._hooks[hookname] = utils.PriorityQueue()
+  return engine.getHook(hookname)
 
-  return engine._hooks[hookname]
-
-def hook_register(hookname, func, place=None):
+def hook_register(hookname, func, place=constants.LAST):
   """
   Registers a function with a hook.
 
@@ -413,15 +410,11 @@ def hook_register(hookname, func, place=None):
 
   @param place: the function will get this place in the call
       order.  functions with the same place specified will get
-      arbitrary ordering.  defaults to hooks.LAST.
+      arbitrary ordering.  defaults to constants.LAST.
   @type  place: int
   """
-  hook = get_hook(hookname)
-
-  if place == None:
-    hook.add(func)
-  else:
-    hook.add(func, place)
+  engine = get_engine()
+  engine.hookRegister(hookname, func, place)
 
 def hook_unregister(hookname, func):
   """

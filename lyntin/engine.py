@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
+# $Id: engine.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -28,10 +28,10 @@ to access the engine using the "get_engine()" function.
     better to go through the exported module.
 @type myengine: Engine
 """
-import Queue, thread, sys
+import Queue, thread, sys, traceback, os.path
 from threading import Thread
 
-from lyntin import __init__, session, utils, event, exported, helpmanager, history, commandmanager
+from lyntin import config, session, utils, event, exported, helpmanager, history, commandmanager, constants
 
 # this is the singleton reference to the Engine instance.
 myengine = None
@@ -95,27 +95,67 @@ class Engine:
     self._hooks = {}
 
     # we register ourselves with the shutdown hook
-    self._hooks["shutdown_hook"] = utils.PriorityQueue()
-    self._hooks["shutdown_hook"].add(self.shutdown)
+    self.hookRegister("shutdown_hook", self.shutdown)
 
-
-  def initialize(self):
-    """ Handles initialization that requires an engine object."""
-    commonsession = session.Session()
+    commonsession = session.Session(self)
     commonsession.setName("common")
 
     # this creates a "common" entry in all the managers that manage
     # session scoped data
-    for mem in self._managers.values():
-      mem.addSession(commonsession)
+    # for mem in self._managers.values():
+    #   mem.addSession(commonsession)
 
     self._sessions["common"] = commonsession
     self._current_session = commonsession
 
-    cm = exported.get_manager("command")
-    exported.hook_register("user_filter_hook", cm.filter, 100)
+    self.hookRegister("user_filter_hook", self._managers["command"].filter, 100)
 
 
+  ### ------------------------------------------
+  ### hook stuff
+  ### ------------------------------------------
+  def getHook(self, hookname, newhook=1):
+    """
+    Retrieves the hook in question.  If the hook doesn't 
+    exist and newhook==1, then we'll create a new hook.
+    Otherwise, we'll return None.
+
+    @param hookname: the name of the hook to retrieve
+    @type  hookname: string
+
+    @returns: the hook by name
+    @rtype: utils.PriorityQueue
+    """
+    if self._hooks.has_key(hookname):
+      return self._hooks[hookname]
+
+    if newhook==1:
+      self._hooks[hookname] = utils.PriorityQueue()
+      return self._hooks[hookname]
+
+    return None
+
+  def hookRegister(self, hookname, func, place=constants.LAST):
+    """
+    Registers a function with a hook.
+
+    @param hookname: the name of the hook
+    @type  hookname: string
+
+    @param func: the function to register with the hook
+    @type  func: function
+
+    @param place: the function will get this place in the call
+        order.  functions with the same place specified will get
+        arbitrary ordering.  defaults to constants.LAST.
+    @type  place: int
+    """
+    hook = self.getHook(hookname)
+    if place == None:
+      hook.add(func)
+    else:
+      hook.add(func, place)
+ 
   ### ------------------------------------------
   ### thread stuff
   ### ------------------------------------------
@@ -229,7 +269,7 @@ class Engine:
         exactly what the user typed--this is for the history manager)
     @rtype: string
     """ 
-    if __init__.debugmode == 1:
+    if config.debugmode == 1:
       exported.write_message("evaluating: %s" % input)
 
     inputlist = utils.split_commands(input)
@@ -241,7 +281,7 @@ class Engine:
       mem = mem.strip()
 
       if len(mem) == 0:
-        mem = __init__.commandchar + "cr"
+        mem = config.commandchar + "cr"
 
       # if it's not internal we spam the hook with the raw input
       if internal == 0:
@@ -255,7 +295,7 @@ class Engine:
           continue
 
       # if it starts with a # it's a loop, session or command
-      if len(mem) > 0 and mem.startswith(__init__.commandchar):
+      if len(mem) > 0 and mem.startswith(config.commandchar):
 
         # pull off the first token without the commandchar
         ses = mem.split(" ", 1)[0][1:]
@@ -269,7 +309,7 @@ class Engine:
             if num > 0:
               for i in range(num):
                 loopcommand = self.handleUserData(command, 1, session)
-              historyitems.append(__init__.commandchar + ses + " {" + loopcommand + "}")
+              historyitems.append(config.commandchar + ses + " {" + loopcommand + "}")
           continue
 
         # is it a session?
@@ -289,7 +329,7 @@ class Engine:
           if len(newinput) > 1:
             newinput = newinput[1]
           else:
-            newinput = __init__.commandchar + "cr"
+            newinput = config.commandchar + "cr"
 
           for sessionname in self._sessions.keys():
             if sessionname != "common":
@@ -308,7 +348,7 @@ class Engine:
     # we don't record internal stuff or input that isn't supposed
     # to be echo'd
     executed = ";".join(historyitems)
-    if internal == 0 and __init__.mudecho == 1:
+    if internal == 0 and config.mudecho == 1:
       self.getManager("history").recordHistory(executed)
 
     return executed
@@ -345,7 +385,7 @@ class Engine:
     @return: the new session
     @rtype: session.Session instance
     """
-    ses = session.Session()
+    ses = session.Session(self)
     ses.setName(name)
     self.registerSession(ses, name)
     return ses
@@ -521,16 +561,17 @@ class Engine:
         self.tallyError()
         exported.write_traceback("engine: unhandled error in engine.")
       self._num_events_processed += 1
+    sys.exit(0)
         
   def tallyError(self):
     """
     Adds one to the error count.  If we see more than 20 errors, we shutdown.
     """
-    __init__.errorcount = __init__.errorcount + 1
+    config.errorcount = config.errorcount + 1
     exported.write_error("WARNING: Unhandled error encountered (%d out of %d)." 
-                         % (__init__.errorcount, 20))
-    exported.hook_spam("error_occurred_hook", {"count": __init__.errorcount})
-    if __init__.errorcount > 20:
+                         % (config.errorcount, 20))
+    exported.hook_spam("error_occurred_hook", {"count": config.errorcount})
+    if config.errorcount > 20:
       exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
       sys.exit("Error count exceeded--shutting down.")
@@ -554,10 +595,10 @@ class Engine:
     data.append("   events processed: %d" % self._num_events_processed)
     data.append("   queue size: %d" % self._event_queue.qsize())
     data.append("   ui: %s" % repr(self._ui))
-    data.append("   speedwalking: %d" % __init__.speedwalk)
-    data.append("   ansicolor: %d" % __init__.ansicolor)
+    data.append("   speedwalking: %d" % config.speedwalk)
+    data.append("   ansicolor: %d" % config.ansicolor)
     data.append("   ticks: %d" % self._current_tick)
-    data.append("   errors: %d" % __init__.errorcount)
+    data.append("   errors: %d" % config.errorcount)
 
     # print info from each session
     data.append("Sessions:")
@@ -696,6 +737,185 @@ class Engine:
     # return the list of elements
     return data
 
+
+def shutdown():
+  """
+  This gets called by the Python interpreter atexit.  The reason
+  we do shutdown stuff here is we're more likely to catch things
+  here than we are to let everything cycle through the 
+  ShutdownEvent.  This should probably get fixed up at some point
+  in the future.
+
+  Do not call this elsewhere.
+  """
+  import lyntin.hooks, lyntin.exported
+  try:
+    lyntin.exported.write_message("shutting down...  goodbye.")
+  except:
+    print "shutting down...  goodbye."
+  lyntin.hooks.shutdown_hook.spamhook(())
+
+
+def main(defaultui="text"):
+  """
+  This parses the command line arguments and makes sure they're all valid,
+  instantiates a ui, does some setup, spins off an engine thread, and
+  goes into the ui's mainloop.
+
+  @param defaultui: the default ui to use.  for instance, the default
+      ui for Win32 systems should probably be the tkui.
+  @type  defaultui: string
+  """
+  global myengine
+  startuperrors = []
+
+  try:
+    import sys, os, traceback
+    from lyntin import config, event, utils, exported
+    from lyntin.ui import base
+
+    config.options["ui"] = defaultui
+
+    # read through options and arguments
+    optlist = utils.parse_args(sys.argv[1:])
+    datadir = ""
+
+    for mem in optlist:
+      if mem[0] in ["--ui", "-u"]:
+        config.options['ui'] = mem[1]
+
+      elif mem[0] in ["--readfile", "--read", "-r"]:
+        if os.path.exists(mem[1]):
+          config.options['readfile'].append(mem[1])
+        else:
+          startuperrors.append("Command file '%s' does not exist." % mem[1])
+
+      elif mem[0] in ["--moduledir", "-m"]:
+        d = config.fixdir(mem[1])
+        if d:
+          config.options['moduledir'].append(d)
+        else:
+          startuperrors.append("Module dir '%s' does not exist." % mem[1])
+
+      elif mem[0] in ["--datadir", "-d"]:
+        d = config.fixdir(mem[1])
+        if d:
+          datadir = d
+        else:
+          startuperrors.append("Data dir '%s' does not exist." % mem[1])
+
+      elif mem[0] == '--nosnoop':
+        config.options['snoopdefault'] = 0
+
+      elif mem[0] == '--help':
+        print HELPTEXT
+        sys.exit(0)
+
+      elif mem[0] == '--version':
+        print VERSION
+        sys.exit(0)
+
+      else:
+        opt = mem[0]
+        while len(opt) > 0 and opt[0] == "-":
+          opt = opt[1:]
+
+        if len(opt) > 0:
+          if config.options.has_key(opt):
+            config.options[opt].append(mem[1])
+          else:
+            config.options[opt] = [mem[1]]
+
+    # if they haven't set the datadir via the command line, then
+    # we go see if they have a HOME in their environment variables....
+    if not datadir:
+      if os.environ.has_key("HOME"):
+        datadir = config.fixdir(os.environ["HOME"])
+
+    config.options['datadir'] = datadir
+
+    import atexit
+    atexit.register(shutdown)
+
+    # instantiate the engine
+    myengine = Engine()
+
+    # instantiate the ui
+    uiinstance = None
+    try:
+      uiname = config.options['ui']
+      modulename = uiname + "ui"
+      uiinstance = base.get_ui(modulename)
+      if not uiinstance:
+        raise ValueError, "No ui instance."
+    except Exception, e:
+      print "Cannot start '%s': %s" % (uiname, e)
+      traceback.print_exc()
+      sys.exit(0)
+
+    myengine.setUI(uiinstance)
+    exported.write_message("UI started.")
+
+    for mem in startuperrors:
+      exported.write_error(mem)
+
+    # do some more silly initialization stuff
+    # adds the .lyntinrc file to the readfile list if it exists.
+    if config.options['datadir']:
+      lyntinrcfile = config.options['datadir'] + ".lyntinrc"
+      if os.path.exists(lyntinrcfile):
+        # we want the .lyntinrc file read in first, so then other
+        # files can overwrite the contents therein
+        config.options['readfile'].insert(0, lyntinrcfile)
+  
+    # import modules listed in modulesinit
+    exported.write_message("Loading Lyntin modules.")
+  
+    try:
+      import modules.__init__
+      modules.__init__.load_modules()
+    except:
+      exported.write_traceback("Modules did not load correctly.")
+      sys.exit(1)
+  
+    # spam the startup hook 
+    exported.hook_spam("startup_hook", {})
+  
+    # handle command files
+    for mem in config.options['readfile']:
+      exported.write_message("Reading in file " + mem)
+      # we have to escape windows os separators because \ has a specific
+      # meaning in the argparser
+      mem = mem.replace("\\", "\\\\")
+      exported.lyntin_command("%sread %s" % (config.commandchar, mem), internal=1)
+  
+    # we're done initialization!
+    exported.write_message(constants.STARTUPTEXT)
+    myengine.writePrompt()
+
+    # spin off an engine thread
+    myengine.startthread("engine", myengine.runengine)
+
+    # start the timer thread
+    myengine.startthread("timer", myengine.runtimer)
+    
+    # start the ui mainloop
+    myengine._ui.runui()
+
+  except SystemExit:
+    # we do this because the engine is blocking on events....
+    if myengine:
+      event.ShutdownEvent().enqueue()
+    
+  except:
+    import traceback
+    traceback.print_exc()
+    if myengine:
+      try:
+        event.ShutdownEvent().enqueue()
+      except:
+        pass
+    sys.exit(1)
 
 # Local variables:
 # mode:python
