@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.5 2003/08/11 10:22:04 glasssnake Exp $
+# $Id: action.py,v 1.6 2003/08/11 14:56:32 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -274,6 +274,18 @@ class ActionData:
     """
     self._disabled[tag] = 1
 
+  def listTags(self):
+    """
+    Lists all the existing tags
+    """
+    tags = {}
+    for action in self._actions.values():
+      tags[action[5]] = 0
+    tags.update(self._disabled)  
+    list = [ "%s tag={%s}" % ((" enabled", "disabled")[disabled], mem)
+             for (mem, disabled) in tags.items() ]
+    exported.write_message("\n".join(list))
+
 
 class ActionManager(manager.Manager):
   def __init__(self):
@@ -306,6 +318,11 @@ class ActionManager(manager.Manager):
     if self._actions.has_key(ses):
       return self._actions[ses].getInfo(text, tag=tag)
     return ""
+
+  def listTags(self, ses):
+    actions = self._actions.get(ses)
+    if actions:
+      actions.listTags()
 
   def enable(self, ses, tag):
     actiondata = self._actions.get(ses)
@@ -518,7 +535,15 @@ def action_disable_cmd(ses, args, input):
     exported.write_message("Disabling actions tagged as {%s}" % tag)
   
 commands_dict["adisable"] = (action_disable_cmd, "tag= quiet:boolean=false")
-  
+
+
+def action_tags_cmd(ses, args, input):
+  """
+  Shows all the tags available
+  """
+  exported.get_manager("action").listTags(ses)
+
+commands_dict["atags"] = (action_tags_cmd, "")  
 
 
 am = None
