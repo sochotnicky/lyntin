@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.3 2003/05/27 02:06:38 willhelm Exp $
+# $Id: engine.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -31,8 +31,7 @@ to access the engine using the "get_engine()" function.
 import Queue, thread, sys
 from threading import Thread
 
-import session, __init__, utils, event
-import exported, helpmanager, history, commandmanager
+from lyntin import __init__, session, utils, event, exported, helpmanager, history, commandmanager
 
 # this is the singleton reference to the Engine instance.
 myengine = None
@@ -582,7 +581,7 @@ class Engine:
     Sets the ui.
 
     @param newui: the new ui to set
-    @type  newui: ui.BaseUI subclass
+    @type  newui: ui.base.BaseUI subclass
     """
     self._ui = newui
 
@@ -591,7 +590,7 @@ class Engine:
     Returns the ui.
 
     @return: the ui
-    @rtype: ui.BaseUI subclass
+    @rtype: ui.base.BaseUI subclass
     """
     return self._ui
 
@@ -606,7 +605,7 @@ class Engine:
     things to the ui--it calls this method.
 
     @param text: the message to write to the ui
-    @type  text: string or ui.Message
+    @type  text: string or ui.base.Message
     """
     self._ui_lock.acquire(1)
     try:

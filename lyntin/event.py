@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: event.py,v 1.3 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -15,7 +15,8 @@ event queue.  You can use the __init__ function to initialize
 your event as it is not used in the base Event class.
 """
 import string, os, sys, traceback
-import ui.ui, __init__, exported, constants
+from lyntin import __init__, exported, constants
+from lyntin.ui import base
 
 class Event:
   """
@@ -247,6 +248,9 @@ class InputEvent(Event):
     self._input = input
     self._internal = internal
     self._ses = ses
+
+    if not self._input:
+      self._input = __init__.commandchar + "cr"
 
   def execute(self):
     """ Execute."""

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.3 2003/07/14 19:57:15 glasssnake Exp $
+# $Id: session.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -13,7 +13,7 @@ to a mud--though it should be noted that sessions could also connect
 to any other TCP/IP service.
 """
 import re, copy, string, os
-import exported, engine, utils, ansi, __init__, event
+from lyntin import exported, utils, ansi, __init__, event
 
 ESC = chr(27)
 
@@ -313,7 +313,7 @@ class Session:
     Deals with printing a prompt if this is the common session.
     """
     if self.getName() == "common":
-      engine.myengine.writePrompt()
+      exported.get_engine().writePrompt()
 
   def handleUserData(self, input, internal=0 ):
     """

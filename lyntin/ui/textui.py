@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.3 2003/07/31 23:59:02 willhelm Exp $
+# $Id: textui.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
@@ -12,7 +12,7 @@ Holds the text ui class.
 import re, sys, os, select, types
 import lyntin.__init__
 from lyntin import ansi, engine, event, utils, exported
-from lyntin.ui import base
+from lyntin.ui import base, message
 
 
 HELP_TEXT = """
@@ -241,13 +241,13 @@ class Textui(base.BaseUI):
     Handles writing information from the mud and/or Lyntin
     to the user.
     """
-    message = args["message"]
+    msg = args["message"]
 
-    if type(message) == types.StringType:
-      message = base.Message(message, base.LTDATA)
+    if type(msg) == types.StringType:
+      msg = message.Message(msg, message.LTDATA)
 
-    line = message.data
-    ses = message.session
+    line = msg.data
+    ses = msg.session
 
     if line == '' or self.showTextForSession(ses) == 0:
       return
@@ -258,8 +258,8 @@ class Textui(base.BaseUI):
     if ses != None and ses != exported.get_current_session():
       pretext = "[" + ses.getName() + "] "
 
-    if message.type == base.ERROR or message.type == base.LTDATA:
-      if message.type == base.ERROR:
+    if msg.type == message.ERROR or msg.type == message.LTDATA:
+      if msg.type == message.ERROR:
         pretext = "error: " + pretext
       else:
         pretext = "lyntin: " + pretext
@@ -270,7 +270,7 @@ class Textui(base.BaseUI):
       sys.stdout.write(line + "\n")
       return
 
-    elif message.type == base.USERDATA:
+    elif msg.type == message.USERDATA:
       # we don't print user data in the textui
       return
 

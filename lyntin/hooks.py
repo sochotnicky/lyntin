@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: hooks.py,v 1.3 2003/08/01 00:14:52 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -73,7 +73,7 @@ should be done through the exported module.
 @var to_user_hook: The ui listens on this hook to display things to the
     user.  Data on this hook can come from a variety of sources such
     as Lyntin error messages, Lyntin regular messages, mud data, user
-    input...  Arg tuple: (data:string|ui.ui.Message)
+    input...  Arg tuple: (data:string|ui.message.Message)
 
 @var timer_hook: The timer hook runs every second.  The scheduler uses this
     to know when to wake up and deal with things.  Arg tuple: (ticknumber:int)
@@ -510,8 +510,9 @@ to_mud_hook = get_hook_manager().getHook("to_mud_hook")
 # The ui's listen on this hook to display stuff.  Data on this hook
 # is meant for the user to see as Lyntin output or mud output.
 #
-# arg tuple: (string | ui.ui.Message)
-#  - message - either a string or a ui.ui.Message instance--this is the data
+# arg tuple: (string | ui.message.Message)
+#  - message - either a string or a ui.message.Message instance--this 
+#              is the data
 to_user_hook = get_hook_manager().getHook("to_user_hook")
 
 # The timer hook runs every second.  The tickers for the various sessions

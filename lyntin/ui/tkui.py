@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.5 2003/07/31 23:59:02 willhelm Exp $
+# $Id: tkui.py,v 1.6 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -15,7 +15,7 @@ from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
 from lyntin import ansi, event, engine, exported, utils
-from lyntin.ui import base
+from lyntin.ui import base, message
 import lyntin.__init__
 
 UNICODE_ENCODING = "latin-1"
@@ -360,7 +360,7 @@ class Tkui(base.BaseUI):
   def write_internal(self, args):
     mess = args[0]
     if type(mess) == types.StringType:
-      mess = base.BaseUI(mess, base.LTDATA)
+      mess = base.BaseUI(mess, message.LTDATA)
 
     line = mess.data
     ses = mess.session
@@ -372,7 +372,7 @@ class Tkui(base.BaseUI):
     color, leftover = buffer_write(mess, self._txt, self._currcolors, 
                                    self._unfinishedcolor)
 
-    if mess.type == base.MUDDATA:
+    if mess.type == message.MUDDATA:
       self._unfinishedcolor[ses] = leftover
       self._currcolors[ses] = color
 
@@ -830,22 +830,22 @@ class NamedWindow:
 
     This is overridden from the 'base.BaseUI'.
     """
-    if type(message) == types.TupleType:
-      message = message[0]
+    if type(msg) == types.TupleType:
+      msg = msg[0]
 
-    if type(message) == types.StringType:
-      message = base.Message(message, base.LTDATA)
+    if type(msg) == types.StringType:
+      msg = message.Message(msg, message.LTDATA)
 
-    line = message.data
-    ses = message.session
+    line = msg.data
+    ses = msg.session
 
     if line == '':
       return
 
-    color, leftover = buffer_write(message, self._txt, self._currcolors, 
+    color, leftover = buffer_write(msg, self._txt, self._currcolors, 
                                    self._unfinishedcolor)
 
-    if message.type == base.MUDDATA:
+    if msg.type == message.MUDDATA:
       self._unfinishedcolor[ses] = leftover
       self._currcolors[ses] = color
 
@@ -909,14 +909,14 @@ class Autotyper:
     self._frame.destroy()
 
 
-def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
+def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
   """
   Handles writing messages to a Tk Text widget taking into accound
   ANSI colors, message types, session scoping, and a variety of
   other things.
 
-  @param message: the Message to write to the buffer
-  @type  message: Message
+  @param msg: the ui.message.Message to write to the buffer
+  @type  msg: ui.message.Message
 
   @param txtbuffer: the Tk Text buffer to write to
   @type  txtbuffer: Text
@@ -931,10 +931,10 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
   @returns: the new color and unfinished color
   @rtype: list of ints, string
   """
-  line = message.data
-  ses = message.session
+  line = msg.data
+  ses = msg.session
 
-  if message.type == base.ERROR:
+  if msg.type == message.ERROR:
     if line.endswith("\n"):
       line = "%s%s%s\n" % (ansi.get_color("b blue"), 
                           line[:-1], 
@@ -944,7 +944,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
                         line[:-1], 
                         ansi.get_color("default"))
 
-  elif message.type == base.USERDATA:
+  elif msg.type == message.USERDATA:
     if lyntin.__init__.mudecho == 1:
       if line.endswith("\n"):
         line = "%s%s%s\n" % (ansi.get_color("b blue"), 
@@ -958,7 +958,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
       # if echo is not on--we don't print this
       return currentcolor, unfinishedcolor
 
-  elif message.type == base.LTDATA:
+  elif msg.type == message.LTDATA:
     if line.endswith("\n"):
       line = "# %s\n" % line[:-1].replace("\n", "\n# ")
     else:
@@ -992,7 +992,7 @@ def buffer_write(message, txtbuffer, currentcolor, unfinishedcolor):
   # unfinished color as well--in case we got a part of an ansi 
   # color code in a mud message, and the other part is in another 
   # message.
-  if message.type == base.MUDDATA:
+  if msg.type == message.MUDDATA:
     color = currentcolor.get(ses, list(DEFAULT_COLOR))
     leftover = unfinishedcolor.get(ses, "")
 

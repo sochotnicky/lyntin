@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.5 2003/07/09 13:16:30 willhelm Exp $
+# $Id: tintincmds.py,v 1.6 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, __init__, exported, event
@@ -608,11 +608,11 @@ def write_cmd(ses, args, input):
     exported.write_message("write: file %s has been written for session %s." % 
                            (filename, ses.getName()), ses)
   except Exception, e:
+    exported.write_error("write: error writing to file %s. %s" % (filename, e), ses)
     try:
       f.close()
     except:
       pass
-    exported.write_error("write: error writing to file %s. %s" % (filename, e), ses)
 
 commands_dict["write"] = (write_cmd, "file quiet:boolean=false")
 

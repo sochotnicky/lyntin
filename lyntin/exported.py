@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.3 2003/06/10 13:01:37 willhelm Exp $
+# $Id: exported.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -12,7 +12,8 @@ very rarely even though we might change Lyntin's internals.  If
 it does change it'll be between major Lyntin versions.
 """
 import sys, traceback
-import engine, ui.ui, __init__, utils
+from lyntin import __init__, utils
+from lyntin.ui import message
 
 LAST = 99
 FIRST = 1
@@ -273,7 +274,7 @@ def write_message(text, ses=None):
   """
   text = str(text)
   if get_engine():
-    get_engine().writeUI(ui.ui.Message(text + "\n", ui.ui.LTDATA, ses))
+    get_engine().writeUI(message.Message(text + "\n", message.LTDATA, ses))
   else:
     print "message:", text
 
@@ -290,7 +291,7 @@ def write_error(text, ses=None):
   """
   text = str(text)
   if get_engine():
-    get_engine().writeUI(ui.ui.Message(text + "\n", ui.ui.ERROR, ses))
+    get_engine().writeUI(message.Message(text + "\n", message.ERROR, ses))
   else:
     print "error:", text
 
@@ -307,7 +308,7 @@ def write_user_data(text, ses=None):
   """
   text = str(text)
   if get_engine():
-    get_engine().writeUI(ui.ui.Message(text + "\n", ui.ui.USERDATA, ses))
+    get_engine().writeUI(message.Message(text + "\n", message.USERDATA, ses))
   else:
     print "userdata:", text
 
@@ -324,7 +325,7 @@ def write_mud_data(text, ses=None):
   """
   text = str(text)
   if get_engine():
-    get_engine().writeUI(ui.ui.Message(text, ui.ui.MUDDATA, ses))
+    get_engine().writeUI(message.Message(text, message.MUDDATA, ses))
   else:
     print "muddata:", text
 
@@ -361,6 +362,7 @@ def get_history(count=30):
   """
   return get_manager("history").getHistory(count)
 
+myengine = None
 def get_engine():
   """
   Nice way of retrieving the engine instance.
@@ -368,7 +370,11 @@ def get_engine():
   @return: the Engine singleton instance
   @rtype: engine.Engine
   """
-  return engine.myengine
+  global myengine
+  if not myengine:
+    import engine
+    myengine = engine
+  return myengine.myengine
 
 def tally_error():
   """

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.1 2003/07/31 23:59:02 willhelm Exp $
+# $Id: base.py,v 1.2 2003/08/01 00:14:52 willhelm Exp $
 #######################################################################
 """
 Holds the ui components in lyntin as well as the Message
@@ -13,55 +13,8 @@ to the user through the ui.  Messages have types and the ui
 will display the message differently depending on the type.
 """
 import string, re, sys
-from lyntin import event, utils
-
-
-""" The message type constants."""
-ERROR = "ERROR: "
-USERDATA = "USERDATA: "
-MUDDATA = "MUDDATA: "
-LTDATA = "LTDATA: "
-
-""" Used for debugging purposes."""
-MESSAGETYPES = {ERROR: "ERROR: ",
-                USERDATA: "USERDATA: ",
-                MUDDATA: "MUDDATA: ",
-                LTDATA: "LTDATA: "}
-
-class Message:
-  """
-  Encapsulates a message to be written to the user.
-  """
-  def __init__(self, data, messagetype=LTDATA, ses=None):
-    """
-    Initialize.
-
-    @param data: the message string
-    @type  data: string
-
-    @param messagetype: the message type (use a constant defined in ui.ui)
-    @type  messagetype: int
-
-    @param ses: the session this message belongs to
-    @type  ses: session.Session
-    """
-    self.session = ses
-    self.data = data
-    self.type = messagetype
-    self._exported_module = None
-
-  def __repr__(self):
-    """
-    Represents the message (returns data + type).
-    """
-    return repr(self.session) + MESSAGETYPES[self.type] + repr(self.data)
-
-  def __str__(self):
-    """
-    The string representation of the Message is the data
-    itself.
-    """
-    return self.data
+from lyntin import exported, utils
+from lyntin.ui import message
 
 class BaseUI:
   """
@@ -156,12 +109,8 @@ class BaseUI:
     @returns: 1 if we should show text, 0 if not
     @rtype: boolean
     """
-    if not self._exported_module:
-      from lyntin import exported
-      self._exported_module = exported
-
     if ses == None or getattr(ses, "_snoop", None) == None \
-        or self._exported_module.get_current_session() == ses or ses.getSnoop() == 1:
+        or exported.get_current_session() == ses or ses.getSnoop() == 1:
       return 1
     return 0
 
@@ -174,6 +123,7 @@ class BaseUI:
     @param input: the raw input from the user
     @type  input: string
     """
+    from lyntin import event
     input = utils.chomp(input)
     event.InputEvent(input).enqueue()
 
