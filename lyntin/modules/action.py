@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.15 2003/10/17 02:11:25 willhelm Exp $
+# $Id: action.py,v 1.16 2003/10/19 23:11:51 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -339,12 +339,21 @@ class ActionManager(manager.Manager):
     if self._actions.has_key(ses):
       self._actions[ses].clear()
 
-  def getInfoMappings(self, ses):
+  def getInfoMappings(self, item, ses):
+    if item != "action":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
     if self._actions.has_key(ses):
       return self._actions[ses].getInfoMappings()
     return []
 
-  def getParameters(self):
+  def getItems(self):
+    return [ "action" ]
+
+  def getParameters(self, item):
+    if item != "action":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
     return [ ("trigger", "Text that triggers the action."),
              ("action", "Command to execute when the trigger is kicked off."),
              ("tag", "Group of actions this action belongs to."),

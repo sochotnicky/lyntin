@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
+# $Id: alias.py,v 1.5 2003/10/19 23:11:51 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -167,6 +167,13 @@ class AliasData:
 
     return data
 
+  def getInfoMappings(self):
+    l = []
+    for m in self._aliases.keys():
+      l.append( { "alias": m, "expansion": self._aliases[m] } )
+
+    return l
+
   def getCount(self):
     """
     Returns the alias count.
@@ -221,6 +228,24 @@ class AliasManager(manager.Manager):
     if not self._aliasdata.has_key(ses):
       return []
     return self._aliasdata[ses].getInfo(text)
+
+  def getInfoMappings(self, item, ses):
+    if item != "alias":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    if self._aliasdata.has_key(ses):
+      return self._aliasdata[ses].getInfoMappings()
+    return []
+    
+  def getItems(self):
+    return [ "alias" ]
+
+  def getParameters(self, item):
+    if item != "alias":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    return [ ("alias", "The alias name."),
+             ("expansion", "The alias expansion.") ]
 
   def persist(self, args):
     """

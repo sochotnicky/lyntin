@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manager.py,v 1.3 2003/10/17 02:11:25 willhelm Exp $
+# $Id: manager.py,v 1.4 2003/10/19 23:11:51 willhelm Exp $
 #######################################################################
 """
 Managers manage things.  Most X{manager}s subclass the "manager.Manager"
@@ -79,7 +79,24 @@ class Manager:
     """
     return ''
 
-  def getInfoMappings(self, ses):
+  def getItems(self):
+    """
+    Returns a list of the items that this manager manages.  So the
+    gag manager manages gags as well as antigags and would return::
+
+       [ "gag", "antigag" ]
+
+    These items are used in getInfoMappings as well as getParameters.
+
+    If this manager doesn't manage anything, then it'll return an
+    empty list.
+
+    @return: returns a list of strings
+    @rtype: list of strings
+    """
+    return []
+
+  def getInfoMappings(self, item, ses):
     """
     Returns a list of maps of parameter name -> value that represents
     all the info this manager is managing for this session.
@@ -88,11 +105,14 @@ class Manager:
     Say it had three aliases a, b, and c which expand to "smile %1", 
     "frown %1", and "kick %1".  It would return::
 
-        [
-          { "alias": "a", "expansion": "smile %1" },
-          { "alias": "b", "expansion": "frown %1" },
-          { "alias": "c", "expansion": "kick %1" }
-        ]
+       [
+         { "alias": "a", "expansion": "smile %1" },
+         { "alias": "b", "expansion": "frown %1" },
+         { "alias": "c", "expansion": "kick %1" }
+       ]
+
+    @param item: the item to get data for
+    @type  item: string
 
     @param ses: the session in question
     @type  ses: Session
@@ -102,10 +122,16 @@ class Manager:
     """
     return []
 
-  def getParameters(self):
+  def getParameters(self, item):
     """
     Returns a list of tuples of the parameters we're storing in
     this manager and the description of each parameter.
+
+    If this manager does not manage this item, it should raise
+    a ValueError.
+
+    @param item: the item to get parameters for
+    @type  item: string
 
     @returns: list of (parameter, desc) tuples
     @rtype: list of tuples
@@ -150,7 +176,7 @@ class Manager:
     For example, the SubstituteManager which is holding 5 substitutes
     and 2 gags for a session named "3k" would return the string::
 
-      "5 substitute(s). 2 gag(s)."
+       "5 substitute(s). 2 gag(s)."
 
     But the ThreadManager which is a globally scoped manager and doesn't 
     apply to the "3k" session would return an empty string.
