@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.8 2003/10/04 18:08:08 willhelm Exp $
+# $Id: utils.py,v 1.9 2003/11/09 23:24:30 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -895,7 +895,7 @@ def expand_vars(text, varmap):
         ccount += 1
         j += 1
  
-      if ccount == 1:
+      if ccount == 1 and j < len(text):
         closure = -1
 
         # if we're looking at a variable in the form of ${blah} then
