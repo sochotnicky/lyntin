@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.3 2003/08/01 00:14:52 willhelm Exp $
+# $Id: event.py,v 1.4 2003/08/05 13:17:08 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -16,7 +16,6 @@ your event as it is not used in the base Event class.
 """
 import string, os, sys, traceback
 from lyntin import __init__, exported, constants
-from lyntin.ui import base
 
 class Event:
   """
@@ -87,9 +86,9 @@ class StartupEvent(Event):
       uiname = __init__.options['ui']
       modulename = uiname + "ui"
 
-      import ui.__init__
+      import ui.base
 
-      uiinstance = ui.__init__.get_ui(modulename)
+      uiinstance = ui.base.get_ui(modulename)
       if not uiinstance:
         raise ValueError, "No ui instance."
       exported.get_engine().setUI(uiinstance)
@@ -100,7 +99,7 @@ class StartupEvent(Event):
       if not uiinstance:
         try:
           # if we had problems, we try to instantiate the textui
-          uiinstance = ui.__init__.get_ui("textui")
+          uiinstance = ui.base.get_ui("textui")
           if not uiinstance:
             raise ValueError, "No ui instance."
           exported.get_engine().setUI(uiinstance)
