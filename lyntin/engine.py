@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.15 2003/09/11 00:33:50 willhelm Exp $
+# $Id: engine.py,v 1.16 2003/09/25 15:43:49 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -704,7 +704,6 @@ class Engine:
     data.append("   events processed: %d" % self._num_events_processed)
     data.append("   queue size: %d" % self._event_queue.qsize())
     data.append("   ui: %s" % repr(self._ui))
-    data.append("   speedwalking: %d" % config.speedwalk)
     data.append("   ansicolor: %d" % self.getConfigManager().get("ansicolor"))
     data.append("   ticks: %d" % self._current_tick)
     data.append("   errors: %d" % self._errorcount)
@@ -933,7 +932,10 @@ def main(defaultoptions={}):
 
         if len(opt) > 0:
           if config.options.has_key(opt):
-            config.options[opt].append(mem[1])
+            if type(config.options[opt]) is list:
+              config.options[opt].append(mem[1])
+            else:
+              config.options[opt] = mem[1]
           else:
             config.options[opt] = [mem[1]]
 

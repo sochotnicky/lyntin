@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.12 2003/09/09 22:44:08 willhelm Exp $
+# $Id: tintincmds.py,v 1.13 2003/09/25 15:43:49 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -346,18 +346,21 @@ def read_cmd(ses, args, input):
   if os.sep not in filename and not filename.startswith("http://"):
     filename = config.options["datadir"] + filename
 
+  contents = ""
+
   try:
     # http reading contributed by Sebastian John
     if filename.startswith("http://"):
-      file = utils.http_get(filename)
+      f = utils.http_get(filename)
+      contents = f.readlines()
     else:
-      file = open(filename, "r")
+      f = open(filename, "r")
+      contents = f.readlines()
+      f.close()
   except Exception, e:
     exported.write_error("read: file %s cannot be opened.\n%s" % (filename, e), ses)
     return
     
-  contents = file.readlines()
-
   # we want to get rid of initial blank lines and make sure
   # the file has content in it
   while len(contents) > 0 and len(contents[0].strip()) == 0:
