@@ -1,0 +1,8 @@
+include setup.py
+include COMMANDS
+include README
+include INSTALL
+include HACKING
+include LICENSE
+recursive-include lyntin *.py
+include scripts/*
