@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manager.py,v 1.2 2003/08/27 03:19:58 willhelm Exp $
+# $Id: manager.py,v 1.3 2003/10/17 02:11:25 willhelm Exp $
 #######################################################################
 """
 Managers manage things.  Most X{manager}s subclass the "manager.Manager"
@@ -78,6 +78,39 @@ class Manager:
     @rtype: string
     """
     return ''
+
+  def getInfoMappings(self, ses):
+    """
+    Returns a list of maps of parameter name -> value that represents
+    all the info this manager is managing for this session.
+
+    For example, an AliasManager manages aliases and their expansions.
+    Say it had three aliases a, b, and c which expand to "smile %1", 
+    "frown %1", and "kick %1".  It would return::
+
+        [
+          { "alias": "a", "expansion": "smile %1" },
+          { "alias": "b", "expansion": "frown %1" },
+          { "alias": "c", "expansion": "kick %1" }
+        ]
+
+    @param ses: the session in question
+    @type  ses: Session
+
+    @returns: a list of maps of parameter name -> value
+    @rtype: list of mappings
+    """
+    return []
+
+  def getParameters(self):
+    """
+    Returns a list of tuples of the parameters we're storing in
+    this manager and the description of each parameter.
+
+    @returns: list of (parameter, desc) tuples
+    @rtype: list of tuples
+    """
+    return []
 
   def addSession(self, newsession, basesession=None):
     """

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.14 2003/10/16 17:47:33 glasssnake Exp $
+# $Id: action.py,v 1.15 2003/10/17 02:11:25 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -102,6 +102,18 @@ class ActionData:
     self._actions.clear()
     self._disabled = {}
     self._actionlist = None
+
+  def getInfoMappings(self):
+    l = []
+    for key in self._actions.keys():
+      mem = self._actions[key]
+      l.append( { "trigger": mem[0],
+                  "action": mem[2],
+                  "tag": mem[6],
+                  "color": mem[3],
+                  "priority": mem[4],
+                  "onetime": mem[5] } )
+    return l
 
   def removeActions(self, text, mytag):
     """
@@ -327,6 +339,20 @@ class ActionManager(manager.Manager):
     if self._actions.has_key(ses):
       self._actions[ses].clear()
 
+  def getInfoMappings(self, ses):
+    if self._actions.has_key(ses):
+      return self._actions[ses].getInfoMappings()
+    return []
+
+  def getParameters(self):
+    return [ ("trigger", "Text that triggers the action."),
+             ("action", "Command to execute when the trigger is kicked off."),
+             ("tag", "Group of actions this action belongs to."),
+             ("color", "Whether we try to match the line with color or not."),
+             ("priority", "The priority to test this trigger at."),
+             ("onetime", "Whether this action should be removed after it's triggered.")]
+             
+    
   def removeActions(self, ses, text, tag=None):
     if self._actions.has_key(ses):
       return self._actions[ses].removeActions(text, tag)
@@ -496,7 +522,7 @@ def action_cmd(ses, args, input):
   am = exported.get_manager("action")
 
   # they typed '#action'--print out all the current actions
-  if not trigger and not action:
+  if not action:
     data = am.getInfo(ses, trigger, tag)
     if not data:
       data = ["action: no actions defined."]

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.12 2003/10/15 02:28:50 willhelm Exp $
+# $Id: net.py,v 1.13 2003/10/17 02:11:25 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -31,6 +31,19 @@ X{prompt_hook}::
    session - the Session that this prompt came from
 
    prompt - the prompt string
+
+
+X{connect_hook}::
+
+   This hook gets spammed every time we make a successful connection.
+
+   Arg mapping: { "session": Session, "host": String, "port": int }
+
+   session - the Session object for this connection
+
+   host - the host we connected to
+
+   port - the port number for the host
 
 
 X{net_read_data_filter}::
