@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.11 2003/08/16 01:15:13 willhelm Exp $
+# $Id: tkui.py,v 1.12 2003/08/22 02:19:36 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -829,7 +829,7 @@ class NamedWindow:
     if (temp.isdigit() and int(temp) > 800):
       self._txt.delete ("1.0", "100.end")
 
-  def write(self, message):
+  def write(self, msg):
     """
     This writes text to the text buffer for viewing by the user.
 
