@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.20 2004/03/30 00:23:22 willhelm Exp $
+# $Id: action.py,v 1.21 2004/03/30 00:27:14 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -525,7 +525,7 @@ def unaction_cmd(ses, args, input):
   """
   am = exported.get_manager("action")
   ad = am.getActionData(ses)
-  func = lambda x, y: ad.removeActions(x, y, args["tag"])
+  func = lambda x: ad.removeActions(x, args["tag"])
   modutils.unsomething_helper(args, func, None, "action", "actions")
 
 commands_dict["unaction"] = (unaction_cmd, "str= tag= quiet:boolean=false")
