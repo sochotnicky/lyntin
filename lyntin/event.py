@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.7 2003/08/28 01:46:47 willhelm Exp $
+# $Id: event.py,v 1.8 2003/09/09 22:44:07 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -13,6 +13,17 @@ Each event class implements the execute function which gets called
 by the event handler thread when it pulls the event object off the
 event queue.  You can use the __init__ function to initialize
 your event as it is not used in the base Event class.
+
+X{from_mud_hook}::
+
+   Raw data that comes from the mud goes through this hook before
+   passing through the engine to be handled.
+
+   Arg mapping: { "session": Session, "data": string }
+
+   session - the Session this data belongs to
+
+   data - the raw data that was sent from the mud
 """
 import sys
 from lyntin import config, exported, constants

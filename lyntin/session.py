@@ -4,13 +4,93 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.8 2003/09/02 01:20:51 willhelm Exp $
+# $Id: session.py,v 1.9 2003/09/09 22:44:08 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
 from the common session.  Each session encapsulates a socket connection
 to a mud--though it should be noted that sessions could also connect
 to any other TCP/IP service.
+
+X{disconnect_hook}::
+
+   When the connection from Lyntin to the mud ends, we spam this hook.
+
+   Arg mapping: { "session": Session, "host": string, "port": int }
+
+   session - the session that we just lost the connection to
+
+   host - the mud we were connected to
+
+   port - the port we were connected to
+
+
+X{to_mud_hook}::
+
+   All data that gets sent from Lyntin to the mud gets spammed
+   to this hook.  This is different from the from_user_hook
+   because this data has already passed through Lyntin's 
+   transform mechanisms.
+
+   Arg mapping: { "session": Session, "data": string, "tag": varies }
+
+   session - the session of the mud we're sending the data to
+
+   data - the raw data we're sending
+
+   tag - this allows you to "tag" outgoing data so that you can 
+         correlate the outgoing data with incoming data and build
+         lock-step mechanisms that track user input and mud output.
+
+
+X{user_filter_hook}::
+
+   After data has passed on the from_user_hook it gets passed through
+   the user_filter_hook which allows the data from the user to
+   be transformed.  This includes alias expansion, variable expansion,
+   speedwalk expansion and whatever other modules listen to this
+   hook.
+
+   Functions that register with this hook should return the dataadj
+   if they did nothing or the adjusted dataadj if they transformed it.
+   Look at examples in the alias and speedwalk modules.
+
+   Arg mapping: { "session": Session, "internal": boolean, "verbatim": boolean,
+                  "data": string, "dataadj": string }
+
+   session - the session this data is associated with
+
+   internal - whether or not this is internally generated.  this affects
+              whether we spam the from_user_hook and whether this 
+              gets logged in the HistoryManager.
+
+   verbatim - whether or not we should be transforming this user data item.
+
+   data - the original raw user data
+
+   dataadj - the latest adjusted data (which originally was the original
+             raw user data)
+
+
+X{mud_filter_hook}::
+
+   Data that comes from the mud gets passed through the from_mud_hook first.
+   Then it passes through the mud_filter_hook where it gets transformed.
+   Actions, substitutes, gags, and things of that nature should register
+   with this hook.
+
+   Functions that register with this hook should return the dataadj if
+   they don't want to adjust the mud data or the adjusted dataadj if they
+   do adjust the mud data.  See the action, gag and highlight modules for
+   examples.
+   
+   Arg mapping: { "session": Session, "data": string, "dataadj": string }
+
+   session - the Session associated with the mud this data came from
+
+   data - the original raw data from the mud
+
+   dataadj - the latest adjusted data from the mud
 """
 import re, copy, string, os
 from lyntin import exported, utils, ansi, config, event

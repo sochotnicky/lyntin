@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: commandmanager.py,v 1.5 2003/08/27 03:19:57 willhelm Exp $
+# $Id: commandmanager.py,v 1.6 2003/09/09 22:44:07 willhelm Exp $
 #######################################################################
 """
 Lyntin comes with a series of X{command}s for manipulating aliases, 
@@ -29,6 +29,18 @@ typed.
 Look at the modules/lyntincmds.py and modules/tintincmds.py modules for 
 command examples.  Additionally, check out the Lyntin module repository
 on http://lyntin.sourceforge.net/ for more examples.
+
+X{default_resolver_hook}::
+
+   Allows you to fill in values for arguments the user didn't specify 
+   on the command line.  
+
+   Arg mapping: {"session": Session, "commandname", string}
+
+   session - the session this command was executed in.
+
+   commandname - the name of the command that was executed
+
 """
 import inspect, re
 from lyntin import manager, exported, argparser, utils

@@ -4,11 +4,33 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.9 2003/08/28 01:46:48 willhelm Exp $
+# $Id: net.py,v 1.10 2003/09/09 22:44:08 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
 connections with a mud and polling the connection for data.
+
+X{bell_hook}::
+
+   When the mud sends a bell character, we spam this hook.  Typically
+   the ui's will register with this hook and handle the bell however
+   they see fit.
+
+   Arg mapping: { "session": Session }
+
+   session - the session that received the bell
+
+
+X{prompt_hook}::
+
+   We try to do some prompt detection and separate prompts into their
+   own events (separate from mud data).
+
+   Arg mapping: { "session": Session, "prompt": string }
+
+   session - the Session that this prompt came from
+
+   prompt - the prompt string
 """
 import socket, select, re, os
 from lyntin import event, config
@@ -196,6 +218,11 @@ class SocketCommunicator:
       self._port = port
       self._sock = sock
       self._sessionname = sessionname
+
+      import exported
+      ses = exported.get_session(sessionname)
+
+      exported.hook_spam("connect_hook", {"session": ses, "host": host, "port": port})
     else:
       raise Exception("Connection already exists.")
 
@@ -321,8 +348,7 @@ class SocketCommunicator:
     if not self._config.get("promptdetection") or data.endswith("\n"):
       event.MudEvent(self._session, data).enqueue() 
     else:
-      h = self._engine.getHook("prompt_hook")
-      event.SpamEvent(h, (self._session, data)).enqueue()
+      event.SpamEvent(hookname="prompt_hook", argmap={"session": self._session, "prompt": data}).enqueue()
 
 
   def handleNego(self, data):

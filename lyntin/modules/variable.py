@@ -4,11 +4,29 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.8 2003/08/30 02:45:57 willhelm Exp $
+# $Id: variable.py,v 1.9 2003/09/09 22:44:08 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
 It also defines global variables like $TIMESTAMP.
+
+X{variable_change_hook}::
+
+   The variable_change_hook allows other modules to be notified when
+   variable values change and handle those changes accordingly.  For
+   instance, the action module would recompile its regular expression
+   triggers based on the new values of the variables.
+
+   Arg mapping: { "session": Session, "variable": string, "oldvalue": string,
+                  "newvalue": string }
+
+   session - the session this variable belongs to
+
+   variable - the name of the variable in question
+
+   oldvalue - the old value of the variable
+
+   newvalue - the new value of the variable
 """
 import string, time
 from lyntin import manager, utils, config, engine, exported
@@ -241,6 +259,11 @@ class VariableManager(manager.Manager):
       self._variables[ses].clear()
 
   def _varChangeHook(self, ses, var, old, new):
+    """
+    This calls the variable_change_hook.  It allows other modules to
+    know when variable values are changed so that they can handle
+    those changes accordingly.
+    """
     exported.hook_spam("variable_change_hook", 
           {"session": ses, "variable": var, "oldvalue": old, "newvalue": new})
 

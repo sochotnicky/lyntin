@@ -4,12 +4,29 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: config.py,v 1.6 2003/09/02 01:20:51 willhelm Exp $
+# $Id: config.py,v 1.7 2003/09/09 22:44:07 willhelm Exp $
 #######################################################################
 """
 This module holds the configuration manager as well as a series of
 configuration type classes.  It also holds some global variables
 that get computed at boot.
+
+X{config_change_hook}::
+
+   This hook notifies registered functions that the value of a 
+   config item has just been changed.
+
+   Arg mapping: { "session": Session, "name": string, "oldvalue": string, "newvalue": string }
+
+   session - The session of the config item that got changed.  If the
+             session is None, then this is a global config item.
+
+   name - the name of the config item
+
+   oldvalue - the old value of the config item or None if there was
+             no previous value.
+
+   newvalue - the new value of the config item
 """
 import types, copy
 from lyntin import exported, utils, manager, constants

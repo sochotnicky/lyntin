@@ -4,12 +4,36 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.9 2003/08/28 01:46:47 willhelm Exp $
+# $Id: exported.py,v 1.10 2003/09/09 22:44:07 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
 very rarely even though we might change Lyntin's internals.  If
 it does change it'll be between major Lyntin versions.
+
+X{write_hook}::
+
+   The write_hook allows you to persist data.  Functions that register
+   with this hook should return a list of strings.
+
+   For example, the alias plugin would register with this hook and if
+   I had an alias vv, it would return:
+
+      [ "alias {vv} {this is my alias}" ]
+
+   as its data.  If quiet == 1, then it would return:
+
+      [ "alias {vv} {this is my alias} quiet={true}" ]
+
+   because "quiet" is an argument for the alias command which quells
+   output when it's called (assuming the output isn't error output).
+
+   Arg mapping: {"session": Session, "quiet": boolean }
+
+   session - the session in question
+
+   quiet - whether (1) or not (0) to append an argument that causes
+           the command to quell input when it is later read in
 """
 import sys, traceback
 from lyntin import utils, constants
@@ -570,6 +594,58 @@ def query_done(x):
   behaviour.
   """
   return None
+
+
+def get_write_data(ses, quiet=0):
+  """
+  Calls the write_hook and retrieves data from all the functions that
+  have registered with the hook.  It passes in the session involved,
+  and also the "quiet" argument.
+
+  For example, the alias module might have one alias for session a.  It
+  would return::
+
+    [ "alias {vv %1} {evoke %1}" ]
+
+  If quiet was 1, then it would return::
+
+    [ "alias {vv %1} {evoke %1} quiet={true}" ]
+
+  Then this method would take all those lists of strings and generate
+  one list of all the strings and return it.
+
+  Exceptions kicked up by poorly written plugins (and bad Lyntin code)
+  will get percolated upwards.  i.e. if exceptions are raised, then you
+  won't get any return data.
+
+  @param ses: the session to save the data for
+  @type  ses: Session
+
+  @param quiet: whether or not to be quiet--this is for when the data
+      that is written is eventually read in.  0 if not quiet, 1 if quiet.
+  @type  quiet: boolean
+
+  @returns: data as a list of strings
+  @rtype: list of strings
+  """
+  data = []
+  def write_mapper(x, y):
+    """
+    Takes the data from x and sticks it into y so that we continue
+    it all the way through.
+    """
+    data.append(y)
+    return x
+
+  hook_spam("write_hook", {"session": ses, "quiet": quiet}, mappingfunc=write_mapper)
+
+  listing = []
+  if data:
+    for mem in data:
+      listing = listing + mem
+
+  return listing
+
 
 # Local variables:
 # mode:python

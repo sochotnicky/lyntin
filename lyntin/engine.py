@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.12 2003/09/02 01:20:51 willhelm Exp $
+# $Id: engine.py,v 1.13 2003/09/09 22:44:07 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -23,6 +23,76 @@ threads.
 The Engine class is a singleton and the reference to it is stored in
 "engine.myengine".  However, you should use the exported module
 to access the engine using the "get_engine()" function.
+
+
+X{startup_hook}::
+
+   The startup hook is called after Lyntin has bootstrapped itself
+   enough to allow everything to initialize itself.
+
+   Arg mapping: {}
+
+
+X{shutdown_hook}::
+
+   When Lyntin is shutting down, this hook is called.  It's possible
+   Lyntin might be in a state of disarray at this point, so it's not
+   clear what is and what is not available.
+
+   Arg mapping: {}
+
+
+X{timer_hook}::
+
+   The timer hook spams all registered functions every second.  This
+   is how the scheduler works.
+
+   Arg mapping: { "tick": int }
+
+   tick - the current tick (starts at 0)
+
+
+X{from_user_hook}::
+
+   All input typed in by the user (as well as other things that
+   eventually go through the handleUserData method) get passed
+   through this hook (unless it's specified as internal).  All
+   registered functions get to see the raw user data this way.
+
+   Arg mapping: {"data": string}
+
+   data - the user data passed into handleUserData
+
+
+X{to_user_hook}::
+
+   Data that goes to the ui for display to the user passes through this
+   hook.
+
+   Arg mapping: { "message": string }
+
+   message - The message to be displayed.  This can be either a string
+             of a ui.base.Message object.
+
+
+X{error_occurred_hook}::
+
+   Every time an event kicks up an unhandled error, we add one to
+   our error count and also spam this hook with the current
+   number of errors.
+
+   Arg mapping: { "count": int }
+
+   count - the current number of errors
+
+
+X{too_many_errors_hook}::
+
+   When we hit the maximum number of errors, this hook gets spammed and
+   then Lyntin shuts down.
+
+   Arg mapping: {}
+
 
 @var  myengine: The engine singleton.  Don't reference this though--it's
     better to go through the exported module.
@@ -609,8 +679,8 @@ class Engine:
     exported.write_error("WARNING: Unhandled error encountered (%d out of %d)." 
                          % (self._errorcount, 20))
     exported.hook_spam("error_occurred_hook", {"count": self._errorcount})
-    # FIXME - change this back to 20
-    if self._errorcount > 5:
+
+    if self._errorcount > 20:
       exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
       sys.exit("Error count exceeded--shutting down.")
@@ -796,12 +866,12 @@ def shutdown():
 
   Do not call this elsewhere.
   """
-  import lyntin.hooks, lyntin.exported
+  import exported
   try:
-    lyntin.exported.write_message("shutting down...  goodbye.")
+    exported.write_message("shutting down...  goodbye.")
   except:
     print "shutting down...  goodbye."
-  lyntin.hooks.shutdown_hook.spamhook(())
+  exported.hook_spam("shutdown_hook", {})
 
 
 def main(defaultui="text"):

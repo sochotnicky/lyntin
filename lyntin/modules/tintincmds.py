@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.11 2003/09/02 01:20:54 willhelm Exp $
+# $Id: tintincmds.py,v 1.12 2003/09/09 22:44:08 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -457,9 +457,6 @@ def session_cmd(ses, args, input):
     # start the network thread
     e.startthread("network", sock.run)
 
-    # spam the hook
-    exported.hook_spam("connect_hook", {"session": ses, "host": host, "port": port})
-
   except:
     exported.write_traceback("session: had problems creating the session.")
     ses.setSocketCommunicator(None)
@@ -605,25 +602,12 @@ def write_cmd(ses, args, input):
   if os.sep not in filename:
     filename = config.options["datadir"] + filename
 
-  data = []
-  def write_mapper(x, y):
-    """
-    Takes the data from x and sticks it into y so that we continue
-    it all the way through.
-    """
-    data.append(y)
-    return x
-
-  exported.hook_spam("write_hook", {"session": ses, "quiet": quiet}, mappingfunc=write_mapper)
+  data = exported.get_write_data(ses, quiet)
 
   if data:
-    listing = []
-    for mem in data:
-      listing = listing + mem
-
     try:
       f = open(filename, "w")
-      f.write(c + ("\n" + c).join(listing))
+      f.write(c + ("\n" + c).join(data))
       f.close()
       exported.write_message("write: file %s has been written for session %s." % 
                              (filename, ses.getName()), ses)
@@ -636,7 +620,6 @@ def write_cmd(ses, args, input):
     return
 
   exported.write_message("write: no data to write.")
-    
 
 commands_dict["write"] = (write_cmd, "file quiet:boolean=false")
 
