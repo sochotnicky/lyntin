@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.26 2004/04/08 23:56:30 willhelm Exp $
+# $Id: engine.py,v 1.27 2004/04/10 19:40:42 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -92,11 +92,6 @@ X{too_many_errors_hook}::
    then Lyntin shuts down.
 
    Arg mapping: {}
-
-
-@var  Engine.instance: The engine singleton.  Don't reference this though--it's
-    better to go through the exported module.
-@type Engine.instance: Engine
 """
 import Queue, thread, sys, traceback, os.path
 from threading import Thread
