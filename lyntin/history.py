@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: history.py,v 1.2 2003/06/08 16:14:29 willhelm Exp $
+# $Id: history.py,v 1.3 2003/11/12 23:23:00 willhelm Exp $
 #######################################################################
 """
 The HistoryManager keeps track of the last 1000 lines of user input 
@@ -22,8 +22,10 @@ class HistoryManager(manager.Manager):
   letting the user to recall and edit those commands to fix mistakes
   they may have typed.
   """
-  def __init__(self):
-    self._history = []
+  def __init__(self, e):
+    self._history = [""]
+    self._config = e.getManager("config")
+    self._engine = e
 
   def getHistoryItem(self, userinput):
     """
@@ -64,7 +66,7 @@ class HistoryManager(manager.Manager):
 
     return returninput
 
-  def getHistory(self,count):
+  def getHistory(self, count):
     """
     Returns everything in the history buffer as a list of strings
 
@@ -81,6 +83,9 @@ class HistoryManager(manager.Manager):
     @type  input: string
     """
     if not input:
+      return
+
+    if input == self._history[0] and not self._config.get("repeathistory"):
       return
 
     self._history.insert(0, input)

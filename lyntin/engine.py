@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.21 2003/10/26 16:07:54 willhelm Exp $
+# $Id: engine.py,v 1.22 2003/11/12 23:23:00 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -142,14 +142,14 @@ class Engine:
     # structure.
     self._managers["help"] = helpmanager.HelpManager(self)
 
+    # our config manager
+    self._managers["config"] = config.ConfigManager(self)
+
     # our history manager
-    self._managers["history"] = history.HistoryManager()
+    self._managers["history"] = history.HistoryManager(self)
 
     # our command manager
     self._managers["command"] = commandmanager.CommandManager(self)
-
-    # our config manager
-    self._managers["config"] = config.ConfigManager(self)
 
     # there is only one ui in the system.
     self._ui = None
@@ -198,11 +198,17 @@ class Engine:
     # this one doesn't seem to do anything
     # c.add("variablechar", config.CharConfig("variablechar", "$", 0, "denotes variables"))
 
+    c.add("repeathistory", config.BoolConfig("repeathistory", 1, 0, 
+        "Whether (yes) or not (no) we record repeated user input in the " +
+        "history buffer.  For example, if you type \"north\" and then " +
+        "\"north\" again, if repeathistory is on, we record both.  " +
+        "Otherwise we would only record the first one."))
+
     c.add("commandchar", config.CharConfig("commandchar", "#", 0, 
         "The character used to denote a command."))
 
     c.add("debugmode", config.BoolConfig("debugmode", 0, 0, 
-        "Debug mode helps you to figure out how your commands are being "
+        "Debug mode helps you to figure out how your commands are being " +
         "evaluated."))
 
     c.add("promptdetection", config.BoolConfig("promptdetection", 0, 0, 

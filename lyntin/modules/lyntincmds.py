@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.8 2003/10/04 19:14:34 willhelm Exp $
+# $Id: lyntincmds.py,v 1.9 2003/11/12 23:23:00 willhelm Exp $
 #######################################################################
 """
 This module holds commands that are new and unique to Lyntin.
@@ -140,8 +140,8 @@ def config_cmd(ses, args, input):
 
   if not value:
     # we print out everything we know about this config item.
-    output = "config: %s\n\n%s\n\n%s\n" % \
-             (name, ci.toString(), utils.wrap_text(ci._description))
+    output = "config: %s\n\ncurrent value: %s\n\n%s\n" % \
+             (name, ci.toString(), utils.wrap_text(ci._description, wraplength=60))
     exported.write_message(output)
     return
 
