@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.22 2003/11/12 23:23:00 willhelm Exp $
+# $Id: engine.py,v 1.23 2003/12/13 20:46:28 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -907,7 +907,6 @@ def main(defaultoptions={}):
 
     # read through options and arguments
     optlist = utils.parse_args(sys.argv[1:])
-    datadir = ""
 
     for mem in optlist:
       if mem[0] == '--help':
@@ -990,8 +989,8 @@ def main(defaultoptions={}):
 
     # do some more silly initialization stuff
     # adds the .lyntinrc file to the readfile list if it exists.
-    if datadir:
-      lyntinrcfile = datadir + ".lyntinrc"
+    if config.options["datadir"]:
+      lyntinrcfile = config.options["datadir"] + ".lyntinrc"
       if os.path.exists(lyntinrcfile):
         # we want the .lyntinrc file read in first, so then other
         # files can overwrite the contents therein
