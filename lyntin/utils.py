@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.12 2004/04/27 15:50:00 glasssnake Exp $
+# $Id: utils.py,v 1.13 2004/10/06 13:59:08 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -188,16 +188,17 @@ def http_get(url):
   host, resource = filename.split("/", 1)
 
   resource = "/" + resource
-  sock = httplib.HTTP()
-  sock.connect(host)
-  sock.putrequest("GET", resource)
-  sock.endheaders()
-  status, reason, headers = sock.getreply()
+  sock = httplib.HTTPConnection(host)
+  sock.request("GET", resource)
+  r = sock.getresponse()
+  status = r.status
+  reason = r.reason
+  data = r.read()
 
   if status != 200:
     raise ValueError("HTTP error: %d %s" % (status, reason))
 
-  return sock.getfile()
+  return data
 
 
 # handles regular expression syntax and flags

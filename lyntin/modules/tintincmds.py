@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.22 2004/09/19 07:17:18 glasssnake Exp $
+# $Id: tintincmds.py,v 1.23 2004/10/06 13:59:08 willhelm Exp $
 #######################################################################
 import os, os.path
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -358,8 +358,7 @@ def read_cmd(ses, args, input):
   try:
     # http reading contributed by Sebastian John
     if filename.startswith("http://"):
-      f = utils.http_get(filename)
-      contents = f.readlines()
+      contents = utils.http_get(filename).split("\n")
     else:
       f = open(filename, "r")
       contents = f.readlines()
