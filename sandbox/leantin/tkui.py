@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.2 2004/04/20 17:05:43 odbrazen Exp $
+# $Id: tkui.py,v 1.3 2004/05/04 05:02:04 odbrazen Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -21,25 +21,49 @@ import ansi
 
 class TkuiSession(object):
   """Handles per-session data for the UI"""
-  def __init__(self, tkui):
+  def __init__(self, tkui, **opts):
     # our run_this_soon() will hand off to the main run_this_soon
     self.__main_run_this_soon = tkui.run_this_soon
 
     self.hidden = 1 # new ui's always start out hidden
     self.echoing = 1 # should we echo the entry box
+    self.scroller_size = (-1, -1) # how big is the scroller, in pixels
+    self.size_change = opts.get('size_change_callback', None)
+    self.font = tkui.font
     self._entry = tkui._entry # we need this to turn echoing on/off
     
     # create our per-session Frames that will appear in the main UI's frames when we are active
     self.top = Tkinter.Frame(tkui.top)
     self.middle = Tkinter.Frame(tkui.middle)
     self.bottom = Tkinter.Frame(tkui.bottom)
+    def print_url(url):
+      print "URL ", url
     self._txt = _tkui.ScrolledANSI(tkui._txt,
+                                   open_url_command=print_url,
                                    transfer_events_to=tkui._entry,
                                    transfer_focus_to=tkui._entry,
                                   )
+    self._txt.bind('<Configure>', self.scroller_grew)
     self.user_opts = None # standard spot for people to store an options object
     self.error_color = {'fg':'blue', 'bg':'white'}
     self.local_color = {'fg':'green', 'bg':'blue'}
+    return
+
+  def scroller_grew(self, event):
+    """ A Tk event, someone changed the size of our text widget """
+    w = event.width
+    h = event.height
+    print "scroller grew", (w, h)
+    if (self.hidden): # ignore it, we're not even visible
+      return
+    (old_w, old_h) = self.scroller_size
+    if (w != old_w or h != old_h):
+      self.scroller_size = (w, h)
+      # do pixel math to figure how many chars wide/tall we are, hope it is close enough
+      char_w = int(w / (float(self.font.measure('abcdeFGHIJ'))/10))
+      char_h = int(h / self.font.metrics()['ascent']) # unsure about this one
+      if (self.size_change):
+        self.size_change(char_w, char_h)
     return
 
   def run_this_soon(self, func):
@@ -119,12 +143,12 @@ class TkuiSession(object):
     return
   
   def _hide(self):
+    self.echo_change(self.echoing)
+    self.hidden = 1
     self.top.pack_forget()
     self.bottom.pack_forget()
     self.middle.pack_forget()
     self._txt.pack_forget()
-    self.echo_change(self.echoing)
-    self.hidden = 1
     return
 
 class Tkui(object):
@@ -147,6 +171,8 @@ class Tkui(object):
     # instantiate all the widgets
     self.__tk = Tkinter.Tk()
     self.__tk.geometry("%dx%d" % (self.__tk.maxsize()))
+    
+    print self.__tk.geometry()
 
     self.title() # punt and setup the default title
 
@@ -207,9 +233,9 @@ class Tkui(object):
                                    )
     return
 
-  def session_ui(self):
+  def session_ui(self, **opts):
     """create a new TkuiSession instance and return it"""
-    sess_ui = TkuiSession(self)
+    sess_ui = TkuiSession(self, **opts)
     return sess_ui
 
   def run_this_soon(self, func):

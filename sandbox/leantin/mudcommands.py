@@ -210,9 +210,17 @@ class ReMatchTrig(Command):
 class AreYouThere(Command):
   command = 'ayt'
   def do_command(sess, line):
-    import sock
-    ayt = sock.IAC + sock.AYT
-    sess.sock.sock.sendall("%s gl\n%s gl\n%s " % (ayt, ayt, ayt))
+    import rtelnetlib as rt
+    ayt = rt.IAC + rt.AYT
+    sess.sock.rawwrite("%s gl\n%s gl\n%s " % (ayt, ayt, ayt))
+    return
+
+class SBTest(Command):
+  command = 'sbtest'
+  def do_command(sess, line):
+    import rtelnetlib as rt
+    ayt = rt.IAC + rt.SB + rt.MCCP2 + 'asdf' + rt.IAC + rt.SE
+    sess.sock.rawwrite(ayt)
     return
 
 class TestColor(Command):

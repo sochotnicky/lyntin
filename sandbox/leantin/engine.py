@@ -24,7 +24,7 @@ class Engine(object):
     self.shutdown = libmisc.Flag()
     return
 
-  def add_session(self, sess):
+  def add_session(self, sess, msg=''):
     if (not self._default_session):
       self._default_session = sess
     else:
@@ -40,6 +40,7 @@ class Engine(object):
     # setup the UI
     self.ui.change_session(sess.ui)
     sess.ui.write('DEBUG, welcome to %s\n' % (sess.name))
+    sess.ui.write(msg)
     return
 
   def launch_ui(self, ui_cls):

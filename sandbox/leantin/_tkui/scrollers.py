@@ -6,7 +6,7 @@ for the protection of others.
 
 from Tkinter import *
 from ScrolledText import ScrolledText
-import os, tkFont
+import os, tkFont, re
 import ansi
 
 # the complete list of foreground color codes and what color they
@@ -89,6 +89,7 @@ class TkColor(ansi.ANSIColor):
       format.append(str(bg))
 
     return tuple(format)
+    
   def __str__(self):
     """We don't have a good string representation, so use a repr of our value"""
     return repr(self.as_tuple())
@@ -110,20 +111,23 @@ class TkColor(ansi.ANSIColor):
  
 class ScrolledANSI(ScrolledText):
   """A ScrolledText widget that can handle ANSI colors"""
+  href_re = re.compile('(https?://[\w\d\.]+/?)')
 
   def __init__(self, main_ui, **opts):
     # check our options, removing them from the dict
     self.handles_other_events = opts.pop('transfer_events_to', None)
     self.gets_our_focus = opts.pop('transfer_focus_to', None)
+    self.open_url_command = opts.pop('open_url_command', None)
 
     # setup the tk call options
     # first setup our defaults
     tkdefaults = {'fg':'white', 'bg':'black', 'height':20}
     if os.name == 'posix':
-      tkdefaults['font'] = tkFont.Font(family="Courier", size=12)
+      self.font = tkFont.Font(family="Courier", size=12)
     else:
-      tkdefaults['font'] = tkFont.Font(family="Fixedsys", size=12)
+      self.font = tkFont.Font(family="Fixedsys", size=12)
     # then update from the passed in options, these will overwrite our defaults
+    tkdefaults['font'] = self.font
     tkdefaults.update(opts)
     
     ScrolledText.__init__(self, main_ui, **tkdefaults)
@@ -169,7 +173,25 @@ class ScrolledANSI(ScrolledText):
     text = text.replace("\r", "")
 
     for (color, text) in self.ansistream.parse(text):
-      self.insert('end', text, color.as_tuple())
+      # check if we are marking up URLs, and this has an url in it
+      if (self.open_url_command and self.href_re.search(text)):
+        last = 0 # where we are in text
+        for (m) in self.href_re.finditer(text):
+          pre = text[last:m.start()]
+          last = m.end()
+          self.insert('end', pre, color.as_tuple()) # non-URL text
+          url = m.group(1)
+          button = Button(self, text=url, command=lambda url=url:self.open_url_command(url),
+                          font=self.font,
+                          background=bg_color_codes[str(color.bg)],
+                          foreground=fg_color_codes[str(color.fg)],
+                          height=1, pady=0, padx=0,
+                         )
+          self.window_create(INSERT, window=button) # clickable URL text
+        # end for
+        self.insert('end', text[last:], color.as_tuple()) # text after last URL
+      else: # just print it
+        self.insert('end', text, color.as_tuple())
       
     self._clipText()
     self._yadjust()

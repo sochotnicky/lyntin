@@ -72,6 +72,12 @@ class ANSIColor(object):
     self.blink = d['blink']
     return
 
+  def copy(self):
+    cp = self.__class__()
+    for (att) in ['fg','bg','underline','bold','reverse','blink']:
+      setattr(cp, att, getattr(self, att))
+    return cp
+
   def __str__(self):
     parts = []
     if (self.bold):
@@ -127,15 +133,18 @@ class ANSIStream(object):
     for (raw_color, sometext) in self.tokenize(text):
       if (raw_color == '0'): # reset to default
         yield (self.default_color, sometext)
-        self.curr_color = self.default_color
+        self.curr_color = self.default_color.copy()
         continue
       elif (raw_color is None): # use current
         yield (self.curr_color, sometext)
         continue
-      
+
+      # else, we have a color change operation
+      # copy the default color and change the bits specified in the string
+      self.curr_color = self.default_color.copy()
+      color = self.curr_color
       apply_to_default_fg = 0
       apply_to_default_bg = 0
-      color = self.new_color()
       parts = map(int, filter(None, raw_color.split(';'))) # strip empties, then int() all the parts
       for (code) in parts:
         if code == 1:
@@ -161,20 +170,16 @@ class ANSIStream(object):
         elif 30 <= code and code<= 37: # these are foreground attributes
           if (apply_to_default_fg):
             self.default_color.fg = code
+            print "Setting FG default to ", code
           else:
             color.fg = code
         elif 40 <= code and code<= 47: # these are background attributes
           if (apply_to_default_bg):
             self.default_color.bg = code
+            print "Setting BG default to ", code
           else:
             color.bg = code
 
-      if (39 in parts or 49 in parts): # they changed the fg or bg default color
-        # this is icky, did they change anything else too?  make a best guess
-        if (str(color) != str(self.new_color())): # they set something other than default color
-          self.curr_color = color # so let's use that
-      else:
-        self.curr_color = color
       yield (color, sometext)
     # end for
     return

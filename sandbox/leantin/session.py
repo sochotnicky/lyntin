@@ -1,7 +1,7 @@
 import socket
 
 import catcher
-import sock
+import rtelnetlib, sock
 import mudcommands
 import libmisc
 import engine
@@ -25,6 +25,7 @@ class Session(object):
     self.log = None
     self.sock = None
     self.rawcatch = []
+    self.echo_change = None
     self.__lb = libmisc.LineBuffer(prompt=self.prompt)
 
   def from_mud(self):
@@ -36,14 +37,15 @@ class Session(object):
         txt = self.sock.read()
         if (not txt):
           continue
-      except socket.timeout:
+      except (rtelnetlib.ReadException):
         # we didn't get a newline we were hoping for
         # assume we are looking at a prompt and paint the pending line anyway
         if (self.__lb.pending):
           self.ui.write_prompt_text(self.__lb.pending)
           self.__lb.pending = ''
         continue
-      except: # bad things, just get out
+      except Exception, e: # bad things, just get out
+        print "BAD THINGS", str(e)
         self.shutdown.flag_true()
         continue # finishes the tread
 
@@ -78,7 +80,7 @@ class Session(object):
           self.log.write('%' + final_text)
       else:
         self.ui.write("# WARNING, output ignored.  You aren't attached to anything\n")
-        print self.sock, self.sock.shutdown and 1
+        print self.sock, self.sock and self.sock.shutdown and 1
     return
 
 class Connect(mudcommands.Command):
@@ -102,14 +104,19 @@ class Connect(mudcommands.Command):
       prompt = None
       
     sess = Session(name=arg, prompt=prompt)
-    sess.ui = engine.Engine().ui.session_ui()
     sess.shutdown = libmisc.Flag()
     sess.ocatch = catcher.CatchQueue()
+    sess.ui = engine.Engine().ui.session_ui()
+    msg = ''
     if (arg != '_default'):
       sess.sock = sock.Sock(info.mud_class.host, info.mud_class.port,
-                            timeout=0.3,
+                            recv_timeout=0.3,
+                            prompt_on_timeout=1,
                             shutdown=sess.shutdown,
-                            echo_callback=sess.ui.echo_change)
+                            echo_callback=sess.ui.echo_change,
+                           )
+      sess.ui.size_change = sess.sock.update_size
+      msg = 'Connected to %s %d\n' % (info.mud_class.host, info.mud_class.port)
       sess.timecron = libmisc.Cron()
       sess.turncron = libmisc.Cron()
       sess.icatch = catcher.CatchQueue()
@@ -125,8 +132,8 @@ class Connect(mudcommands.Command):
       if (info.log_dir):
         libmisc.ensure_path_built(info.log_dir)
         sess.log = open('%s/%s.log' % (info.log_dir, info.name), 'a+')
-    
-    engine.Engine().add_session(sess)
+
+    engine.Engine().add_session(sess, msg)
     if (info is not None):
       info.ui_init(sess.ui)
     return
