@@ -6,3 +6,4 @@ include HACKING
 include LICENSE
 recursive-include lyntin *.py
 include scripts/*
+include tools/*

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.15 2003/10/25 18:40:57 willhelm Exp $
+# $Id: net.py,v 1.16 2003/10/26 16:07:54 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -87,7 +87,7 @@ X{net_write_data_filter}::
    dataadj - the data the previous function in the hook returned
 
 
-X{net_handle_telnet_option}:
+X{net_handle_telnet_option}::
 
    There are a series of Telnet options that Lyntin doesn't handle.
    So we allow module writers to handle them if they so desire.

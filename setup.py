@@ -21,7 +21,7 @@ setup(name="lyntin",
       license=LICENSE,
       url=URL,
       scripts=SCRIPTS,
-      packages=['lyntin', 'lyntin.modules', 'lyntin.ui', 'lyntin.errata'],
+      packages=['lyntin', 'lyntin.modules', 'lyntin.ui', 'tools'],
       long_description=
 """Lyntin is a mud client framework written in Python which allows for 
 plugins, different user interfaces, and the use of Python on the command 
