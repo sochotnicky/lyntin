@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.5 2004/01/27 16:33:19 willhelm Exp $
+# $Id: helpmanager.py,v 1.6 2004/04/12 14:03:29 willhelm Exp $
 #######################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
@@ -81,8 +81,8 @@ class HelpManager(manager.Manager):
 
     directives, helptext = _parse_directives(helptext)
 
-    if not categorylist and directives.has_key("category"):
-      categorylist = directives["category"].split(".")
+    if directives.has_key("category"):
+      categorylist = directives["category"].split(".") + categorylist
 
     place = self._help_tree
     for mem in categorylist:
