@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manual.py,v 1.3 2003/10/25 18:40:57 willhelm Exp $
+# $Id: manual.py,v 1.4 2004/02/10 21:20:35 jmberne Exp $
 #######################################################################
 """
 This module holds the README manual text.
@@ -172,8 +172,8 @@ Examples:
 1. #action {$Myvar} {woo} 
 
 Will trigger whenever the value Myvar holds when this is entered 
-(the original value of Myvar - it will not change if Myvar's 
-value changes)
+passes by (the original value of Myvar - it will not change if 
+Myvar's value changes)
 
 2. #action {$$Myvar} {woo}
 
