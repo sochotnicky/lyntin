@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.2 2003/08/01 00:14:52 willhelm Exp $
+# $Id: base.py,v 1.3 2003/08/01 00:29:41 willhelm Exp $
 #######################################################################
 """
 Holds the ui components in lyntin as well as the Message
@@ -36,7 +36,7 @@ class BaseUI:
     import lyntin.exported
     lyntin.exported.hook_register("shutdown_hook", self.shutdown)
 
-  def startui(self):
+  def startui(self, args):
     """
     Initializes your user interface.  It's best to do all your 
     initialization logic in startui including the call to start w

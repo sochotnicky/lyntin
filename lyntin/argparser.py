@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: argparser.py,v 1.2 2003/05/27 02:06:38 willhelm Exp $
+# $Id: argparser.py,v 1.3 2003/08/01 00:29:41 willhelm Exp $
 #######################################################################
 """
 This provides the ArgumentParser class which parses X{command argument}s
@@ -918,7 +918,7 @@ class ChoiceChecker(TypeChecker):
       raise ParserException("TypeArgs (%s) not specified for %s type - must allow at least one choice." % (typeargs, typename) )
     self._choices = typeargs.split("|")
 
-  def check(self, args):
+  def check(self, arg):
     """
     Checks the arg against a series of choices that were presented
     when this checker was instantiated.  So you could say that valid
@@ -926,11 +926,8 @@ class ChoiceChecker(TypeChecker):
     value the user passed in was "blue", then we would raise a 
     ParserException since that's not a valid value.
 
-    @param args: the argument
-    @type  args: string
-
-    @returns: the choice
-    @rtype: int
+    @param arg: the argument
+    @type  arg: string
 
     @raise ParserException: if the arg is not a valid choice
     """

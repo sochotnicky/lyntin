@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.4 2003/08/01 00:14:52 willhelm Exp $
+# $Id: exported.py,v 1.5 2003/08/01 00:29:41 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -494,9 +494,9 @@ def filter_mapper(x, y):
   Each filter function will get a map with at least the following keys when 
   it is called:
 
-    session - the session
-    data - the original data
-    dataadj - the adjusted data
+    - session - the session
+    - data - the original data
+    - dataadj - the adjusted data
   """
   if y != None:
     x["dataadj"] = y
