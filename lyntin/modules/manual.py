@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manual.py,v 1.2 2003/10/04 23:40:20 willhelm Exp $
+# $Id: manual.py,v 1.3 2003/10/25 18:40:57 willhelm Exp $
 #######################################################################
 """
 This module holds the README manual text.
@@ -12,9 +12,9 @@ This module holds the README manual text.
 from lyntin import exported
 
 bugs = """
-Lyntin was originally written by Lyn Headley.  Lyntin is 
-currently being maintained by Will Guaraldi, 
-willhelm@users.sourceforge.net as of 1.3.2.
+Lyntin was originally written by Lyn Headley.  Lyntin is currently 
+being maintained by Will Guaraldi (willhelm@users.sourceforge.net) 
+as of 1.3.2.
 
 We appreciate ALL types of feedback.
 
@@ -44,27 +44,46 @@ this is "#".  It can be changed with the "#config" command.  The
 command character can also do some other special things:
 
 1. You can execute commands in another session by typing the 
-   command character and then the sesion name: "#3k say hello" 
-   will say hello in the 3k session.
+   command character and then the sesion name then the command.
+   example:
+
+      #3k say hello       - will say hello in session 3k
+      #a #info            - will run the #info command in session a
 
 2. You can switch to another session by typing the command 
-   character and then the session name: "#3k" will switch to the 
-   3k session.
+   character and then the session name.  examples:
+
+      #a                  - will switch to session a (if it exists)
+      #3k                 - will switch to session 3k (if it exists)
 
 3. You can execute a command in all sessions by typing the 
-   command character then all: "#all say hello" will say hello in 
-   all sessions.
+   command character then all.  examples:
+
+      #all say hello      - will run "say hello" in all sessions
 
 4. You can execute a command a number of times by typing the 
-   command character then a number, then the command: 
-   "#5 say hello" will send "say hello" to the current session 
-   5 times.
+   command character then a number, then the command.  examples:
+
+      #5 say hello        - will run "say hello" 5 times
+      
 
 Commands are separated by the semicolon.  Semicolons can be 
-escaped with the \ character.
+escaped with the \ character.  examples:
+
+   say hello;wave         - will run "say hello" then "wave"
+   say hi!  \;)           - will run "say hi!  ;)"
 
 Command arguments can be enclosed with { }.  This enables you to 
-specify arguments that have multiple words in them.
+specify arguments that have multiple words in them.  exaples:
+
+   #alias a b             - executes #alias with args "a" and "b"
+   #alias {a} {b}         - executes #alias with args "a" and "b"
+   #alias {a} {say hi}    - executes #alias with args "a" and "say hi"
+   #alias a say hi        - executes #alias with args "a", "say", 
+                            and "hi" which will kick up an error
+                            (since the #alias command doesn't accept
+                            a third string argument)
+
 
 {, } and \ can all be escaped with the \ character: \{, \}, and \\.
 
@@ -75,15 +94,15 @@ contribute = """
 Development and maintenance is entirely managed by the maintainer 
 right now.  If you're interested in sending in bug fixes, please 
 feel welcome.  I'm extremely accomodating to most methods of 
-sending in patches, however a diff -u output file is great for 
-this sort of thing.
+sending in patches, however a diff -u against the code in cvs is
+great for this sort of thing.
 
 All patches and such things should be sent to the mailing list at:
 
    lyntin-devl@lists.sourceforge.net
 
-Note: Patches will not be applied unless the author either yields 
-the copyright to the FSF or to us (and then we'll yield it to the 
+NOTE: Patches will not be applied unless the author either yields 
+the copyright to the FSF or to me (and then I'll yield it to the 
 FSF).
 
 Please read through the web-site areas on coding conventions and 
@@ -97,16 +116,16 @@ The latest release of Lyntin is always available from:
 
    http://lyntin.sourceforge.net/
 
-under Download.  We also have snapshots of what's in CVS under
-Development.
+in the "download" section.  We also have snapshots of what's in CVS 
+in the "development" section.
 
 There are very few developers working on Lyntin, but we turn
-around bugs in very short periods of time.  Issues are tracked
-via the Sourceforge bug-tracker or through email.  If you have
-problems, feel free to submit a bug report--please include as
-much information as you can so we can reproduce and then fix
-the bug.  If you want to fix it yourself, please do!  Feel free
-to send in patches.
+around emails in very short periods of time.  Issues/bugs are
+tracked by me by hand since the Sourceforge trackers _suck_.
+
+When communicating bugs or feature requests INCLUDE AS MUCH 
+INFORMATION AS POSSIBLE.  If you don't, I'll just ask you for
+it anyhow.
 
 In-game help is accessed by typing ``#help``.  When you start 
 Lyntin for the first time, type ``#help general`` and that'll 
@@ -126,9 +145,16 @@ the Tintin variable evaluation did not provide for.
     evaluated/expanded.  One layer of $s or %s is then stripped 
     off when this evaluation occurs.
 
+  * Variables are matched by length of name.  So if you have two
+    variables "a" and "ab", we'll test to see if the variable is
+    "ab" before "a".  We also handle bracing of variable names
+    like ${a} and ${ab} which will guarantee unambiguosity.
+
   * Variable expansion is always done on user input before 
     commands are evaluted.  This means variables can be used as 
-    arguments to any commands, etc.
+    arguments to any commands, etc.  It also means that if you
+    want the variable actually in the command, you have to prepend
+    another $.
 
   * Variable expansion happens again when certain expressions are
     evaluated, such as action triggers, alias expansion, etc.
@@ -172,28 +198,15 @@ time of expansion.
 
 Will bind hello to expand to the literal string "$moo"
 
-category: readme
-"""
+7. #alias {hello} {$${moo}}
 
-examples = """
-Examples of commands in Lyntin::
-
-   say hello
-   get all;put all in chest
-   #3k {get all;put all in chest}
-   #alias gg {get all;put all in chest}
-   #alias gg {get all;put all in chest} quiet={true}
-   #alias k {kill %1;follow %1;#action {pummels you} {%2}}
-   #3k {say you people are irritating;#zap}
-   #5 {get all from chest;donate all}
-   say you rock!  \;)
+Will bind hello to expand to moo's current value at the time of
+expansion.
 
 category: readme
 """
 
 general = """
-"lyntin.py --help" lists command line arguments and what they do.
-
 Type "#help help" for help on how to use the in-game help system.
 
 Read through the "#help readme" topics.  These will help as they 
@@ -231,7 +244,9 @@ All the documentation comes with Lyntin and is also available on
 the Lyntin website in HTML form.  If you find problems with the 
 documentation or have fixes for it, let us know.
 
-Lyntin has a series of command line flags which change its behavior.
+You can use a config file to configure Lyntin at startup.  Alternatively
+you can edit the startup script and embed the boot options which
+get passed into the lyntin.engine.main function.
 
 category: readme
 """
@@ -305,6 +320,13 @@ regular expression.
 
 The second one gets compiled without being escaped.
 
+If you want to pass an "ignorecase" flag, do so after the end
+]:
+
+  #highlight {red} {r[krynor]i}
+
+will highlight all instances of "krynor" (ignoring case) as red.
+
 For regular expression documentation, refer to the Python 
 documentation at:
 
@@ -349,7 +371,6 @@ def load():
   exported.add_help("contribute", contribute)
   exported.add_help("errata", errata)
   exported.add_help("evaluation", evaluation)
-  exported.add_help("examples", examples)
   exported.add_help("general", general)
   exported.add_help("gettingstarted", gettingstarted)
   exported.add_help("osnotes", osnotes)

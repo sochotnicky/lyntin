@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.14 2003/10/18 16:39:30 willhelm Exp $
+# $Id: net.py,v 1.15 2003/10/25 18:40:57 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -344,8 +344,8 @@ class SocketCommunicator:
     readers, e, w = select.select([self._sock], [], [], .2)
     if readers:
       return readers[0].recv(1024)
-    else:
-      return None
+
+    return None
 
   def _filterIncomingData(self, data):
     """
