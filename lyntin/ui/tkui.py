@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.3 2003/06/08 14:40:56 willhelm Exp $
+# $Id: tkui.py,v 1.4 2003/07/09 13:16:30 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -541,7 +541,10 @@ class CommandEntry(Entry):
       self._partk.handleinput(action)
       return 1
     else:
-      exported.write_error("%s is currently not bound to anything." % binding)
+      # we're commenting this out since it seems to be more annoying
+      # than useful.  it's not a good substitute for good documentation
+      # for the tkui.
+      # exported.write_error("%s is currently not bound to anything." % binding)
       return 0
 
   def callBinding(self, tkevent):

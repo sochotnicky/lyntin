@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.4 2003/06/13 14:58:25 willhelm Exp $
+# $Id: tintincmds.py,v 1.5 2003/07/09 13:16:30 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, __init__, exported, event
@@ -619,16 +619,24 @@ commands_dict["write"] = (write_cmd, "file quiet:boolean=false")
 
 def zap_cmd(ses, args, input):
   """
-  This disconnects from the mud and closes the session.
+  This disconnects from the mud and closes the session.  If no
+  session is specified, it will close the current session.
 
   category: commands
   """
+  sesname = args["session"]
+  if sesname:
+    ses = exported.get_engine().getSession(sesname)
+    if ses == None:
+      exported.write_error("zap: session %s does not exist." % sesname)
+      return
+
   if exported.get_engine().closeSession(ses):
     exported.write_message("zap: session %s zapped!" % ses.getName())
   else:
     exported.write_message("zap: session %s cannot be zapped!" % ses.getName())
 
-commands_dict["zap"] = (zap_cmd, "")
+commands_dict["zap"] = (zap_cmd, "session=")
 
 
 def load():
