@@ -1,0 +1,20 @@
+--------------------
+ERRATA README
+--------------------
+
+This directory will contain a series of scripts and other helper 
+tools that can be used for Lyntin development and use.  Nothing
+in this directory is even remotely supported.
+
+Contents:
+
+testserver.py
+    Neil's Pub is a small mini-mud capable of allowing multiple
+    people to log on and do basic things.  It allows us to test
+    various things without connecting to a real mud and possibly
+    messing things up.  It's also another reason why Lyntin is
+    so cool--you get your own mini-mud along with your mud 
+    client!
+
+unittest.py
+    Unit tests for the standalone functions in lyntin.utils.

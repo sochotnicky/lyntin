@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.11 2003/10/04 19:14:34 willhelm Exp $
+# $Id: exported.py,v 1.12 2003/10/07 00:50:42 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -53,6 +53,20 @@ def lyntin_command(text, internal=0, session=None):
   """
   The best way of executing a Lyntin command as if the user had typed it.
 
+  This executes "#help", doesn't create an entry in the history, and
+  doesn't spam the from_user_hook::
+
+    from lyntin.exported import lyntin_command
+    lyntin_command("#help", internal=1, session=None)
+
+  This executes "#action {killing blow} {reclaim}", creates an entry
+  in the history, spams the from_user_hook, and does it in the session
+  named "a"::
+
+    from lyntin.exported import lyntin_command, get_session
+    lyntin_command("#action {killing blow} {reclaim}", internal=0, session=get_session("a"))
+
+
   @param text: the command to execute.  ex. "#help"
   @type  text: string
 
@@ -72,7 +86,49 @@ def lyntin_command(text, internal=0, session=None):
 
 def add_command(cmd, func, arguments=None, argoptions=None, helptext=""):
   """
-  The best way to add commands to Lyntin.
+  This function allows you to add additional commands to Lyntin.
+  Note, if you add a command that has the same name as an existing
+  command, we'll first remove the existing command and then add
+  the new command (this is done in the CommandManager).
+
+  If you add a E{^} to the beginning of the command name, then the user
+  has to type the entire command name for it to kick off.  For
+  example, if I specified "E{^}end", then the user has to type "#end"
+  to execute that command.  If I had specified "end", then the user
+  could type "e", "en", or "end".
+
+  If you don't specify helptext and the function has a doc_string,
+  then we'll pull the helptext from the function's doc_string.
+
+  This creates a basic command that has no arguments or argoptions
+  and adds it to the CommandManager::
+
+    import os
+    from lyntin.exported import add_command
+
+    ht = "This command does an os.system("who") to let you see " + \
+         "who's online\\nright now."
+
+    def who_cmd(ses, args, input):
+      os.system("who")
+
+    add_command("who", who_cmd, "", None, ht)
+
+
+  Same thing, but the help text is in the doc_string of the command::
+
+    import os
+    from lyntin.exported import add_command
+
+    def who_cmd(ses, args, input):
+      \"\"\"
+      This command does an os.system("who") to let you see who's
+      online right now.
+      \"\"\"
+      os.system("who")
+
+    add_command("who", who_cmd)
+
 
   @param cmd: the command name to add.  ex. "help"
   @type  cmd: string
@@ -108,7 +164,7 @@ def remove_command(text):
 
 def get_commands():
   """
-  Returns a list of the commands currently bound.
+  Returns a list of the existing commands in Lyntin.
 
   @return: the list of commands currently registered with Lyntin
   @rtype: list of strings
@@ -118,6 +174,21 @@ def get_commands():
 def add_manager(name, mgr):
   """
   Registers a manager with the engine.
+
+  example of usage::
+
+     from lyntin.exported import add_manager
+     from lyntin import manager
+
+     class MyManager(manager.Manager):
+       def __init__(self):
+         pass
+
+     add_manager("mymanager", MyManager)
+
+
+  Managers are pretty straightforward especially considering that
+  Lyntin makes great use of them so there are lots of examples.
 
   @param name: the name of the manager to register with Lyntin
   @type  name: string
@@ -156,6 +227,21 @@ def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
   Gets a value for a config item.  If the default value is
   not specified, then it will raise a ValueError.
 
+  This gets the snoopdefault config value.  Since we're not
+  specifying a session, it'll get the global one::
+
+     from lyntin.exported import get_config
+
+     snoopdefault = get_config("snoopdefault", defaultvalue=0)
+
+
+  This gets the ignoreactions setting for the session named "a"::
+
+     from lyntin.exported import get_config, get_session
+
+     ia = get_config("ignoreactions", get_session("a"), defaultvalue=0)
+
+
   @param name: the name of the item to retrieve the value of
   @type  name: string
 
@@ -171,7 +257,19 @@ def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
 
 def add_config(name, configitem, ses=None):
   """
-  Adds a new configuration item.
+  Adds a new configuration item.  Configuration items allow you to
+  present the user with options that they can change which control
+  the behavior of your module.  Examples of this abound in Lyntin.
+
+  Here we create a boolean config item to control whether we're
+  ignoring actions or not for the session named "a"::
+
+    from lyntin import config
+    from lyntin.exported import add_config
+
+    tc = config.BoolConfig("ignoreactions", 0, 1, "Allows you to turn off action handling")
+    add_config("ignoreactions", tc, get_session("a"))
+   
 
   @param name: the name of the item
   @type  name: string
@@ -207,6 +305,11 @@ def add_help(fqn, helptext):
   """
   Adds a help topic to the structure.  See the helpmanager documentation
   for more details as to what the helptext should look like.
+
+  Note: If you're building commands, the add_command function allows you
+  to pass in help text for the command.  If you don't pass in help text
+  and the command function has a doc_string, then we'll try to 
+  extract the help text from the doc_string.
 
   @param fqn: a . delmited string of categories ending
       with a help name
@@ -330,7 +433,9 @@ def get_num_errors():
 def set_num_errors(num):
   """
   Sets the number of errors Lyntin has had thus far.  Do be careful
-  when setting this because Lyntin keeps track of errors for a reason.
+  when setting this because Lyntin keeps track of errors for the 
+  purposes of shutting down the client in case we get into a runaway
+  exception loop.
 
   @param num: the number of errors to set
   @type  num: int
@@ -519,7 +624,8 @@ def hook_unregister(hookname, func):
   if engine._hooks.has_key(hookname):
     engine._hooks[hookname].remove(func)
 
-def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x, emptyfunc=lambda x:x, donefunc=lambda x:x):
+def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x, 
+      emptyfunc=lambda x:x, donefunc=lambda x:x):
   """
   Sends out input to all the registrants of a hook.
 
