@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.10 2003/09/18 23:18:05 willhelm Exp $
+# $Id: variable.py,v 1.11 2003/10/04 18:08:08 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -386,7 +386,11 @@ def variable_cmd(ses, args, input):
 
   Variables can later be accessed via the variable character
   (which defaults to $) and the variable name.  In the case of the
-  above, the variable name would be $hps.
+  above, the variable name would be $hps.  
+
+  We also handle braced closures for denoting variables like ${hps}.  
+  If you have a variable hps and a variable hpset, you can explicitly
+  specify which one using { }.
 
   There are also system variables $HOME, $TIMESTAMP, $LOGTIMESTAMP,
   and $DATADIR (must be upper-cased) and global variables.  To set 
@@ -397,6 +401,7 @@ def variable_cmd(ses, args, input):
     #variable {_fun} {happy fun ball}
     #showme $_fun
     #showme $TIMESTAMP
+    #showme ${TIMESTAMP}
 
   category: commands
   """

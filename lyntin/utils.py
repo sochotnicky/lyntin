@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
+# $Id: utils.py,v 1.8 2003/10/04 18:08:08 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -24,9 +24,6 @@ TIME_REGEXP3=re.compile(r"^(?P<hour>0|1[3-9]|2[0-3]):(?P<minute>[0-5][0-9])(:(?P
 
 # for finding %... variables
 PVAR_REGEXP = re.compile(r'%+(-?(\d+):?-?(\d*)|:-?(\d+))')
-
-# for finding $... variables
-DVAR_REGEXP = re.compile(r'\$+(-?(\d+):?-?(\d*)|:-?(\d+))')
 
 class PriorityQueue:
   """
@@ -899,12 +896,34 @@ def expand_vars(text, varmap):
         j += 1
  
       if ccount == 1:
-        textfragment = text[j:]
-        for mem in varmapkeys:
-          if textfragment.find(mem) == 0:
-            repl = str(varmap[mem])
-            text = text[:i] + repl + text[i+len(mem)+ccount:]
+        closure = -1
+
+        # if we're looking at a variable in the form of ${blah} then
+        # we have this wonderful set of closures to play with.
+        if text[j] == "{":
+          closure = text.find("}", j)
+          # if we didn't find a closure, then we set it to the end of
+          # the text.
+          if closure == -1:
+            closure = len(text)-1
+
+          # we found a { and a }, so the textfragment exists between
+          # them.
+          textfragment = text[j+1:closure]
+
+          if textfragment in varmapkeys:
+            repl = str(varmap[textfragment])
+            text = text[:i] + repl + text[closure+1:]
             break
+
+        else:
+          textfragment = text[j:]
+
+          for mem in varmapkeys:
+            if textfragment.find(mem) == 0:
+              repl = str(varmap[mem])
+              text = text[:i] + repl + text[i+len(mem)+ccount:]
+              break
       else:
         i += ccount
 
