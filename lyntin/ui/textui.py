@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.8 2003/10/18 16:39:30 willhelm Exp $
+# $Id: textui.py,v 1.9 2004/04/06 14:05:43 glasssnake Exp $
 #######################################################################
 """
 Holds the text ui class.
@@ -71,6 +71,10 @@ class Textui(base.BaseUI):
     self._rline = 0
     self._echo = 1
 
+    # grab the stdin stream at once,
+    # enabling it's further redirection by another module
+    self._stdin = sys.stdin
+
   def runui(self):
     global HELP_TEXT
     exported.add_help("textui", HELP_TEXT)
@@ -84,8 +88,7 @@ class Textui(base.BaseUI):
       self._tio = 0
     else:
       self._tio = 1
-      stdinfd = sys.stdin.fileno()
-      echonew = termios.tcgetattr(stdinfd)
+      echonew = termios.tcgetattr(self._stdin.fileno())
       self._onecho_attr = echonew[3]
       self._offecho_attr = echonew[3] & ~termios.ECHO
 
@@ -126,7 +129,7 @@ class Textui(base.BaseUI):
     """ Turns on echo if termios module is present."""
     if self._tio == 0 or self._rline == 1:
       return
-    fd = sys.stdin.fileno()
+    fd = self._stdin.fileno()
     new = termios.tcgetattr(fd)
     new[3] = self._onecho_attr
     try:
@@ -140,7 +143,7 @@ class Textui(base.BaseUI):
     if self._tio == 0 or self._rline == 1:
       return
 
-    fd = sys.stdin.fileno()
+    fd = self._stdin.fileno()
     new = termios.tcgetattr(fd)
     new[3] = self._offecho_attr
     try:
@@ -182,7 +185,7 @@ class Textui(base.BaseUI):
     If the os is posix and there is no readline module, then we
     use sys.stdin.readline().
     """
-    readers,w,e = select.select([sys.stdin], [], [])
+    readers,w,e = select.select([self._stdin], [], [])
     if readers:
       for mem in readers:
         try:
@@ -191,7 +194,7 @@ class Textui(base.BaseUI):
           pass
 
   def _non_posix_input(self):
-    return sys.stdin.readline()
+    return self._stdin.readline()
 
   def run(self):
     """ This is the poll loop for user input."""

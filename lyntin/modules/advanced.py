@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: advanced.py,v 1.5 2004/04/03 21:07:05 glasssnake Exp $
+# $Id: advanced.py,v 1.6 2004/04/06 14:05:41 glasssnake Exp $
 #######################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -77,7 +77,6 @@ def python_cmd(ses, words, input):
     else:
       if execdictglobals == None:
         execdictglobals = {}
-        exported.write_error("No lyntinuser module loaded--executing in advanced.py.")
       dictglobals = execdictglobals
 
     source = input[1:].lstrip()
