@@ -332,9 +332,22 @@ class inputbox:
     # current index in string
     self.curx_ = len(string)
     
+    self.completer_ = exported.get_manager("completion")
+
     # self.startx_ = 0
     self.attach(win)
+    self._reset()
+
+
+  def _reset(self):
     self.history_ = []   # history search buffer
+    if self.completer_:
+      self.completer_.reset()
+
+  def get_completion(self, text, position):
+    if self.completer_:
+      return self.completer_.get_completion(text, position)
+    return (text, position)  
 
   def attach(self, window):
     self.window_ = window
@@ -374,31 +387,41 @@ class inputbox:
       self.string_ = self.string_[:self.curx_]+chr(ch)+self.string_[self.curx_:]
       self.curx_ += 1
       self._align(1)
-      self.history_ = []
+      self._reset()
     elif ch in (ascii.BS, ascii.DEL, curses.KEY_BACKSPACE):
       if self.curx_ > 0:
         self.curx_ -= 1
         self.string_ = self.string_[0:self.curx_] + self.string_[self.curx_+1:]
         self._align(1)
-      self.history_ = []
+      self._reset()  
+    elif ch == ascii.HT:
+      newtext, newposition = self.get_completion(self.string_, self.curx_)
+      self.set(newtext)
+      self.curx_ = newposition
+      self._align(1)
     elif ch in (ascii.SOH, curses.KEY_HOME): # ^a
       self.curx_ = 0
       self._align()
+      self._reset()  
     elif ch in (ascii.STX, curses.KEY_LEFT): # ^b    
       if self.curx_ > 0:
         self.curx_ -= 1
         self._align()
+      self._reset()  
     elif ch in (ascii.ACK, curses.KEY_RIGHT): # ^f
       if self.curx_ < len(self.string_):
         self.curx_ += 1
         self._align()
+      self._reset()  
     elif ch in (ascii.EOT, curses.KEY_DC): # ^d
       if self.curx_ < len(self.string_):
         self.string_ = self.string_[0:self.curx_] + self.string_[self.curx_+1:]
         self._align(1)
+      self._reset()  
     elif ch in (ascii.ENQ, curses.KEY_END): # ^e
       self.curx_ = len(self.string_)
       self._align()
+      self._reset()  
     elif ch in (ascii.DLE, curses.KEY_UP): # ^p
       #
       # search the history back
@@ -424,7 +447,7 @@ class inputbox:
       #
       # Kill the line, reset the history search
       #
-      self.history_ = []
+      self._reset()
       self.set("")
 
     # elif ch in (ascii.DLE,): # ^r
@@ -434,7 +457,7 @@ class inputbox:
       #
       # reset the history search
       #
-      self.history_ = []
+      self._reset()
 
     # elif ch == curses.KEY_RESIZE:
     #   pass
