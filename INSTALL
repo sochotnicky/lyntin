@@ -4,7 +4,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-$Id: INSTALL,v 1.5 2003/10/03 02:17:48 willhelm Exp $
+$Id: INSTALL,v 1.6 2003/11/22 21:45:42 willhelm Exp $
 
 For more up-to-date documentation, check out the web-site at:
 http://lyntin.sourceforge.net/
@@ -18,28 +18,36 @@ This document holds installation instructions for various operating
 systems as well as a series of general setup instructions for getting
 started with Lyntin.
 
+There are separate instructions for UNIX/LINUX and for WINDOWS.  Read
+the appropriate one for your system.
+
 
 UNIX/LINUX
 ==========
 
 Requirements:
 
-1. Python 2.2 (with Tkinter if you want to use the tkui) http://www.python.org/
+1. Python 2.2 (with Tkinter if you want to use the tkui) 
+   http://www.python.org/
 2. tar
 3. gzip
 
 
 Steps:
 
-Untar and unzip the client.  Then run "python setup.py install".  That'll
-install the "runlyntin" script into /usr/bin or /usr/local/bin depending 
-on how you have Python installed.  
+Untar and unzip the client.  Then run:
+
+   python setup.py install
+
+That'll install the "runlyntin" script into /usr/bin or /usr/local/bin 
+depending on how you have Python installed.  
 
 Lyntin takes both command-line options as well as a config file.  A 
 sample config file looks like this:
 
 %<------------------
 [Lyntin]
+ui:        text
 datadir:   /home/willg/ltd40
 moduledir: /home/willg/ltd40
 read:      http://www.bluesock.org/~willg/3krc
@@ -69,10 +77,14 @@ Steps:
 2. Run the installer which will install the Lyntin libraries and
    standard modules into the site-packages directory of your
    Python installation.
-3. Download the startup script.
+3. Download the startup script runlyntin.pyw from the website.
 4. Adjust the boot settings in the startup script to suit your 
    needs.
 
+
+
+If you have problems with installation, see the website on how to 
+contact us and ask questions.
 
 Good luck!
 

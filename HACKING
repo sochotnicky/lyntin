@@ -5,7 +5,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-$Id: HACKING,v 1.4 2003/09/09 02:49:10 willhelm Exp $
+$Id: HACKING,v 1.5 2003/11/22 21:45:42 willhelm Exp $
 
 For more up-to-date information, please check the web-site:
 http://lyntin.sourceforge.net/
@@ -21,7 +21,8 @@ online on the Lyntin site and is in the source code itself which comes
 with every copy of Lyntin (because it _is_ Lyntin) is where you will
 find the answers to all your questions and more!
 
-If you have questions, ask on the lyntin-devl mailing list.
+If you have questions that you can't find answers to, ask on the 
+lyntin-devl mailing list.  Details are on the website.
 
 In depth knowledge of the Python programming language is required to
 really get into Lyntin since it's all written in Python.  If you
@@ -35,10 +36,7 @@ SYNOPSIS
 
 Lyntin was built for the hacker mudder.  This is a special breed of
 person who muds and has a series of complex problems they want to
-solve and mere aliases and triggers just aren't going to do the trick.
-
-(At this point I should mention that I also use Lyntin to debug
-applications that use ASCII-oriented protocols like HTTP.)
+solve that aliases and triggers aren't going solve.
 
 Tintin has a series of commands that implements a macro language.
 Building "macros" in this way is complex and solves a small set of 
@@ -102,13 +100,13 @@ The Lyntin directory structure in CVS looks like this:
     |-- lyntin/
     |     |-- ui/       -- user interfaces
     |     |-- modules/  -- Lyntin modules
-    |     |-- errata/   -- random stuff for testing and other stuff
     |
     |-- scripts/        -- holds the Lyntin startup scripts
+    |-- tools/          -- random stuff for testing and other stuff
 
-When you startup Lyntin, you'll probably specify a datadir.  I tend
-to store all my Lyntin data here (command files, session data, AIM
-history dumps...).
+When you startup Lyntin, you should specify a datadir.  I store all 
+my Lyntin data here (command files, session data, AIM history 
+dumps...).
 
 
 
@@ -132,16 +130,16 @@ The engine holds:
    * the ConfigManager
    * the HelpManager
    * the HistoryManager
-   * the list of Sessions
+   * all running Sessions
    * the user interface
-   * the hooks
+   * the hook data structures
    * a series of other managers which manage aliases, actions,
      gags, highlights, substitutes, variables and other such 
      things
 
 Managers can manage things on an engine scoping.  For example, the 
 HelpManager just has help for all of Lyntin--there's no help topics 
-that are for a specific session.
+for a specific session.
 
 Managers can also manage things on a session scoping.  For example,
 the ActionManager (in the action plugin) manages data for each 
@@ -160,9 +158,9 @@ use the exported module for accessing its own internals.  The reasons
 for this being that it gives us a centralized place for fixing behavior
 bugs.
 
-If you plan on building Lyntin modules, do use the exported API--it
-will save you much consternation when dealing with multiple Lyntin
-releases.
+If you plan on building Lyntin modules, use the exported API--it
+will save you the frustration of dealing with internal changes between
+Lyntin releases.
 
 
 
@@ -291,8 +289,7 @@ Lyntin comes with a text ui which can be used over telnet/ssh
 or in a command shell.  It also comes with a tk gui.  The tk gui
 has functionality like split history screen (pgup and pgdown),
 its own command history buffer (up and down) and numpad bindings
-(VK__NUMPAD0 through VK__NUMPAD9).  There's also a very rudimentary
-and unstable curses ui.
+(VK__NUMPAD0 through VK__NUMPAD9).
 
 Feel free to extend the ui code and send in patches.  Or even
 write your own ui based on another widget set or whatever you
@@ -319,6 +316,27 @@ hook.  Registering, unregistering, and retrieving Hooks should be
 done through the exported module.
 
 Read through the API documentation for hook documentation.
+
+
+
+CONFIGURATION
+-------------
+
+Lyntin 4.0 has a sophisticated configuration system that's composed of
+boot options which are defined in the runlyntin startup script as
+well as provided by the config.ini file you can pass in at the command
+line.
+
+In-game, configuration can be adjusted using the #config command.  The
+#config command will also tell you what configuration parameters are
+available, what the values are currently set at, and descriptions of
+what the configuration parameters do.
+
+As a module writer, you can add your own configuration parameters.
+See examples in the lyntin/modules/substitute.py module.
+
+Also see the documentation in the config module in the API as well
+as in the exported module.
 
 
 
