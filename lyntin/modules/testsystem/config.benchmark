@@ -1,0 +1,23 @@
+>>> #config
+
+Commandline:
+   datadir        /home/willg/
+   evalmode       1
+   moduledir      (None)
+   readfile       (None)
+   snoopdefault   1
+   ui             text
+Global:
+   ansicolor      on (boolean)
+   commandchar    # (char)
+   evalmode       lyntin  ("lyntin" or "tintin")
+   mudecho        on (boolean)
+   speedwalk      on (boolean)
+Session:
+   ignoreactions  off (boolean)
+   ignoresubs     off (boolean)
+   verbatim       off (boolean)
+
+>>> #config evalmode
+
+config: evalmode set to 1.

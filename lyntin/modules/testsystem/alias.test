@@ -1,0 +1,20 @@
+#clear
+#nop This is a quick test script for aliases.
+#nop === Initializing alias test
+#unalias {*}
+#nop === Building some aliases
+#alias a b
+#alias {b} {c}
+#alias {dee} {e}
+#nop === Showing all aliases
+#alias
+#nop === Showing aliases that start with d (should show 1)
+#alias {d*}
+#nop === Showing info (3 alias(es).)
+#info
+#unalias b*
+#nop === Showing info (2 alias(es).)
+#info
+#unalias *
+#nop === Showing info (0 alias(es).)
+#info

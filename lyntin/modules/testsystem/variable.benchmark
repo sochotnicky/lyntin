@@ -1,0 +1,112 @@
+>>> #clear
+
+clear: session common cleared.
+>>> #nop This is a quick test script for variables.
+
+>>> #nop === Initializing variable test
+
+>>> #unvar *
+
+unvariable: No variables removed.
+>>> #nop TEST 1: building and removing variables
+
+>>> #nop === Building some variables
+
+>>> #variable a b
+
+variable: {a}={b} added.
+>>> #variable {bcd} {dcb}
+
+variable: {bcd}={dcb} added.
+>>> #variable {efg} gfe
+
+variable: {efg}={gfe} added.
+>>> #nop === Showing all variables (include builtins)
+
+>>> #variable
+
+variables:
+#variable {a} {b}
+#variable {bcd} {dcb}
+#variable {efg} {gfe}
+>>> #nop === Attempting to expand variables.
+
+>>> #nop $TIMESTAMP - builtin
+
+>>> #nop $a (b) $bcd (dcb) $efg (gfe) \$efg (dollar sign efg)
+
+>>> #nop === Showing info (3 variable(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 3 variable(s).
+>>> #unvar g*
+
+unvariable: No variables removed.
+>>> #nop === Showing info (2 variable(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 3 variable(s).
+>>> #unvar *
+
+unvariable: {a} {b} removed.
+unvariable: {bcd} {dcb} removed.
+unvariable: {efg} {gfe} removed.
+>>> #nop === Showing info (0 variable(s).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #nop === Completed.
+
+>>> #nop TEST 2: variable expansion
+
+>>> #unvar *
+
+unvariable: No variables removed.
+>>> #var a b
+
+variable: {a}={b} added.
+>>> #nop === creates var: {a} {b}
+
+>>> #var $a c
+
+variable: {b}={c} added.
+>>> #nop === creates var: {b} {c}
+
+>>> #var a $b
+
+variable: {a}={c} added.
+>>> #nop === creates var: {a} {c}
+

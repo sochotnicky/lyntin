@@ -1,0 +1,87 @@
+>>> #clear
+
+clear: session common cleared.
+>>> #nop This is a quick test script for aliases.
+
+>>> #nop === Initializing alias test
+
+>>> #unalias {*}
+
+unalias: No aliases removed.
+>>> #nop === Building some aliases
+
+>>> #alias a b
+
+alias: {a} {b} added.
+>>> #alias {b} {c}
+
+alias: {b} {c} added.
+>>> #alias {dee} {e}
+
+alias: {dee} {e} added.
+>>> #nop === Showing all aliases
+
+>>> #alias
+
+aliases:
+#alias {a} {b}
+#alias {b} {c}
+#alias {dee} {e}
+>>> #nop === Showing aliases that start with d (should show 1)
+
+>>> #alias {d*}
+
+aliases:
+#alias {dee} {e}
+>>> #nop === Showing info (3 alias(es).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 3 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #unalias b*
+
+unalias: {b} {c} removed.
+>>> #nop === Showing info (2 alias(es).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 2 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).
+>>> #unalias *
+
+unalias: {a} {b} removed.
+unalias: {dee} {e} removed.
+>>> #nop === Showing info (0 alias(es).)
+
+>>> #info
+
+Session name: common
+   snoop: on
+   socket: None
+   action: 0 action(s).
+   alias: 0 alias(es).
+   deed: 0 deed(s).
+   highlight: 0 highlight(s).
+   logger: logging not enabled
+   speedwalk: 0 dir(s). 0 exclude(s).
+   substitute: 0 substitute(s). 0 gag(s).
+   variable: 0 variable(s).

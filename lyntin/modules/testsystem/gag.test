@@ -1,0 +1,19 @@
+#clear
+#nop This is a quick test script for gags.
+#nop === Initializing gag test
+#ungag {*}
+#nop === Building some gags
+#gag onebiggag
+#gag {gag this}
+#gag {dee}
+#gag three more gags
+#nop === Showing all gags
+#gag
+#nop === Showing info (6 gag(s).)
+#info
+#ungag g*
+#nop === Showing info (4 gag(s).)
+#info
+#ungag *
+#nop === Showing info (0 gag(s).)
+#info
