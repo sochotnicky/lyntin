@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.17 2004/03/30 00:23:22 willhelm Exp $
+# $Id: tintincmds.py,v 1.18 2004/04/06 15:44:23 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -339,6 +339,7 @@ def read_cmd(ses, args, input):
   Note: the first non-whitespace char is used to set the Lyntin
   command character.  If you use non Lyntin commands in your file,
   make sure the first one is a command char.  If not, use #nop .
+  It will skip blank lines.
 
   If you don't specify a directory, Lyntin will look for the file
   in your datadir.
@@ -363,11 +364,7 @@ def read_cmd(ses, args, input):
     exported.write_error("read: file %s cannot be opened.\n%s" % (filename, e), ses)
     return
 
-  # we want to get rid of initial blank lines and make sure
-  # the file has content in it
-  # FIXME - this could be re-written as a list comprehension
-  while len(contents) > 0 and len(contents[0].strip()) == 0:
-    contents = contents[1:]
+  contents = [m for m in contents if len(m.strip()) > 0]
 
   if len(contents) == 0:
     exported.write_message("read: %s had no data." % filename, ses)
