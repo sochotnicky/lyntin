@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: advanced.py,v 1.6 2004/04/06 14:05:41 glasssnake Exp $
+# $Id: advanced.py,v 1.7 2004/04/06 15:43:49 willhelm Exp $
 #######################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -40,9 +40,8 @@ def _get_user_module():
   # we could implement a priority.
   for mem in sys.modules.keys():
     modname = "lyntinuser"
-    if mem == modname or (len(mem) > len(modname) and mem[-1 * (len(modname) + 1):] == "." + modname):
-      usermodule = sys.modules[mem]
-      return usermodule
+    if mem == modname or mem.endswith("." + modname):
+      return sys.modules[mem]
 
   return None
 
@@ -63,8 +62,10 @@ def python_cmd(ses, words, input):
   category: commands
   """
   global execdictglobals, execdictlocals
+
   # NOTE: if we ever get to handling multiple-lines, we'll need
   # to change this function completely.
+
   try:
     if execdictlocals == None:
       execdictlocals = {}
@@ -77,6 +78,7 @@ def python_cmd(ses, words, input):
     else:
       if execdictglobals == None:
         execdictglobals = {}
+        exported.write_error("No lyntinuser module loaded--executing with no context.")
       dictglobals = execdictglobals
 
     source = input[1:].lstrip()
