@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntinunittest.py,v 1.1 2003/10/17 02:11:25 willhelm Exp $
+# $Id: lyntinunittest.py,v 1.2 2003/11/09 23:25:09 willhelm Exp $
 #######################################################################
 """
 This module uses the Python unittest framework to unittest various
@@ -152,6 +152,9 @@ class TestExpandPlacementVars(unittest.TestCase):
 class TestExpandVars(unittest.TestCase):
   varmap = {"var1": "value1", "var2": "value2", "var3": "value3"}
   t = (
+    (r"$", "$"),
+    (r" $", " $"),
+    (r"$ ", "$ "),
     (r"This has no vars.", "This has no vars."),
     (r"$var1 $var2 $var3", "value1 value2 value3"),
     (r"$var1 $$var2 \$var3", r"value1 $$var2 \$var3"),
