@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: argparser.py,v 1.4 2003/08/02 13:26:26 willhelm Exp $
+# $Id: argparser.py,v 1.5 2003/08/21 02:55:47 willhelm Exp $
 #######################################################################
 """
 This provides the ArgumentParser class which parses X{command argument}s
@@ -777,7 +777,7 @@ class BooleanChecker(TypeChecker):
     if ret == 1 or ret == 0:
       return ret
 
-    raise ParserException, "Invalid boolean value specified: %s" % (arg)
+    raise ParserException("Invalid boolean value specified: %s" % (arg))
 
 typecheckers["boolean"] = BooleanChecker
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.3 2003/08/01 00:14:52 willhelm Exp $
+# $Id: hooks.py,v 1.4 2003/08/21 02:55:47 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -213,7 +213,7 @@ class HookManager(manager.Manager):
     @type  newhook: Hook
     """
     if self._hook_map.has_key(hookname):
-      raise ValueError, "Already have a hook by that name."
+      raise ValueError("Already have a hook by that name.")
     self._hook_map[hookname] = newhook
 
 

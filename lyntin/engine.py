@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.7 2003/08/08 00:15:24 willhelm Exp $
+# $Id: engine.py,v 1.8 2003/08/21 02:55:47 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -55,6 +55,9 @@ class Engine:
     # this is the master shutdown flag for the event queue
     # handling.
     self._shutdownflag = 0
+
+    # this is the error count
+    self._errorcount = 0
 
     # listeners exist at an engine level.  if you sign up for
     # an input hook, you get the input hook for ALL sessions.
@@ -403,7 +406,7 @@ class Engine:
     @raises ValueError: if the session has a non-unique name
     """
     if self._sessions.has_key(name):
-      raise ValueError, "Session of that name already exists."
+      raise ValueError("Session of that name already exists.")
 
     commonsession = self.getSession("common")
     for mem in self._managers.values():
@@ -419,7 +422,7 @@ class Engine:
     @type  ses: session.Session instance
     """
     if not self._sessions.has_key(ses.getName()):
-      raise ValueError, "No session of that name."
+      raise ValueError("No session of that name.")
 
     for mem in self._managers.values():
       try:
@@ -567,11 +570,11 @@ class Engine:
     """
     Adds one to the error count.  If we see more than 20 errors, we shutdown.
     """
-    config.errorcount = config.errorcount + 1
+    self._errorcount = self._errorcount + 1
     exported.write_error("WARNING: Unhandled error encountered (%d out of %d)." 
-                         % (config.errorcount, 20))
-    exported.hook_spam("error_occurred_hook", {"count": config.errorcount})
-    if config.errorcount > 20:
+                         % (self._errorcount, 20))
+    exported.hook_spam("error_occurred_hook", {"count": self._errorcount})
+    if self._errorcount > 20:
       exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
       sys.exit("Error count exceeded--shutting down.")
@@ -598,7 +601,7 @@ class Engine:
     data.append("   speedwalking: %d" % config.speedwalk)
     data.append("   ansicolor: %d" % config.ansicolor)
     data.append("   ticks: %d" % self._current_tick)
-    data.append("   errors: %d" % config.errorcount)
+    data.append("   errors: %d" % self._errorcount)
 
     # print info from each session
     data.append("Sessions:")
@@ -844,7 +847,7 @@ def main(defaultui="text"):
       modulename = uiname + "ui"
       uiinstance = base.get_ui(modulename)
       if not uiinstance:
-        raise ValueError, "No ui instance."
+        raise ValueError("No ui instance.")
     except Exception, e:
       print "Cannot start '%s': %s" % (uiname, e)
       traceback.print_exc()
