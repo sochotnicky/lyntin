@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.4 2003/09/02 01:20:52 willhelm Exp $
+# $Id: gag.py,v 1.5 2003/10/04 23:19:40 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
@@ -18,21 +18,20 @@ class GagData:
     self._gags = {}
     self._antigags = []
 
-  def addGag(self, item, gag):
+  def addGag(self, item):
     """
     Adds a gag to the dict.
 
     @param item: the item to gag
     @type  item: string
-
-    @param gag: the thing to gag in place of "item"
-    @type  gag: string
     """
-    self._gags[item] = gag 
+    compiled = utils.compile_regexp(item, 1)
+    self._gags[item] = compiled
 
   def addAntiGag(self, item):
     """ Adds an antigag."""
-    self._antigags.append(item)
+    if item not in self._antigags:
+      self._antigags.append(item)
 
   def clear(self):
     """
@@ -97,7 +96,9 @@ class GagData:
     @returns: list of all antigags
     @rtype: list of strings
     """
-    return self._antigags
+    listing = self._antigags[:]
+    listing.sort()
+    return listing
 
   def expand(self, text):
     """
@@ -118,14 +119,11 @@ class GagData:
           return text
 
       # check for gags
-      for mem in self._gags.keys():
-        if ansi.filter_ansi(text).find(mem) != -1:
+      for mem in self._gags.values():
+        if mem.search(ansi.filter_ansi(text)):
           tokens = ansi.split_ansi_from_text(text)
-          text = []
-          for mem in tokens:
-            if ansi.is_color_token(mem):
-              text.append(mem)
-          return "".join(text)
+          tokens = [m for m in tokens if ansi.is_color_token(m)]
+          return "".join(tokens)
 
     return text 
 
@@ -148,7 +146,7 @@ class GagData:
     if text:
       data = utils.expand_text(text, data)
 
-    data = ["gag {%s} {%s}" % (mem, utils.escape(self._gags[mem])) for mem in data]
+    data = ["gag {%s}" % mem for mem in data]
 
     return data
 
@@ -192,10 +190,10 @@ class GagManager(manager.Manager):
   def __init__(self):
     self._gags = {}
 
-  def addGag(self, ses, item, gag):
+  def addGag(self, ses, item):
     if not self._gags.has_key(ses):
       self._gags[ses] = GagData()
-    self._gags[ses].addGag(item, gag)
+    self._gags[ses].addGag(item)
 
   def addAntiGag(self, ses, item):
     if not self._gags.has_key(ses):
@@ -241,7 +239,7 @@ class GagManager(manager.Manager):
       if self._gags.has_key(basesession):
         sdata = self._gags[basesession]
         for mem in sdata._gags.keys():
-          self.addGag(newsession, mem, sdata._gags[mem])
+          self.addGag(newsession, mem)
 
   def removeSession(self, ses):
     if self._gags.has_key(ses):
@@ -331,15 +329,15 @@ def gag_cmd(ses, args, input):
   regular expression matching syntax as you see fit.
 
   As with all commands, braces get stripped off and each complete
-  argument creates a gag.  gag accepts multiple gags at once, and
-  accepts a quiet argument to supress reporting of what has been
-  gagged.  
+  argument creates a gag.  
 
   examples:
     #gag {has missed you.}    <-- will prevent any incoming line
                                   with "has missed you" to be shown.
-    #gag has missed you       <-- will gag any text with "has",
-                                  "missed", or "you"
+    #gag missed               <-- will gag lines with "missed" in them.
+    #gag {r[sven.*?dealt]i}   <-- will gag anything that matches the
+                                  regexp "sven.*?dealt" and ignore
+                                  case.
 
   category: commands
   """
@@ -353,15 +351,14 @@ def gag_cmd(ses, args, input):
     if not data:
       data = ["gag: no gags defined."]
 
-    exported.write_message("\n".join(data), ses)
+    exported.write_message("gags" + "\n" + "\n".join(data), ses)
     return
 
-  for togag in gaggedtext:
-    gm.addGag(ses, togag, ".")
-    if not quiet:
-      exported.write_message("gag: {%s} added." % togag, ses)
+  gm.addGag(ses, gaggedtext)
+  if not quiet:
+    exported.write_message("gag: {%s} added." % gaggedtext, ses)
 
-commands_dict["gag"] = (gag_cmd, "text* quiet:boolean=false")
+commands_dict["gag"] = (gag_cmd, "text= quiet:boolean=false")
 
 
 def ungag_cmd(ses, args, input):
