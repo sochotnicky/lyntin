@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
+# $Id: engine.py,v 1.6 2003/08/06 23:14:46 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -785,10 +785,7 @@ def main(defaultui="text"):
         config.options['ui'] = mem[1]
 
       elif mem[0] in ["--readfile", "--read", "-r"]:
-        if os.path.exists(mem[1]):
-          config.options['readfile'].append(mem[1])
-        else:
-          startuperrors.append("Command file '%s' does not exist." % mem[1])
+        config.options['readfile'].append(mem[1])
 
       elif mem[0] in ["--moduledir", "-m"]:
         d = config.fixdir(mem[1])
