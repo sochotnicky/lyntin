@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: argparser.py,v 1.3 2003/08/01 00:29:41 willhelm Exp $
+# $Id: argparser.py,v 1.4 2003/08/02 13:26:26 willhelm Exp $
 #######################################################################
 """
 This provides the ArgumentParser class which parses X{command argument}s
@@ -933,9 +933,9 @@ class ChoiceChecker(TypeChecker):
     """
     possibilities = []
     for item in self._choices:
-      if item.find(args) == 0:
+      if item.find(arg) == 0:
         possibilities.append(item)
-        if len(item) == len(args):
+        if len(item) == len(arg):
           return item
     if len(possibilities) == 0 or len(possibilities) > 1:
       raise ParserException, "Invalid argument, must be one of %s." % (self._choices,)
