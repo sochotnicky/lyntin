@@ -25,4 +25,7 @@ class Login(object):
   
   mud_class = mudbasic.Mud # Mud class to use for this login
   player_class = mudbasic.Player # Player class to use for this login
+
+  log_dir = None
   def ui_init(session_ui): pass
+  def sess_init(self, sess): pass
