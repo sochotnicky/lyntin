@@ -57,10 +57,10 @@ class CatchQueue(object):
   def input_many(self, lines):
     """Like input(), but never returns a value"""
     for (line) in lines:
-      self.input(line)
+      self.line(line)
     return
   
-  def input(self, line):
+  def line(self, line):
     ret = None
     action = PASS
     consume = []
@@ -91,7 +91,7 @@ class CatchQueue(object):
     else: # wasn't modified
       final = line
     if (reparse):
-      return self.input(final)
+      return self.line(final)
     else:
       return final
 
@@ -126,10 +126,13 @@ class CatchQueue(object):
       outstr += "   %s\n" % (str(ob))
     return outstr
 
-  def suicide(self):
+  def done(self):
     for (ob) in self.obs:
-      ob.suicide()
+      ob.done()
     self.prioritized_obs = []
+    def line_die(*args):
+      raise DoneEarly()
+    self.line = line_die
     return
 
 class Catcher(object):
@@ -274,7 +277,7 @@ class Catcher(object):
   def deltas(self):
     return self.data.changed_tuples()
 
-  def suicide(self):
+  def done(self):
     """arrange for ourselves to be removed at the next pass"""
     self.start = re.compile('.') # match anything
     self.expects = -1
@@ -283,7 +286,6 @@ class Catcher(object):
     self.parse = parse_die
     self.clear_callbacks()
     return
-  done = suicide
 
   def tick_tock(self):
     """put ourselves one second closer to timing out"""
@@ -295,7 +297,7 @@ class Catcher(object):
     
     self.__expire_seconds -= 1
     if (self.__expire_seconds <= 0):
-      self.suicide()
+      self.done()
     return
 
   def bump_tock(self):
@@ -308,7 +310,7 @@ class Catcher(object):
     
     self.__expire_bumps -= 1
     if (self.__expire_bumps <= 0):
-      self.suicide()
+      self.done()
     return
 
   def _peek_text(self):
@@ -448,7 +450,7 @@ def test_catch(cob, lines):
   c = CatchQueue()
   c.add(cob)
   for (line) in lines:
-    c.input(line)
+    c.line(line)
   return
 
 class Who(Catcher):
