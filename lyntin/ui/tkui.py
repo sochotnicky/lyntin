@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.17 2003/11/20 23:28:57 willhelm Exp $
+# $Id: tkui.py,v 1.18 2004/01/18 17:21:55 glasssnake Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -17,7 +17,7 @@ import os, tkFont, types, Queue
 from lyntin import ansi, event, engine, exported, utils, constants, config
 from lyntin.ui import base, message
 
-UNICODE_ENCODING = "latin-1"
+UNICODE_ENCODING = config.options.get("encoding", ["latin-1"])[0]
 
 HELP_TEXT = """The tkui uses the Tk widget set and provides a graphical interface 
 to Lyntin.  It also has the following additional functionality:
@@ -721,7 +721,7 @@ class CommandEntry(Entry):
     if self.hist_index < len(hist) - 1:
       self.hist_index = self.hist_index + 1
       self.delete(0, 'end')
-      self.insert(0, hist[self.hist_index])
+      self.insert(0, hist[self.hist_index].decode(UNICODE_ENCODING))
 
   def insertNextCommand(self, tkevent):
     """ Handles the <KeyPress-Down> event."""
@@ -731,11 +731,11 @@ class CommandEntry(Entry):
     self.hist_index = self.hist_index - 1
     if self.hist_index == -1:
       self.delete(0, 'end')
-      self.insert(0, self.current_input)
+      self.insert(0, self.current_input.decode(UNICODE_ENCODING))
             
     else:
       self.delete(0, 'end')
-      self.insert(0, hist[self.hist_index])
+      self.insert(0, hist[self.hist_index].decode(UNICODE_ENCODING))
 
 class NamedWindow:
   """
@@ -1072,7 +1072,7 @@ def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
         format.append(bg)
 
       # insert the text using the formatting tuple we just generated
-      txtbuffer.insert('end', mem, tuple(format))
+      txtbuffer.insert('end', mem.decode(UNICODE_ENCODING), tuple(format))
 
   return color, leftover
 
