@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.11 2003/10/15 02:19:02 willhelm Exp $
+# $Id: net.py,v 1.12 2003/10/15 02:28:50 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -531,23 +531,23 @@ class SocketCommunicator:
           option = data[i:i+3]
 
           self.logControl("receive: " + _cc(option))
-          if data[i+2] == ECHO:
-            if data[i+1] == WILL:
+          if option[2] == ECHO:
+            if option[1] == WILL:
               self._config.change("mudecho", "off")
-            elif data[i+1] == WONT:
+            elif option[1] == WONT:
               self._config.change("mudecho", "on")
 
-          elif data[i+2] == TERMTYPE:
-            if data[i+1] == DO:
-              self.write(IAC + WILL + data[i+2], 0)
+          elif option[2] == TERMTYPE:
+            if option[1] == DO:
+              self.write(IAC + WILL + TERMTYPE, 0)
               self.logControl("send: IAC WILL TERMTYPE")
             else:
-              self.write(IAC + WONT + data[i+2], 0)
+              self.write(IAC + WONT + TERMTYPE, 0)
               self.logControl("send: IAC WONT TERMTYPE")
 
-          elif data[i+2] == EOR:
-            if data[i+1] == WILL:
-              self.write(IAC + DO + data[i+2], 0)
+          elif option[2] == EOR:
+            if option[1] == WILL:
+              self.write(IAC + DO + EOR, 0)
               self.logControl("send: IAC DO EOR")
 
           else:
@@ -558,13 +558,13 @@ class SocketCommunicator:
             ret = exported.hook_spam("net_handle_telnet_option", args)
 
             if ret:
-              if data[i+1] in DD:
-                self.write(IAC + WONT + data[i+2], 0)
-                self.logControl("send: " + _cc(IAC + WONT + data[i+2]))
+              if option[1] in DD:
+                self.write(IAC + WONT + option[2], 0)
+                self.logControl("send: " + _cc(IAC + WONT + option[2]))
 
-              elif data[i+1] in WW:
-                self.write(IAC + DONT + data[i+2], 0)
-                self.logControl("send: " + _cc(IAC + DONT + data[i+2]))
+              elif option[1] in WW:
+                self.write(IAC + DONT + option[2], 0)
+                self.logControl("send: " + _cc(IAC + DONT + option[2]))
 
           data = data[:i] + data[i+3:]
 
@@ -576,11 +576,18 @@ class SocketCommunicator:
             marker = i
             break
 
-          self.logControl("receive: " + _cc(data[i:end+1]))
+          option = data[i:end+1]
+          self.logControl("receive: " + _cc(option))
 
-          if data[i+2] == TERMTYPE and data[i+3] == SEND:
+          if option[2] == TERMTYPE and option[3] == SEND:
             self.write(IAC + SB + TERMTYPE + IS + self._termtype + IAC + SE, 0)
             self.logControl("send: IAC SB TERMTYPE IS " + self._termtype + " IAC SE")
+          else:
+            args = {"session": self._session, "data": option}
+            # this will give us back the args (in the case that no one
+            # handled it) or None (in the case that someone handled it
+            # and raised a StopSpammingException).
+            ret = exported.hook_spam("net_handle_telnet_option", args)
 
           data = data[:i] + data[end+1:]
 
