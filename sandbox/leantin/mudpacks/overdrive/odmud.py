@@ -6,3 +6,5 @@ class ODMud(mudbasic.Mud):
 
   name_prompt = 'Enter character name:'
   pass_prompt = 'Password:'
+  prompt = '> '
+  strip_prompt = 1
