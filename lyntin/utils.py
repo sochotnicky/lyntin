@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.10 2004/01/27 21:22:41 glasssnake Exp $
+# $Id: utils.py,v 1.11 2004/04/10 19:40:10 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -39,7 +39,7 @@ class PriorityQueue:
     # whether or not our orderedlist is dirty
     self._dirty = 0
 
-  def _generateList(self):
+  def __generateList(self):
     """
     Goes through the prioritymap and generates an orderedlist.  This
     saves cycles since it puts the ordering of the list up front
@@ -103,7 +103,7 @@ class PriorityQueue:
     has been adjusted since the last time we regenerated the list.
     """
     if self._dirty == 1:
-      self._generateList()
+      self.__generateList()
     return self._orderedlist
 
   def count(self):
