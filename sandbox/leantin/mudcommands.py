@@ -2,6 +2,8 @@
 import re, gc
 import catcher, libmisc
 
+TWO_ARGS = re.compile('(.*),(.*)', re.DOTALL)
+
 class MetaCommand(type):
   all = []
   def __init__(cls, name, bases, dict):
@@ -10,6 +12,8 @@ class MetaCommand(type):
     if (not func): # must be an intermediate class
       return
     setattr(cls, 'do_command', staticmethod(func.im_func)) # don't let anyone on c.l.py see this
+    if (cls.arg_parse is not None):
+      setattr(cls, 'arg_parse_re', re.compile(cls.arg_parse))
     MetaCommand.all.append(cls)
     return
 
@@ -19,37 +23,49 @@ class CommandCatcher(catcher.Catcher):
 
   def __init__(self, *args, **opts):
     catcher.Catcher.__init__(self, *args, **opts)
-    self.do_command = None
-    self.error_msg = None
+    self.command_input = None
     return
   
   def parse(self, lines):
     text = '\n'.join(lines)
-    text = CommandCatcher.start.match(text).group(1)
+    self.command_input = text
+    return
+
+  def parse_command_input(self, extra_commands = []):
+    """valid after we've caught a command and parse() has been called.
+       if a list of extra_commands is included they will be considered
+       for running with the global commands
+    """
+    text = CommandCatcher.start.match(self.command_input).group(1)
     parts = text.split()
     name = parts[0]
     arg = ' '.join(parts[1:])
     matching = []
-    for (cmd) in MetaCommand.all:
+    for (cmd) in MetaCommand.all + extra_commands:
       if (cmd.command == name):
         matching.insert(0, cmd) # perfect matches go first
         break # and we will always use them
       elif (cmd.command.startswith(name)):
         matching.append(cmd)
 
+    self.text = None
     if (matching):
-      self.command = matching[0]
-      self.arg = arg
-    return
+      return (name, matching[0], arg)
+    else:
+      return (name, None, None)
 
   def apply_command(self, sess):
     """callback with a session that tells us to execute the last command"""
-    if (not self.command):
+    # build a list of commands private to the session/mode
+    extra_commands = sess.commands
+    if (sess.mode):
+      extra_commands += sess.mode[0].commands
+    # and check out the text from parse()
+    (name, command, arg) = self.parse_command_input(extra_commands)
+    if (not command):
       sess.ui.write("# ERROR, no command named '%s'\n" % (name))
     else:
-      self.command._do_command(sess, self.command.command, self.arg) # session, command name, arg
-    self.command = None
-    self.arg = None
+      command._do_command(sess, command.command, arg) # session, full command name, arg
     return
 
 class Command(object):
@@ -57,11 +73,15 @@ class Command(object):
   """The base Command class
   To define a command, inherit Command and define a do_command function in
   that class.  By default it will be called with one arg,"""
-  arg_parse = '.*'
-
+  arg_parse = None # defaults to whole line
+  private = 0 # defaults to globally defined
   def _do_command(cls, session, cmd, line):
     """do arg parsing here"""
-    args = [line]
+    if (cls.arg_parse is None):
+      args = [line]
+    else:
+      m = cls.arg_parse.match(cls.arg_parse)
+      args = m.groups()
     cls.do_command(session, *args)
     return
   _do_command = classmethod(_do_command)
@@ -79,8 +99,6 @@ class DefendTypeFindItem(Command):
 
 class TestDo(Command):
   command = 'tdo'
-  arg_definition = 'input='
-  arg_options = 'limitparsing=0'
   
   def do_command(sess, do_this):
     cobs = [catcher.Stats(count=2,muffle=1), catcher.Spells(count=2,muffle=1), catcher.Skills(count=2,muffle=1)]
@@ -139,8 +157,6 @@ class UnAlias(Command):
 
 class DoPath(Command):
   command = 'dp'
-  arg_definition = 'input='
-  arg_options = 'limitparsing=0'
 
   _walk_re = re.compile('(\d*)([\s\w]+)')
   last_moves = []
@@ -172,7 +188,36 @@ class Read(Command):
       return
     for (line) in fob:
       line = line.strip()
-      sess.ocatch.input(line)
+      sess.ocatch.line(line)
     return
                     
           
+class ReMatchTrig(Command):
+  command = 'rtrig'
+  arg_parse = TWO_ARGS
+
+  def do_command(sess, match_re, action):
+    class AnonCatcher(catcher.Catcher):
+      start = re.compile(match_re)
+      end = start
+    cob = AnonCatcher(listen=1)
+    def trig_func():
+      sess.to_mud(action + "\n")
+      return
+    cob.add_callback(trig_func)
+    sess.icatch.add(cob)
+
+class AreYouThere(Command):
+  command = 'ayt'
+  def do_command(sess, line):
+    import sock
+    ayt = sock.IAC + sock.AYT
+    sess.sock.sock.sendall("%s gl\n%s gl\n%s " % (ayt, ayt, ayt))
+    return
+
+class TestColor(Command):
+  command = 'testcolor'
+  def do_command(sess, line):
+    color_re = re.compile('^(\w+)\s+(\w+)')
+    (fg, bg) = color_re.match(line).groups()
+    sess.ui.write(repr((fg, bg)), fg=fg, bg=bg)
