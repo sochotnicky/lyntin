@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: logger.py,v 1.7 2004/01/02 06:40:30 glasssnake Exp $
+# $Id: logger.py,v 1.8 2004/01/18 15:19:54 glasssnake Exp $
 #######################################################################
 """
 This module defines the LoggerManager which handles logging.
@@ -249,7 +249,7 @@ class LoggerManager(manager.Manager):
 
   def tomudfilter(self, args):
     """
-    from_user_hook function for logging user input.
+    to_mud_hook function for logging user input.
     """
     session = args["session"]
     text = args["data"]
