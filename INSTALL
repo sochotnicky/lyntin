@@ -4,7 +4,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-$Id: INSTALL,v 1.4 2003/05/27 02:06:38 willhelm Exp $
+$Id: INSTALL,v 1.5 2003/10/03 02:17:48 willhelm Exp $
 
 For more up-to-date documentation, check out the web-site at:
 http://lyntin.sourceforge.net/
@@ -24,8 +24,7 @@ UNIX/LINUX
 
 Requirements:
 
-1. Python 2.2 (with Tkinter if you want to use the tkui) 
-   http://www.python.org/
+1. Python 2.2 (with Tkinter if you want to use the tkui) http://www.python.org/
 2. tar
 3. gzip
 
@@ -33,18 +32,27 @@ Requirements:
 Steps:
 
 Untar and unzip the client.  Then run "python setup.py install".  That'll
-install a "lyntin" and a "lyntintk" scripts into /usr/bin or /usr/local/bin
-depending on how you have Python installed.  Those two scripts will start
-Lyntin.
+install the "runlyntin" script into /usr/bin or /usr/local/bin depending 
+on how you have Python installed.  
 
-Lyntin takes a series of command-line options.  For a list of options 
-and explanations, run:
+Lyntin takes both command-line options as well as a config file.  A 
+sample config file looks like this:
 
-   lyntin --help
+%<------------------
+[Lyntin]
+datadir:   /home/willg/ltd40
+moduledir: /home/willg/ltd40
+read:      http://www.bluesock.org/~willg/3krc
+%<------------------
 
-The lyntintk script is exactly like running:
+To start Lyntin with the config file do this:
 
-   lyntin --ui tk
+   runlyntin -c /path/to/config.ini
+
+Lyntin takes a series of command-line options.  For a list of basic 
+options and explanations, run:
+
+   runlyntin --help
 
 
 WINDOWS
@@ -53,27 +61,17 @@ WINDOWS
 Requirements:
 
 1. Python 2.2 http://www.python.org/
-2. Winzip or some other pkzip extracting program
 
 
 Steps:
 
-1. Make sure you have at least Python 2.2
-2. Unzip the client into "c:\lyntin"
-3. Right click on lyntin.py and select "Create Shortcut"
-4. Then right click on the new shortcut and select "Properties"
-5. There are many versions of Windows and I think shortcut properties
-   differ between them.  On Win2k, I have my shortcut set up like this:
-
-   Target:    {path_to_python}\pythonw.exe c:\lyntin\lyntin.py --ui tk
-   Start in:  c:\lyntin
-   Run:       Normal window
-
-Note: {path_to_python} needs to be replaced with the actual path to
-"pythonw.exe".  So if "pythonw.exe" is in "c:\python22\bin"
-then the Target would be:
-
-   c:\python22\bin\pythonw.exe c:\lyntin\lyntin.py --ui tk
+1. Make sure you have at least Python 2.2.
+2. Run the installer which will install the Lyntin libraries and
+   standard modules into the site-packages directory of your
+   Python installation.
+3. Download the startup script.
+4. Adjust the boot settings in the startup script to suit your 
+   needs.
 
 
 Good luck!

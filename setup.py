@@ -9,9 +9,9 @@ URL = lyntin.__url__
 LICENSE = lyntin.__license__
 
 if '--format=wininst' in sys.argv:
-  SCRIPTS = ['scripts/lyntintk.pyw']
+  SCRIPTS = ['scripts/runlyntin.pyw']
 else:
-  SCRIPTS = ['scripts/lyntin', 'scripts/lyntintk']
+  SCRIPTS = ['scripts/runlyntin']
 
 setup(name="lyntin",
       version=VERSION.lower(),

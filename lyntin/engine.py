@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.17 2003/09/28 21:00:59 glasssnake Exp $
+# $Id: engine.py,v 1.18 2003/10/03 02:17:48 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -390,7 +390,7 @@ class Engine:
     historyitems = []
     commandchar = self._managers["config"].get("commandchar")
     for mem in inputlist:
-      mem = mem.strip()
+      # mem = mem.strip()
 
       if len(mem) == 0:
         mem = commandchar + "cr"

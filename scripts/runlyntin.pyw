@@ -5,11 +5,17 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntin,v 1.5 2003/09/11 00:23:53 willhelm Exp $
+# $Id: runlyntin.pyw,v 1.1 2003/10/03 02:17:48 willhelm Exp $
 #######################################################################
+bootoptions = {"ui": "tk",
+               "datadir": "",
+               "moduledir": [],
+               "readfile": [],
+               "snoopdefault": 1}
+
 if __name__ == '__main__':
   import lyntin.engine
-  lyntin.engine.main({"ui": "text"})
+  lyntin.engine.main(bootoptions)
 
 # Local variables:
 # mode:python
