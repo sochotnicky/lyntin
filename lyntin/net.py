@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: net.py,v 1.2 2003/05/17 17:52:10 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -386,9 +386,9 @@ class SocketCommunicator:
               self.logControl("send: IAC DO EOR")
 
           elif data[i+1] in DD:
-            self.logControl("receive: IAC "+CODES[ord(data[i+1])]+" "+CODES[ord(data[i+2])])
+            self.logControl("receive: IAC %d %d" % (ord(data[i+1]), ord(data[i+2])))
             self.write(IAC + WONT + data[i+2], 0)
-            self.logControl("send: IAC WONT " + CODES[ord(data[i+2])])
+            self.logControl("send: IAC WONT %d" % (ord(data[i+2])))
 
           data = data[:i] + data[i+3:]
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: engine.py,v 1.2 2003/05/17 17:52:10 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -552,7 +552,6 @@ class Engine:
     data.append("   events processed: %d" % self._num_events_processed)
     data.append("   queue size: %d" % self._event_queue.qsize())
     data.append("   ui: %s" % repr(self._ui))
-    data.append("   thread manager: %s" % repr(self.getManager("thread")))
     data.append("   speedwalking: %d" % __init__.speedwalk)
     data.append("   ansicolor: %d" % __init__.ansicolor)
     data.append("   ticks: %d" % self._current_tick)
