@@ -6,7 +6,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-Wed, 30 Apr 2003 15:00:43 +0000
+Sat, 04 Oct 2003 23:22:46 +0000
 
 For more up-to-date information and documentation, please check the 
 web-site: http://Lyntin.sourceforge.net/
@@ -45,32 +45,33 @@ escaped with the \ character.
 Command arguments can be enclosed with { }.  This enables you to 
 specify arguments that have multiple words in them.
 
-{, } and \ can all be escaped with the \ character: \{, \}, and \\.
+{, } and \ can all be escaped with the \ character: \{, \}, and \.
 
 
 
 COMMAND REFERENCE
 =================
 
-   @                load             tickwarnsize
-   action           log              unaction
-   alias            loop             unalias
-   antisubstitute   math             unantisubstitute
-   bell             nop              ungag
-   clear            raw              unhighlight
-   config           read             unload
-   cr               schedule         unschedule
-   deed             session          unsubstitute
-   diagnostics      showme           unswdir
-   end              snoop            unswexclude
-   gag              substitute       unvariable
-   grep             swdir            variable
-   help             swexclude        version
-   highlight        textin           wizlist
-   history          tick             write
-   if               tickoff          zap
-   info             tickon
-   killall          ticksize
+   @                history          tickoff
+   action           if               tickon
+   alias            info             ticksize
+   antigag          killall          tickwarnsize
+   antisubstitute   load             unaction
+   atags            log              unalias
+   bell             loop             unantigag
+   chr              math             unantisubstitute
+   clear            nop              ungag
+   config           raw              unhighlight
+   cr               read             unload
+   deed             schedule         unschedule
+   diagnostics      session          unsubstitute
+   disable          showme           unswdir
+   enable           snoop            unswexclude
+   end              substitute       unvariable
+   gag              swdir            variable
+   grep             swexclude        version
+   help             textin           write
+   highlight        tick             zap
 
 
 
@@ -91,10 +92,12 @@ COMMANDS.@
 
 COMMANDS.ACTION
 
-   syntax: #action [<TRIGGER>] [<ACTION>] [<PRIORITY:INT=5>] 
-         [<ONETIME:BOOLEAN=false>] [<QUIET:BOOLEAN=false>] 
+   syntax: #action [<TRIGGER>] [<ACTION>] [<TAG>] [<COLOR:BOOLEAN=false>] 
+         [<PRIORITY:INT=5>] [<ONETIME:BOOLEAN=false>] 
+         [<QUIET:BOOLEAN=false>] 
    
-   With no trigger and no action, prints all actions.
+   With no trigger, no action and no tag, prints all actions.
+   With no trigger and no action, prints all actions with given tag.
    With a trigger and no action, prints actions that match the
    trigger statement.
    With a trigger and an action, creates an action.
@@ -125,6 +128,8 @@ COMMANDS.ACTION
      #action {%0 gives you %5} {say thanks for the %5, %0!}
      #action {r[^%_1 tells\s+you %2$]} {say %1 just told me %2}
      #action {r[sven dealt .+? to %1$]i} {say i just killed %1!}
+   
+   see also: unaction, enable, disable, atags
 
 
 
@@ -154,6 +159,16 @@ COMMANDS.ALIAS
 
 
 
+COMMANDS.ANTIGAG
+
+   syntax: #antigag [<ITEM>] [<QUIET:BOOLEAN=false>] 
+   
+   Allows you to create antigags.
+   
+   For any line that contains an antigag, we won't do gags on it.
+
+
+
 COMMANDS.ANTISUBSTITUTE
 
    syntax: #antisubstitute [<ITEM>] [<QUIET:BOOLEAN=false>] 
@@ -161,7 +176,15 @@ COMMANDS.ANTISUBSTITUTE
    Allows you to create antisubstitutes.
    
    For any line that contains an antisubstitute, we won't do substitutions
-   or gags on it.
+   on it.
+
+
+
+COMMANDS.ATAGS
+
+   Shows all the tags available
+   
+   see also: action, unaction, enable, disable
 
 
 
@@ -169,6 +192,23 @@ COMMANDS.BELL
 
    Kicks off the bell for a given session.  Anything registered
    with the bell_hook will get tickled.
+
+
+
+COMMANDS.CHR
+
+   syntax: #chr [VAR] [ASCII:INT] [<QUIET:BOOLEAN=false>] 
+   
+   Allows you to assign arbitrary characters to variables.  For example,
+   if you wanted to assign ASCII char 7 to variable ctrlG you could
+   do:
+   
+     #chr {ctrlG} {7}
+   
+   Since this creates a variable, you should remove the variable with
+   the unvariable command.
+   
+   Note: This won't work if you don't have the variable module loaded.
 
 
 
@@ -183,9 +223,24 @@ COMMANDS.CONFIG
 
    syntax: #config [<NAME>] [<VALUE>] [<QUIET:BOOLEAN=false>] 
    
-   Allows you to set a wide variety of options, some of which are
-   session oriented and some of which are global.  Typing "#config"
-   by itself will print out all the options it knows about.
+   Allows you to view and change configuration options that affect
+   how Lyntin functions.  Configuration options can be session
+   oriented or global to all of Lyntin.
+   
+   examples: 
+     #config
+         displays global configuration and session configuration for the 
+         current session
+   
+     #a #config
+         displays global configuration and session configuration for the 
+         session named 'a'
+   
+     #config ansicolor
+         displays information about the mudecho configuration option
+   
+     #config ansicolor on
+         sets the ansicolor configuration option to on
 
 
 
@@ -235,6 +290,29 @@ COMMANDS.DIAGNOSTICS
 
 
 
+COMMANDS.DISABLE
+
+   syntax: #disable [<TAG>] [<QUIET:BOOLEAN=false>] 
+   
+   Temporarily disables all the actions with given tag, so their triggers
+   won't trigger any actions (well, this desciption is a bit obscure,
+   but I've tried my best :)
+   
+   see also: action, unaction, enable, atags
+
+
+
+COMMANDS.ENABLE
+
+   syntax: #enable [<TAG>] [<QUIET:BOOLEAN=false>] 
+   
+   Enables actions with given tag.
+   By default, all the tags are enabled.
+   
+   see also: action, unaction, disable, atags
+
+
+
 COMMANDS.END
 
    Closes all sessions and quits out of Lyntin.
@@ -248,7 +326,7 @@ COMMANDS.END
 
 COMMANDS.GAG
 
-   syntax: #gag [TEXT...] [<QUIET:BOOLEAN=false>] 
+   syntax: #gag [<TEXT>] [<QUIET:BOOLEAN=false>] 
    
    With no arguments, prints out all gags.
    With arguments, creates a gag.
@@ -260,15 +338,15 @@ COMMANDS.GAG
    regular expression matching syntax as you see fit.
    
    As with all commands, braces get stripped off and each complete
-   argument creates a gag.  gag accepts multiple gags at once, and
-   accepts a quiet argument to supress reporting of what has been
-   gagged.  
+   argument creates a gag.  
    
    examples:
      #gag {has missed you.}    <-- will prevent any incoming line
                                    with "has missed you" to be shown.
-     #gag has missed you       <-- will gag any text with "has",
-                                   "missed", or "you"
+     #gag missed               <-- will gag lines with "missed" in them.
+     #gag {r[sven.*?dealt]i}   <-- will gag anything that matches the
+                                   regexp "sven.*?dealt" and ignore
+                                   case.
 
 
 
@@ -385,14 +463,21 @@ COMMANDS.IF
    
    Allows you to do some boolean logic based on Lyntin variables
    or any Python expression.  If this expression returns a non-false
-   value, then the action will be performed.
-   
-   Strings should be in single quotes:
+   value, then the action will be performed otherwise the elseaction
+   (if there is one) will be peformed.
    
    examples:
      #if {$myhpvar < 100} {#showme PANIC!}
      #if {$myhpvar < 100 && $myspvar < 100} {#showme PANIC!}
      #if {'$name' == 'Joe'} {#showme That joe is a jerk.}
+   
+   When you're comparing variable values with other strings, make sure 
+   to put them in quotes becuase variable expansion happens before
+   the if command is evaluated.
+   
+   examples:
+     WRONG: #if {$name == Joe} {#showme Joe is a jerk.}
+     RIGHT: #if {'$name' == 'Joe'} {#showme Joe is a jerk.}
 
 
 
@@ -443,10 +528,15 @@ COMMANDS.LOAD
 COMMANDS.LOG
 
    syntax: #log [<LOGFILE>] [<DATABUFFER:BOOLEAN=false>] 
-         [<STRIPANSI:BOOLEAN=true>] 
+         [<STRIPANSI:BOOLEAN=true>] [<USERPREFIX>] 
    
    Will start or stop logging to a given filename for that session.
    Each session can have its own logfile.
+   
+   If USERPREFIX is set, then every line from the user will be 
+   prepended with this prefix and immediately written into log file. 
+   If USERPREFIX is omitted, then the user input will be attached to 
+   mud prompts before logging.
 
 
 
@@ -554,16 +644,16 @@ COMMANDS.SCHEDULE
    
    examples:
    
-     #schedtime {5} {#showme blah}
+     #schedule {5} {#showme blah}
    
    will kick off 5 ticks from now (a tick is approx one second) and
    will execute "#showme blah".
    
-     #schedtime {1m30s} {#showme blah}
+     #schedule {1m30s} {#showme blah}
    
    will kick off in 1 minute and 30 seconds.
    
-     #schedtime {10} {#showme blah} {true}
+     #schedule {10} {#showme blah} {true}
    
    will kick off every 10 seconds.
 
@@ -758,13 +848,16 @@ COMMANDS.TICKWARNSIZE
 
 COMMANDS.UNACTION
 
-   syntax: #unaction [<STR>] [<QUIET:BOOLEAN=false>] 
+   syntax: #unaction [<STR>] [<TAG>] [<QUIET:BOOLEAN=false>] 
    
    Removes action(s) from the manager.
    
    examples:
      #unaction {missed you.}
      #unaction missed*
+     #unaction tag={indoor}
+     
+   see also: action, enable, disable, atags
 
 
 
@@ -773,6 +866,14 @@ COMMANDS.UNALIAS
    syntax: #unalias [<STR>] [<QUIET:BOOLEAN=false>] 
    
    Allows you to remove aliases.
+
+
+
+COMMANDS.UNANTIGAG
+
+   syntax: #unantigag [<STR>] [<QUIET:BOOLEAN=false>] 
+   
+   Allows you to remove antigags.
 
 
 
@@ -821,10 +922,12 @@ COMMANDS.UNSCHEDULE
 
    syntax: #unschedule [<STR>] [<QUIET:BOOLEAN=false>] 
    
-   Allows you to remove a scheduled event by id.  To see a list of the
-   events and ids for the current session use the #sched command.
+   Allows you to remove a scheduled event by id.  To remove all events
+   scheduled use *.  To see a list of the events and ids for the current 
+   session use the #sched command.
    
    examples:
+     #unschedule *
      #unschedule 44
 
 
@@ -874,17 +977,22 @@ COMMANDS.VARIABLE
    
    Variables can later be accessed via the variable character
    (which defaults to $) and the variable name.  In the case of the
-   above, the variable name would be $hps.
+   above, the variable name would be $hps.  
    
-   There are also system variables $HOME, $TIMESTAMP, and $DATADIR 
-   (must be upper-cased) and global variables.  To set a global 
-   variable which can be used in all sessions, it must be preceded
-   by a _.
+   We also handle braced closures for denoting variables like ${hps}.  
+   If you have a variable hps and a variable hpset, you can explicitly
+   specify which one using { }.
+   
+   There are also system variables $HOME, $TIMESTAMP, $LOGTIMESTAMP,
+   and $DATADIR (must be upper-cased) and global variables.  To set 
+   a global variable which can be used in all sessions, it must 
+   be preceded by a _.
    
    examples:
      #variable {_fun} {happy fun ball}
      #showme $_fun
      #showme $TIMESTAMP
+     #showme ${TIMESTAMP}
 
 
 
@@ -892,13 +1000,6 @@ COMMANDS.VERSION
 
    Displays the version number, contact information, and web-site for
    Lyntin.
-
-
-
-COMMANDS.WIZLIST
-
-   Displays the web-page where you can find an up-to-date list
-   of people who have contributed to Lyntin's development.
 
 
 
@@ -923,107 +1024,10 @@ COMMANDS.WRITE
 
 COMMANDS.ZAP
 
-   This disconnects from the mud and closes the session.
-
-
-
-EVALMODES
-=========
-
-There are two user input evaluation modes in Lyntin: Lyntin mode 
-and Tintin mode.  You can switch modes using the command-line 
-argument:
-
-   --evalmode [mode]
-
-with valid modes being "tintin" and "lyntin".  You can also switch
-it ingame using the #config command:
-
-   #config evalmode [mode]
-
-with valid modes being "tintin" and "lyntin".
-
-The evalmodes differ in how variables, placement variables, and
-command arguments are expanded as well as the time at which 
-they're expanded.  Tintin mode emulates how Tintin works.  Lyntin 
-mode is born from our own preferred user input evaluation.
-
-Lyntin defaults to lyntin mode--so if you're a Tintin user and 
-want to user your Tintin command files, you should make sure to 
-start Lyntin up in tintin mode.
-
-Note: Lyntin 4.0 will no longer have the tintin evalmode and the 
-idea of evalmodes will go away.
-
-
-
-README.EVALMODES.LYNTINMODE
-
-Lyntin mode strives to provide maximum flexibility and forsake the
-dependancy on tintinmode.  Though not neccessarily better, it does
-provide some abilities that tintinmode does not.
-
-  * Variables and placement variables with a single $ or % are
-    evaluated/expanded.  One layer of $s or %s is then stripped 
-    off when this evaluation occurs.
-
-  * Variable expansion is always done on user input before 
-    commands are evaluted.  This means variables can be used as 
-    arguments to any commands, etc.
-
-  * Variable expansion happens again when certain expressions are
-    evaluated, such as action triggers, alias expansion, etc.
-    Essentially, when any stored value gets expanded its variables
-    will get expanded (typically whenever tintinmode would do its 
-    sole expansion.) 
-
-  * Placement vars in actions and aliases support an expanded 
-    syntax based on python array slices.  %0:1 will evaluate to 
-    the first and second arguments, while %0: will be all 
-    arguments, and %:-1 will be all but the last argumen, etc.
-
-  * Examples:
-     #action {$Myvar} {woo} 
-         --- will trigger whenever the value Myvar holds when this 
-             is entered (the original value of Myvar - it will not 
-             change if Myvar's value changes)
-     #action {$$Myvar} {woo}
-         --- Will trigger whenever the current value of Myvar 
-             passes by.
-     #action {$$$Myvar} {woo}
-         --- Will trigger whenever the literal string $Myvar is 
-             seen.  (and thus, place more $s in if you wish to 
-             trigger on more of them, the first 2 will be stripped 
-             by the variable expansion processes. 
-     #alias {hello} {$moo}
-         --- will bind hello to $moo's current value.
-     #alias {hello} {$$moo}
-         --- will bind hello to always expand to moo's current 
-             value, even when it changes.
-     #alias {hello} {$$$moo}
-         --- will bind hello to expand to the literal string 
-             "$moo"
-
-
-
-README.EVALMODES.TINTINMODE
-
-Tintin eval mode strives to act how Tintin would act.  There are
-probably some minor descrepancies--these should be logged as bugs.
-Basically, tintin eval mode has the following properties:
-
- * the number of % signs indicates the nesting depth at which the
-   placement variable will be expanded.  If the nesting depth 
-   equals the number of %, then the variable will be expanded.  
-   Otherwise it's left as it is.
-
- * placement variables can start with a % or a $ and the name can
-   start with a _, but must otherwise be entirely of digits.
-
- * variables are not denested after they've been evaluated by the
-   CommandManager like Lyntin mode does.
-
-Note: Tintin evalmode will be removed in Lyntin 4.0.
+   syntax: #zap [<SESSION>] 
+   
+   This disconnects from the mud and closes the session.  If no
+   session is specified, it will close the current session.
 
 
 
