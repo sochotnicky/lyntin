@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.10 2003/09/09 22:44:07 willhelm Exp $
+# $Id: exported.py,v 1.11 2003/10/04 19:14:34 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -244,6 +244,19 @@ def get_help(fqn):
   @rtype: string
   """
   return get_manager("help").getHelp(fqn)
+
+def get_version():
+  """
+  Returns Lyntin's version number as a tuple.  For example, if
+  this were Lyntin version 4.0, the tuple would be (4, 0, 0).
+  If this were Lyntin version 55.3.2 the tuple would be
+  (55, 3, 2).
+
+  @return: the version number of this installation of Lyntin
+  @rtype: tuple of (int, int, int)
+  """
+  import lyntin.__init__
+  return lyntin.__init__.__version_tuple__
 
 def expand_ses_vars(text, ses):
   """

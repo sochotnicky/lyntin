@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.7 2003/09/28 21:00:59 glasssnake Exp $
+# $Id: lyntincmds.py,v 1.8 2003/10/04 19:14:34 willhelm Exp $
 #######################################################################
 """
 This module holds commands that are new and unique to Lyntin.
@@ -37,6 +37,42 @@ def bv(bool):
   if bool:
     return "on"
   return "off"
+
+def chr_cmd(ses, args, input):
+  """
+  Allows you to assign arbitrary characters to variables.  For example,
+  if you wanted to assign ASCII char 7 to variable ctrlG you could
+  do:
+
+    #chr {ctrlG} {7}
+
+  Since this creates a variable, you should remove the variable with
+  the unvariable command.
+
+  Note: This won't work if you don't have the variable module loaded.
+
+  category: commands
+  """
+  var = args["var"]
+  ascii = args["ascii"]
+  quiet = args["quiet"]
+
+  vm = exported.get_manager("variable")
+
+  if not vm:
+    exported.write_error("chr: no variable manager found.")
+    return
+
+  if ascii < 0 or ascii > 127:
+    exported.write_error("chr: ascii argument out of range of 0 to 127.")
+    return
+
+  vm.addVariable(ses, var, chr(ascii))
+  if not quiet:
+    exported.write_message("chr: variable %s added." % var)
+
+commands_dict["chr"] = (chr_cmd, "var ascii:int quiet:boolean=false")
+
 
 def config_cmd(ses, args, input):
   """

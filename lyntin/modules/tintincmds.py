@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.13 2003/09/25 15:43:49 willhelm Exp $
+# $Id: tintincmds.py,v 1.14 2003/10/04 19:14:34 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -156,14 +156,21 @@ def if_cmd(ses, args, input):
   """
   Allows you to do some boolean logic based on Lyntin variables
   or any Python expression.  If this expression returns a non-false
-  value, then the action will be performed.
-
-  Strings should be in single quotes:
+  value, then the action will be performed otherwise the elseaction
+  (if there is one) will be peformed.
 
   examples:
     #if {$myhpvar < 100} {#showme PANIC!}
     #if {$myhpvar < 100 && $myspvar < 100} {#showme PANIC!}
     #if {'$name' == 'Joe'} {#showme That joe is a jerk.}
+
+  When you're comparing variable values with other strings, make sure 
+  to put them in quotes becuase variable expansion happens before
+  the if command is evaluated.
+
+  examples:
+    WRONG: #if {$name == Joe} {#showme Joe is a jerk.}
+    RIGHT: #if {'$name' == 'Joe'} {#showme Joe is a jerk.}
 
   category: commands
   """
@@ -172,9 +179,6 @@ def if_cmd(ses, args, input):
   expr = args["expr"]
   action = args["action"]
   elseaction = args["elseaction"]
-
-  expr = expr.replace("&&", " and ")
-  expr = expr.replace("||", " or ")
 
   try:
     if eval(expr):
