@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.12 2003/10/07 00:50:42 willhelm Exp $
+# $Id: exported.py,v 1.13 2003/10/15 02:19:02 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -43,6 +43,11 @@ LAST = 99
 FIRST = 1
 
 class StopSpammingException(Exception):
+  """
+  This is what you raise when you're implementing a handler hook
+  and you've handled the data.  This will cause the hook to stop
+  iterating through the rest of the hook functions.
+  """
   pass
 
 class DoneSpammingException(Exception):
@@ -647,7 +652,7 @@ def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x,
       tuple, and return what spamhook should return.
   @type  emptyfunc: function
 
-  @param donefunc: Functino to be called when spamming finishes normally.
+  @param donefunc: Function to be called when spamming finishes normally.
       Should take 1 argument and return what spamhook should return.
   @type  donefunc: function
         

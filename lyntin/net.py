@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.10 2003/09/09 22:44:08 willhelm Exp $
+# $Id: net.py,v 1.11 2003/10/15 02:19:02 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -31,9 +31,72 @@ X{prompt_hook}::
    session - the Session that this prompt came from
 
    prompt - the prompt string
+
+
+X{net_read_data_filter}::
+
+   This allows you to filter incoming data before it passes through
+   Lyntin.  If you were going to write an MCCP module, this is the
+   hook it would register with to decompress incoming mud data.
+
+   Functions that register with this hook should return the dataadj
+   if they did nothing or the adjusted dataadj if they transformed it.
+   Look at the user_filter_hook examples in the alias and speedwalk
+   modules.
+
+   Arg mapping: { "session": Session, "data": String, "dataadj": String }
+
+   session - the Session that this data came from
+
+   data - the original data we got from the mud
+
+   dataadj - the data the previous function in the hook returned
+
+
+X{net_write_data_filter}::
+
+   This allows you to filter outgoing data after it has passed through
+   Lyntin and just before it gets sent out on the socket.  If you were 
+   going to write an MCCP module, this is the hook it would register 
+   with to compress outgoing mud data.
+
+   Functions that register with this hook should return the dataadj
+   if they did nothing or the adjusted dataadj if they transformed it.
+   Look at the user_filter_hook examples in the alias and speedwalk
+   modules.
+
+   Arg mapping: { "session": Session, "data": String, "dataadj": String }
+
+   session - the Session that this data is going to
+
+   data - the original data we wanted to send to the mud
+
+   dataadj - the data the previous function in the hook returned
+
+
+X{net_handle_telnet_option}:
+
+   There are a series of Telnet options that Lyntin doesn't handle.
+   So we allow module writers to handle them if they so desire.
+   The data argument is the telnet option string.  So if they
+   send us 255 251 24, then that's what you're getting.  We handle
+   all the buffering of telnet option stuff--so you needn't worry
+   about that.
+
+   We send along the IAC DO TERMTYPE kinds of things as well as the
+   IAC SB blah blah IAC SE kinds of things.  This is a handler--so
+   if you've handled it, raise an exported.StopSpammingException() .
+
+   Arg mapping: { "session": Session, "data": String }
+
+   session - the Session that this telnet option came from
+
+   data - the telnet option itself
+
 """
 import socket, select, re, os
-from lyntin import event, config
+
+from lyntin import event, config, exported
 from lyntin.ui import message
 
 ### --------------------------------------------
@@ -42,6 +105,7 @@ from lyntin.ui import message
 
 # reverse lookup allowing us to see what's going on more easily
 # when we're debugging.
+# for a list of telnet options: http://www.freesoft.org/CIE/RFC/1700/10.htm
 CODES = {255: "IAC",
          254: "DON'T",
          253: "DO",
@@ -52,14 +116,23 @@ CODES = {255: "IAC",
          240: "SE",
          239: "TELOPT_EOR",
          0:   "<IS>",
-         1:   "[<ECHO> or <SEND>]",
+         1:   "[<ECHO> or <SEND/MODE>]",
          3:   "<SGA>",
+         5:   "STATUS",
          24:  "<TERMTYPE>",
          25:  "<EOR>", 
          31:  "<NegoWindoSize>",
          32:  "<TERMSPEED>",
+         34:  "<Linemode>",
          35:  "<XDISPLAY>",
-         39:  "<ENV>"}
+         36:  "<ENV>",
+         39:  "<NewENV>",
+         85:  "COMPRESS (MCCP)",
+         86:  "COMPRESS2 (MCCP)",
+         91:  "MXP"}
+
+# more info on 85/86/MCCP: http://www.randomly.org/projects/MCCP/protocol.html
+# more info on 91/MXP: http://www.zuggsoft.com/zmud/mxp.htm
 
 # telnet control codes
 IAC  = chr(255)
@@ -73,6 +146,8 @@ NOP  = chr(241)
 SE   = chr(240)
 TELOPT_EOR = chr(239)
 SEND = chr(1)
+MODE = chr(1)
+FORWARDMASK = chr(2)
 IS   = chr(0)
 
 # some nice strings to help with the telnet control code
@@ -87,11 +162,32 @@ SGA      = chr(3)
 TERMTYPE = chr(24)
 EOR      = chr(25)
 NAWS     = chr(31)
+LINEMODE = chr(34)
 ENV      = chr(39)
 
+BELL     = chr(7)
 
-# the BELL character
-BELL = chr(7)
+def _fcc(code):
+  if CODES.has_key(ord(code)):
+    return CODES[ord(code)]
+  return str(code)
+
+def _cc(option):
+  """
+  Takes in an option string which we peel apart and return a pretty
+  string representation of.
+
+  @param option: the option string to convert
+  @type  option: string
+
+  @return: the string representation of the code
+  @rtype: string
+  """
+  if len(option) == 3:
+    return " ".join([_fcc(m) for m in option])
+
+  return " ".join(_fcc(option[0]), _fcc(option[1]), _fcc(option[2]), option[3:-2], _fcc(option[-2]), _fcc(option[-1]))
+
 
 class SocketCommunicator:
   """
@@ -219,12 +315,13 @@ class SocketCommunicator:
       self._sock = sock
       self._sessionname = sessionname
 
-      import exported
       ses = exported.get_session(sessionname)
 
-      exported.hook_spam("connect_hook", {"session": ses, "host": host, "port": port})
+      exported.hook_spam("connect_hook", \
+              {"session": ses, "host": host, "port": port})
     else:
       raise Exception("Connection already exists.")
+
 
   def _pollForData(self):
     """
@@ -236,25 +333,54 @@ class SocketCommunicator:
     else:
       return None
 
+  def _filterIncomingData(self, data):
+    """
+    run the data through the net_read_data_filter hook which
+    allows things like compressors and other data transformation
+    mechanisms to do their thing.
+    """
+    # be careful--this catches both the '' and the None situations
+    if not data:
+      return data
+
+    spamargs = {"session": self._session, "data": data, "dataadj": data}
+    spamargs = exported.hook_spam("net_read_data_filter", 
+          argmap=spamargs, mappingfunc=exported.filter_mapper)
+
+    if spamargs == None:
+      data = ""
+    else:
+      data = spamargs["dataadj"]
+
+    return data
+
   def run(self):
     """
-    Polls a socket and returns any data sitting there.
+    While the connection hasn't been shut down, we spin through this
+    loop retrieving data from the mud, 
     """
+    from lyntin import exported
     try:
       data = ''
       while not self._shutdownflag:
         newdata = self._pollForData()
 
         if newdata:
+          newdata = self._filterIncomingData(newdata)
+          if newdata == "":
+            continue
+
           lines = re.split(self._line_regex, 
                            (data + newdata).replace("\r", ""))
           map(self.handleData, filter(None, lines[:-1]))
           data = lines[-1]
 
-        elif newdata == '': 
+        elif newdata == '':
+          # if we got back an empty string, then something's amiss
+          # and we should dump them.
           if data:
             self.handleData(data)
-          if self._shutdownflag == 0 and self._session: 
+          if self._shutdownflag == 0 and self._session:
             self._session.shutdown(())
           break
 
@@ -271,7 +397,6 @@ class SocketCommunicator:
         self._session.shutdown(())
 
     except:
-      import exported
       exported.write_traceback("socket exception")
       if self._session:
         self._session.shutdown(())
@@ -295,7 +420,7 @@ class SocketCommunicator:
 
   def write(self, data, convert=1):
     """
-    Writes data to the mud.
+    Writes data to the mud after passing it through net_write_data_filter.
 
     @param data: the data to write to the socket
     @type  data: string
@@ -314,6 +439,18 @@ class SocketCommunicator:
         data = data.replace(IAC, IAC+IAC)
 
     if self._shutdownflag == 0:
+      # run the data through the net_write_data_filter hook which
+      # allows things like compressors and other data transformation
+      # mechanisms to do their thing.
+      spamargs = {"session": self._session, "data": data, "dataadj": data}
+      spamargs = exported.hook_spam("net_write_data_filter", argmap=spamargs, 
+            mappingfunc=exported.filter_mapper)
+
+      if spamargs == None:
+        return
+      else:
+        data = spamargs["dataadj"]
+ 
       try:
         self._sock.send(data)
 
@@ -323,7 +460,6 @@ class SocketCommunicator:
           raise Exception(e)
 
       return None
-    return e
 
   def handleData(self, data):
     """
@@ -392,15 +528,16 @@ class SocketCommunicator:
 
         # handles DO/DONT/WILL/WONT stuff
         if data[i+1] in DDWW:
+          option = data[i:i+3]
+
+          self.logControl("receive: " + _cc(option))
           if data[i+2] == ECHO:
-            self.logControl("receive: IAC " + CODES[ord(data[i+1])]+" ECHO")
             if data[i+1] == WILL:
               self._config.change("mudecho", "off")
             elif data[i+1] == WONT:
               self._config.change("mudecho", "on")
 
           elif data[i+2] == TERMTYPE:
-            self.logControl("receive: IAC " + CODES[ord(data[i+1])]+" TERMTYPE")
             if data[i+1] == DO:
               self.write(IAC + WILL + data[i+2], 0)
               self.logControl("send: IAC WILL TERMTYPE")
@@ -409,15 +546,25 @@ class SocketCommunicator:
               self.logControl("send: IAC WONT TERMTYPE")
 
           elif data[i+2] == EOR:
-            self.logControl("receive: IAC " + CODES[ord(data[i+1])] + " EOR")
             if data[i+1] == WILL:
               self.write(IAC + DO + data[i+2], 0)
               self.logControl("send: IAC DO EOR")
 
-          elif data[i+1] in DD:
-            self.logControl("receive: IAC %d %d" % (ord(data[i+1]), ord(data[i+2])))
-            self.write(IAC + WONT + data[i+2], 0)
-            self.logControl("send: IAC WONT %d" % (ord(data[i+2])))
+          else:
+            args = {"session": self._session, "data": option}
+            # this will give us back the args (in the case that no one
+            # handled it) or None (in the case that someone handled it
+            # and raised a StopSpammingException).
+            ret = exported.hook_spam("net_handle_telnet_option", args)
+
+            if ret:
+              if data[i+1] in DD:
+                self.write(IAC + WONT + data[i+2], 0)
+                self.logControl("send: " + _cc(IAC + WONT + data[i+2]))
+
+              elif data[i+1] in WW:
+                self.write(IAC + DONT + data[i+2], 0)
+                self.logControl("send: " + _cc(IAC + DONT + data[i+2]))
 
           data = data[:i] + data[i+3:]
 
@@ -429,8 +576,11 @@ class SocketCommunicator:
             marker = i
             break
 
+          self.logControl("receive: " + _cc(data[i:end+1]))
+
           if data[i+2] == TERMTYPE and data[i+3] == SEND:
             self.write(IAC + SB + TERMTYPE + IS + self._termtype + IAC + SE, 0)
+            self.logControl("send: IAC SB TERMTYPE IS " + self._termtype + " IAC SE")
 
           data = data[:i] + data[end+1:]
 
