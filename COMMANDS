@@ -6,7 +6,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-Sat, 04 Oct 2003 23:22:46 +0000
+Sat, 25 Oct 2003 16:42:36 +0000
 
 For more up-to-date information and documentation, please check the 
 web-site: http://Lyntin.sourceforge.net/
@@ -23,27 +23,46 @@ this is "#".  It can be changed with the "#config" command.  The
 command character can also do some other special things:
 
 1. You can execute commands in another session by typing the 
-   command character and then the sesion name: "#3k say hello" 
-   will say hello in the 3k session.
+   command character and then the sesion name then the command.
+   example:
+
+      #3k say hello       - will say hello in session 3k
+      #a #info            - will run the #info command in session a
 
 2. You can switch to another session by typing the command 
-   character and then the session name: "#3k" will switch to the 
-   3k session.
+   character and then the session name.  examples:
+
+      #a                  - will switch to session a (if it exists)
+      #3k                 - will switch to session 3k (if it exists)
 
 3. You can execute a command in all sessions by typing the 
-   command character then all: "#all say hello" will say hello in 
-   all sessions.
+   command character then all.  examples:
+
+      #all say hello      - will run "say hello" in all sessions
 
 4. You can execute a command a number of times by typing the 
-   command character then a number, then the command: 
-   "#5 say hello" will send "say hello" to the current session 
-   5 times.
+   command character then a number, then the command.  examples:
+
+      #5 say hello        - will run "say hello" 5 times
+      
 
 Commands are separated by the semicolon.  Semicolons can be 
-escaped with the \ character.
+escaped with the \ character.  examples:
+
+   say hello;wave         - will run "say hello" then "wave"
+   say hi!  \;)           - will run "say hi!  ;)"
 
 Command arguments can be enclosed with { }.  This enables you to 
-specify arguments that have multiple words in them.
+specify arguments that have multiple words in them.  exaples:
+
+   #alias a b             - executes #alias with args "a" and "b"
+   #alias {a} {b}         - executes #alias with args "a" and "b"
+   #alias {a} {say hi}    - executes #alias with args "a" and "say hi"
+   #alias a say hi        - executes #alias with args "a", "say", 
+                            and "hi" which will kick up an error
+                            (since the #alias command doesn't accept
+                            a third string argument)
+
 
 {, } and \ can all be escaped with the \ character: \{, \}, and \.
 
