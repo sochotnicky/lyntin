@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.7 2003/08/14 15:01:19 willhelm Exp $
+# $Id: action.py,v 1.8 2003/08/14 20:24:31 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -223,9 +223,6 @@ class ActionData:
     @rtype: string
     """
 
-    if len(self._actions.keys()) == 0:
-      return ''
-
     if text=='':
       listing = self._actions.keys()
     else:
@@ -242,7 +239,7 @@ class ActionData:
 
     for mem in self._disabled.keys():
       if not tag or mem == tag:
-        data.append("%sadisable tag={%s}" % (config.commandchar, mem))
+        data.append("%sdisable tag={%s}" % (config.commandchar, mem))
 
     return string.join(data, "\n")
 
@@ -331,15 +328,17 @@ class ActionManager(manager.Manager):
 
   def disable(self, ses, tag):
     actiondata = self._actions.get(ses)
-    if actiondata:
-      actiondata.disable(tag)
+    if not actiondata:
+      actiondata = ActionData(ses)
+      self._actions[ses] = actiondata
+    actiondata.disable(tag)
 
   def addSession(self, newsession, basesession=None):
     if basesession:
       if self._actions.has_key(basesession):
         acdata = self._actions[basesession]._actions
-        for mem in acdata.keys():
-          self.addAction(newsession, mem, acdata[mem][2], acdata[mem][3], acdata[mem][4], acdata[mem][5])
+        for (mem, act) in acdata.items():
+          self.addAction(newsession, mem, act[2], act[3], act[4], act[5])
         for tag in self._actions[basesession]._disabled.keys():
           self.disable(newsession, tag)
 
@@ -451,6 +450,8 @@ def action_cmd(ses, args, input):
     #action {r[^%_1 tells\\s+you %2$]} {say %1 just told me %2}
     #action {r[sven dealt .+? to %1$]i} {say i just killed %1!}
 
+  see also: unaction, enable, disable, atags
+  
   category: commands
   """
   trigger = args["trigger"]
@@ -500,6 +501,8 @@ def unaction_cmd(ses, args, input):
     #unaction {missed you.}
     #unaction missed*
     #unaction tag={indoor}
+    
+  see also: action, enable, disable, atags
 
   category: commands
   """
@@ -514,20 +517,27 @@ def action_enable_cmd(ses, args, input):
   """
   Enables actions with given tag.
   By default, all the tags are enabled.
+  
+  see also: action, unaction, disable, atags
+
+  category: commands
   """
   tag = args["tag"]
   exported.get_manager("action").enable(ses, tag)
   if not args["quiet"]:
     exported.write_message("Enabling actions tagged as {%s}" % tag)
-  
+    
 commands_dict["enable"] = (action_enable_cmd, "tag= quiet:boolean=false")
-  
 
 def action_disable_cmd(ses, args, input):
   """
   Temporarily disables all the actions with given tag, so their triggers
   won't trigger any actions (well, this desciption is a bit obscure,
   but I've tried my best :)
+
+  see also: action, unaction, enable, atags
+  
+  category: commands
   """
   tag = args["tag"]
   exported.get_manager("action").disable(ses, tag)
@@ -536,10 +546,13 @@ def action_disable_cmd(ses, args, input):
   
 commands_dict["disable"] = (action_disable_cmd, "tag= quiet:boolean=false")
 
-
 def action_tags_cmd(ses, args, input):
   """
   Shows all the tags available
+
+  see also: action, unaction, enable, disable
+  
+  category: commands
   """
   exported.get_manager("action").listTags(ses)
 
