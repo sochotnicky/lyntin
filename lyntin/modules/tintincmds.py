@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.14 2003/10/04 19:14:34 willhelm Exp $
+# $Id: tintincmds.py,v 1.15 2004/02/15 16:15:06 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -350,8 +350,6 @@ def read_cmd(ses, args, input):
   if os.sep not in filename and not filename.startswith("http://"):
     filename = config.options["datadir"] + filename
 
-  contents = ""
-
   try:
     # http reading contributed by Sebastian John
     if filename.startswith("http://"):
@@ -364,9 +362,10 @@ def read_cmd(ses, args, input):
   except Exception, e:
     exported.write_error("read: file %s cannot be opened.\n%s" % (filename, e), ses)
     return
-    
+
   # we want to get rid of initial blank lines and make sure
   # the file has content in it
+  # FIXME - this could be re-written as a list comprehension
   while len(contents) > 0 and len(contents[0].strip()) == 0:
     contents = contents[1:]
 
@@ -378,10 +377,25 @@ def read_cmd(ses, args, input):
   if not contents[0].startswith(c):
     exported.lyntin_command("%sconfig commandchar %s" % (c, contents[0][0]), internal=1, session=ses)
 
+  command = ""
+  continued = 0
+  # FIXME - should this be a config setting?
+  esc = "\\"
+
   for mem in contents:
     mem = mem.strip()
     if len(mem) > 0:
-      exported.lyntin_command(mem, internal=1, session=ses)
+      # handle multi-line commands
+      if mem.endswith(esc):
+        mem = mem.rstrip(esc)
+        continued = 1
+      else:
+        continued = 0
+
+    command = command + mem
+    if not continued:
+      exported.lyntin_command(command, internal=1, session=ses)
+      command = ""
 
   exported.write_message("read: file %s read." % filename, ses)
 
