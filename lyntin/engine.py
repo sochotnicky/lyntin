@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.27 2004/04/10 19:40:42 willhelm Exp $
+# $Id: engine.py,v 1.28 2004/04/18 15:11:47 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -66,8 +66,13 @@ X{from_user_hook}::
 
 X{to_user_hook}::
 
-   Data that goes to the ui for display to the user passes through this
-   hook.
+   This hook is for data to be displayed to the user.  The UI listens
+   on this hook as do logger functions.
+
+   NOTE: Functions registered with this hook should NEVER call 
+   exported.write* functions.  That will result in an infinite loop and 
+   then Lyntin will either hang or die.  If you want to spit out output
+   use an OutputEvent.
 
    Arg mapping: { "message": string }
 
