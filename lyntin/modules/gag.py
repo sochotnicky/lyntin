@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.6 2003/10/05 15:43:41 willhelm Exp $
+# $Id: gag.py,v 1.7 2003/10/25 18:41:21 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
@@ -150,6 +150,13 @@ class GagData:
 
     return data
 
+  def getGagInfoMappings(self):
+    l = []
+    for mem in self._gags.keys():
+      l.append( {"text": mem} )
+
+    return l
+
   def getAntiGagsInfo(self, text):
     """
     Returns information about the antigags in here.
@@ -172,6 +179,12 @@ class GagData:
 
     return data
 
+  def getAntiGagInfoMappings(self):
+    l = []
+    for mem in self._antigags.keys():
+      l.append( { "item": mem } )
+
+    return l
 
   def getStatus(self):
     """
@@ -223,6 +236,31 @@ class GagManager(manager.Manager):
     if self._gagdata.has_key(ses):
       return self._gagdata[ses].getInfo(text)
     return []
+
+  def getItems(self):
+    return ["gag", "antigag"]
+
+  def getParameters(self, item):
+    if item == "gag":
+      return [ ( "text", "The text whose presence indicates we should gag the line." ) ]
+
+    if item == "antigag":
+      return [ ( "item", "The item whose presence indicates we shouldn't gag the line." ) ]
+
+    raise ValueError("%s is not a valid item for this manager." % item)
+
+  def getInfoMappings(self, item, ses):
+    if item not in ["gag", "antigag"]:
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    if not self._gagdata.has_key(ses):
+      return []
+
+    if item == "gag":
+      return self._gagdata.getGagInfoMappings()
+
+    return self._gagdata.getAntiGagInfoMappings()
+
 
   def getAntiGagsInfo(self, ses, text=''):
     if self._gagdata.has_key(ses):

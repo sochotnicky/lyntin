@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.7 2003/10/04 19:14:34 willhelm Exp $
+# $Id: highlight.py,v 1.8 2003/10/25 18:41:21 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -234,6 +234,14 @@ class HighlightData:
 
     return data
 
+  def getInfoMappings(self):
+    l = []
+    for mem in self._highlights.keys():
+      l.append( { "style": self._highlights[mem][0],
+                  "text": utils.escape(mem) } )
+
+    return l
+      
   def getStatus(self):
     """
     Returns a one-liner describing this data object
@@ -272,6 +280,25 @@ class HighlightManager(manager.Manager):
     if self._highlights.has_key(ses):
       return self._highlights[ses].getInfo(text, colorize)
     return []
+
+  def getItems(self):
+    return ["highlight"]
+
+  def getParameters(self, item):
+    if item != "highlight":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    return [ ("style", "The formatting style to highlight the text with."),
+             ("text", "The text to highlight.") ]
+
+  def getInfoMappings(self, item, ses):
+    if item != "highlight":
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    if not self._highlights.has_key(ses):
+      return []
+
+    return self._highlights[ses].getInfoMappings()
 
   def getStatus(self, ses):
     if self._highlights.has_key(ses):
