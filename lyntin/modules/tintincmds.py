@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.8 2003/08/27 03:19:58 willhelm Exp $
+# $Id: tintincmds.py,v 1.9 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -344,7 +344,7 @@ def read_cmd(ses, args, input):
   filename = args["filename"]
 
   if os.sep not in filename and not filename.startswith("http://"):
-    filename = config.options['datadir'] + filename
+    filename = exported.get_config("datadir") + filename
 
   try:
     # http reading contributed by Sebastian John
@@ -423,7 +423,8 @@ def session_cmd(ses, args, input):
     exported.write_error("session: session name cannot be all numbers.")
     return
 
-  ses = exported.get_engine().getSession(name)
+  e = exported.get_engine()
+  ses = e.getSession(name)
 
   if ses != None:
     preexistingsession = 1
@@ -436,25 +437,25 @@ def session_cmd(ses, args, input):
 
   try:
     # create a SocketCommunicator
-    sock = net.SocketCommunicator()
+    sock = net.SocketCommunicator(e)
 
     # create and register a session for this connection....
     if ses == None:
-      ses = exported.get_engine().createSession(name)
+      ses = e.createSession(name)
 
     ses.setSocketCommunicator(sock)
     ses._host = host
     ses._port = port
     sock.setSession(ses)
 
-    exported.get_engine().changeSession(name)
+    e.changeSession(name)
 
     # connect to the mud...
     # this might take a while--we block here until this is done.
     sock.connect(host, port, name)
 
     # start the network thread
-    exported.get_engine().startthread("network", sock.run)
+    e.startthread("network", sock.run)
 
     # spam the hook
     exported.hook_spam("connect_hook", {"session": ses, "host": host, "port": port})
@@ -464,10 +465,10 @@ def session_cmd(ses, args, input):
     ses.setSocketCommunicator(None)
 
     if preexistingsession == 0:
-      try:    exported.get_engine().unregisterSession(ses)
+      try:    e.unregisterSession(ses)
       except: pass
 
-      try:    exported.get_engine().closeSession(name)
+      try:    e.closeSession(name)
       except: pass
 
 
@@ -546,7 +547,7 @@ def textin_cmd(ses, args, input):
   filename = args["file"]
 
   if os.sep not in filename:
-    filename = config.options['datadir'] + filename
+    filename = exported.get_config("datadir") + filename
    
   try:
     f = open(filename, "r")
@@ -602,7 +603,7 @@ def write_cmd(ses, args, input):
   c = exported.get_engine().getConfigManager().get("commandchar")
 
   if os.sep not in filename:
-    filename = config.options['datadir'] + filename
+    filename = exported.get_config("datadir") + filename
 
   data = []
   def write_mapper(x, y):

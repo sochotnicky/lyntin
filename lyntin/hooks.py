@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.5 2003/08/27 03:19:58 willhelm Exp $
+# $Id: hooks.py,v 1.6 2003/08/28 01:46:47 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -34,9 +34,6 @@ should be done through the exported module.
 
 @var shutdown_hook: Allows you to finalize things when Lyntin is 
     shutting down.  Arg tuple: (quiet:boolean)
-
-@var mudecho_hook: When the mud sends an echo on/off, we spam it to
-    this hook.  Arg tuple: (echostate:boolean)
 
 @var bell_hook: When the mud sends a ^G, we spam this hook.  Arg tuple:
     (session:Session)
@@ -428,12 +425,6 @@ startup_hook = get_hook_manager().getHook("startup_hook")
 # arg tuple: (boolean)
 #  - 0 if we don't have to be quiet, 1 if we should be quiet
 shutdown_hook = get_hook_manager().getHook("shutdown_hook")
-
-# When the mud sends an echo on or an echo off.
-# 
-# arg tuple: (boolean)
-#  - yesno - new echo state: 1 if on, 0 if off
-mudecho_hook = get_hook_manager().getHook("mudecho_hook")
 
 # When the mud sends a ^G character, we kick off a SpamEvent
 # which spams the bell_hook.

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.6 2003/08/06 22:59:44 willhelm Exp $
+# $Id: textui.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
@@ -60,10 +60,9 @@ class Textui(base.BaseUI):
   def __init__(self):
     """ Initialize the textui."""
     base.BaseUI.__init__(self)
-    self._do_i_echo = 1
     exported.hook_register("shutdown_hook", self.shutdown)
     exported.hook_register("to_user_hook", self.write)
-    exported.hook_register("mudecho_hook", self.echo)
+    exported.hook_register("config_change_hook", self.configChangeHandler)
     exported.hook_register("bell_hook", self.bell)
     self._currcolors = {}
     self._unfinishedcolor = {}
@@ -101,10 +100,7 @@ class Textui(base.BaseUI):
         # we do some stuff to grab the readlinerc file if they have one
         # so the user can set some readline oriented things which makes 
         # things a little nicer for the user.
-        if config.options.has_key("datadir"):
-          d = config.options["datadir"]
-        else:
-          d = "." + os.sep
+        d = exported.get_config("datadir")
 
         try:
           readline.read_init_file(d + "readlinerc")
@@ -154,17 +150,18 @@ class Textui(base.BaseUI):
     """ Handles incoming bell characters."""
     sys.stdout.write('\07')
 
-  def echo(self, args):
-    """ This turns echo on and off on the CommandEntry widget."""
-    yesno = args["yesno"]
-    if yesno == 0:
-      # echo off
-      self._do_i_echo = 0
-      self.turnoffecho()
-    else:
-      # echo on
-      self._do_i_echo = 1
-      self.turnonecho()
+  def configChangeHandler(self, args):
+    """ Handles config changes (including mudecho)."""
+    name = args["name"]
+    newvalue = args["newvalue"]
+
+    if name == "mudecho":
+      if newvalue == 0:
+        # echo off
+        self.turnoffecho()
+      else:
+        # echo on
+        self.turnonecho()
 
   def _posix_readline_input(self):
     """
@@ -263,7 +260,7 @@ class Textui(base.BaseUI):
         pretext = "lyntin: " + pretext
 
       line = pretext + utils.chomp(line).replace("\n", "\n" + pretext)
-      if config.ansicolor == 1:
+      if exported.get_config("ansicolor") == 1:
         line = DEFAULT_ANSI + line
       sys.stdout.write(line + "\n")
       return
@@ -272,7 +269,7 @@ class Textui(base.BaseUI):
       # we don't print user data in the textui
       return
 
-    if config.ansicolor == 0:
+    if exported.get_config("ansicolor") == 0:
       if pretext:
         if line.endswith("\n"):
           line = (pretext + line[:-1].replace("\n", "\n" + pretext) + "\n")

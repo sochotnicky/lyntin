@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.12 2003/08/22 02:19:36 willhelm Exp $
+# $Id: tkui.py,v 1.13 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -184,7 +184,7 @@ class Tkui(base.BaseUI):
     self._initColorTags()
     self.dequeue()
 
-    exported.hook_register("mudecho_hook", self.echo)
+    exported.hook_register("config_change_hook", self.configChangeHandler)
     exported.hook_register("to_user_hook", self.write)
 
   def runui(self):
@@ -325,17 +325,20 @@ class Tkui(base.BaseUI):
     else:
       self._entry.clearInput()
 
-  def echo(self, args):
-    """ This turns echo on and off on the CommandEntry widget."""
-    yesno = args["yesno"]
-    if yesno==1:
-      # echo on
-      self._do_i_echo = 1
-      self._entry.configure(show='')
-    else:
-      # echo off
-      self._do_i_echo = 0
-      self._entry.configure(show='*')
+  def configChangeHandler(self, args):
+    """ This handles config changes including mudecho. """
+    name = args["name"]
+    newvalue = args["newvalue"]
+
+    if name == "mudecho":
+      if newvalue == 1:
+        # echo on
+        self._do_i_echo = 1
+        self._entry.configure(show='')
+      else:
+        # echo off
+        self._do_i_echo = 0
+        self._entry.configure(show='*')
 
   def _yadjust(self):
     """Handles y scrolling after text insertion."""
@@ -936,6 +939,7 @@ def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
   @returns: the new color and unfinished color
   @rtype: list of ints, string
   """
+  global myui
   line = msg.data
   ses = msg.session
 
@@ -950,7 +954,7 @@ def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
                         ansi.get_color("default"))
 
   elif msg.type == message.USERDATA:
-    if config.mudecho == 1:
+    if myui._do_i_echo == 1:
       if line.endswith("\n"):
         line = "%s%s%s\n" % (ansi.get_color("b blue"), 
                             line[:-1], 

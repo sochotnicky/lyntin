@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
+# $Id: session.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -60,7 +60,6 @@ class Session:
 
     # register with the shutdown hook 
     self._engine.hookRegister("shutdown_hook", self.shutdown)
-    self._engine.hookRegister("write_hook", self.getWriteFileInfo)
 
   def __repr__(self):
     return "session.Session %s" % self._name
@@ -147,41 +146,6 @@ class Session:
     else:
       data.append("   snoop: off")
     data.append("   socket: %s" % repr(self._socket))
-
-    return data
-
-  def getWriteFileInfo(self, args):
-    """
-    Implements the write_hook.  Persists information about whether
-    speedwalking and ansicolor are active.
-
-    @param args: the args tuple for the write_hook
-    @type  args: tuple
-    """
-    ses = args["session"]
-
-    if not ses == self:
-      return
-
-    quiet = args["quiet"]
-    if quiet == 1:
-      quiet = " quiet={true}"
-    else:
-      quiet = ""
-
-    data = []
-
-    # saves speedwalking state
-    if config.speedwalk == 1:
-      data.append("config speedwalk on" + quiet)
-    else: 
-      data.append("config speedwalk off" + quiet)
-
-    # saves ansi state
-    if config.ansicolor == 1:
-      data.append("config ansicolor on" + quiet)
-    else: 
-      data.append("config ansicolor off" + quiet)
 
     return data
 

@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: config.py,v 1.3 2003/08/27 03:19:58 willhelm Exp $
+# $Id: config.py,v 1.4 2003/08/28 01:46:47 willhelm Exp $
 #######################################################################
 """
 This module holds the configuration manager as well as a series of
 configuration type classes.
 """
-import os, os.path, types
+import types, copy
 from lyntin import exported, utils, manager, constants
 
 
@@ -55,13 +55,17 @@ class ConfigBase:
     @param newvalue: the new value to set
     @type  newvalue: varies
 
-    @returns: the old value
+    @returns: the old value (actual value)
     @rtype: varies
     """
-    if self.check(newvalue) == 1:
-      oldvalue = self._value
-      self._value = newvalue
-      return oldvalue
+    oldvalue = self._value
+
+    # check should raise an Exception if the value is not appropriate.
+    # it should also return the adjusted value (string -> whatever we're
+    # supposed to store)
+    self._value = self.check(newvalue)
+
+    return oldvalue
 
   def check(self, value):
     """
@@ -92,6 +96,16 @@ class ConfigBase:
     """
     return self._value
 
+  def toString(self):
+    """
+    Retrieves a textual representation of the value and the type
+    of the config item.
+
+    @returns: string
+    @rtype: string
+    """
+    return repr(self._value) + " (varies)"
+
   def getDescription(self):
     """
     Gets the description of the config item.
@@ -111,6 +125,9 @@ class StringConfig(ConfigBase):
       raise TypeError("Value is not of type string.")
     return value
 
+  def toString(self):
+    return repr(self._value) + " (string)"
+
 class CharConfig(ConfigBase):
   """
   Holds a single character.
@@ -124,6 +141,10 @@ class CharConfig(ConfigBase):
 
     return value
 
+  def toString(self):
+    return repr(self._value) + " (char)"
+
+
 class IntConfig(ConfigBase):
   """
   Holds an int.
@@ -131,25 +152,37 @@ class IntConfig(ConfigBase):
   def check(self, value):
     return int(value)
   
+  def toString(self):
+    return repr(self._value) + " (int)"
+
+def bv(bool):
+  if bool:
+    return "on"
+  return "off"
+
 class BoolConfig(ConfigBase):
   """
   Holds a boolean value.
   """
   def check(self, value):
-    ret = utils.convert_boolean(arg)
+    ret = utils.convert_boolean(value)
     if ret == 1 or ret == 0:
       return ret
 
     raise ValueError("Invalid boolean value specified: %s" % (value))
+
+  def toString(self):
+    return bv(self._value) + " (bool)"
 
 
 class ConfigManager(manager.Manager):
   """
   Holds all the configuration pieces for Lyntin.
   """
-  def __init__(self):
+  def __init__(self, e):
     # this is a map of session -> (map of config names -> items)
     self._config = {}
+    self._engine = e
 
   def add(self, name, configitem, ses=None):
     """
@@ -164,6 +197,9 @@ class ConfigManager(manager.Manager):
     @param ses: if this item is session based, then this is the session
         to associate the item with
     @type  ses: Session
+
+    @raises ValueError: if we already have an item in that session with
+        that name.
     """
     if not self._config.has_key(ses):
       self._config[ses] = {}
@@ -174,6 +210,27 @@ class ConfigManager(manager.Manager):
     self._config[ses][name] = configitem
     self._configChangeHook(ses, name, None, configitem.get())
 
+  def remove(self, name, ses=None):
+    """
+    Allows you to remove a configuration item from the system.
+
+    @param name: the name of the item to remove
+    @type  name: string
+
+    @param ses: the session from which to remove the item (None if
+        it's a general Lyntin item)
+    @type  ses: Session
+
+    @raises ValueError: if the item does not exist
+    """
+    if not self._config.has_key(ses):
+      raise ValueError("That session does not exist.")
+
+    if not self._config[ses].has_key(name):
+      raise ValueError("That item does not exist.")
+
+    del self._config[ses][name]
+    
   def change(self, name, newvalue, ses=None):
     """
     Changes the value of a configuration item and then (if 
@@ -197,7 +254,7 @@ class ConfigManager(manager.Manager):
       raise ValueError("No config item of that name.")
 
     oldvalue = self._config[ses][name].set(newvalue)
-    self._configChangeHook(ses, name, oldvalue, newvalue)
+    self._configChangeHook(ses, name, oldvalue, self._config[ses][name].get())
 
   def get(self, name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
     """
@@ -233,25 +290,63 @@ class ConfigManager(manager.Manager):
     exported.hook_spam("config_change_hook", 
         {"session": ses, "name": name, "oldvalue": value, "newvalue": newvalue })
 
-# the character used to denote variables (FIXME - this is only half true)
-variablechar = '$'
+  def getConfigItems(self, ses=None):
+    """
+    Returns all the configuration items for a given session.
 
-# whether (1) or not (0) we're in debug mode which helps us figure out
-# how our commands are being evaluated
-debugmode = 0
+    @param ses: the session to pull items for, or None if it's general
+        Lyntin configuration stuff
+    @type  ses: Session
 
-# whether (1) or not (0) we're doing prompt detection.  prompt detection
-# is done in net.py when mud data comes in.
-promptdetection = 0
+    @returns: list of ConfigBase subclass objects
+    @rtype: list of ConfigBase subclass objects
+    """
+    if self._config.has_key(ses):
+      return self._config[ses].values()
 
-# whether (1) or not (0) we do speedwalking checks
-speedwalk = 1
+    return []
 
-# whether (1) or not (0) we whack all the ansi stuff for incoming mud data
-ansicolor = 1
+  def getConfigItem(self, name, ses=None):
+    """
+    Retrieves a specific configuration item by name and session.  If
+    the ses passed in is None, then we look for lyntin general config
+    items.
 
-# whether (1) or not (0) we're echoing user input to the ui
-mudecho = 1
+    @param name: the name of the config item to retrieve
+    @type  name: string
+
+    @param ses: the session to retrieve the item from (or None if it's
+        a global item)
+    @type  ses: Session
+
+    @returns: a ConfigBase item or None if the item doesn't exist
+    @rtype: ConfigBase
+    """
+    if not self._config.has_key(ses):
+      return None
+
+    if not self._config[ses].has_key(name):
+      return None
+
+    return self._config[ses][name]
+
+
+  def addSession(self, newsession, basesession):
+    # if we have nothing to clone from, then we don't want to
+    # worry about this
+    if not basesession or not self._config.has_key(basesession):
+      return
+
+    x = {}
+
+    for mem in self._config[basesession].values():
+      x[mem._name] = copy.deepcopy(mem)
+
+    self._config[newsession] = x
+
+  def removeSession(self, ses):
+    if self._config.has_key(ses):
+      del self._config[ses]
 
 # this holds a list of all the modules Lyntin has dynamically imported
 # or have been imported via the #import command.
@@ -264,42 +359,3 @@ options = {'datadir': '',
            'readfile': [],
            'snoopdefault': 1,
            'ui': 'text'}
-
-def fixdir(d):
-  """
-  Takes in a directory (datadir, moduledir, ...) and fixes it (by
-  adding an os.sep to the end) as well as verifies that it exists.
-
-  If it does not exist, then it returns a None.  If it does exist,
-  then it returns the adjusted directory name.
-
-  @param d: the directory in question
-  @type  d: string
-
-  @returns: None or the fixed directory
-  @rtype: string
-  """
-  if not os.path.exists(d):
-    return None
-
-  if len(d) > 0 and d[-1] != os.sep:
-    d = d + os.sep
-
-  return d
-
-"""
-todo - 
-build a configurationmanager
-add an exported.addConfig, exported.getConfig, exported.setConfig
-
-addConfig takes a Config* object (ConfigInt, ConfigString, ConfigBoolean)
-
-Config* objects allow you to set whether the item is persisted and
-what the default value is.
-
-then #config command becomes a front end for all of this.
-
-#write will cause all persisted config options to become persisted
-
-then we have a config_change_hook just like the variable_change_hook.
-"""

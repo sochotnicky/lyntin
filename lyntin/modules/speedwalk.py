@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
+# $Id: speedwalk.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -34,7 +34,7 @@ really don't want them to be, we use #swexclude::
 # Originally written 2002 by Sebastian John
 
 import re, string
-from lyntin import manager, utils, config, exported
+from lyntin import manager, utils, exported
 from lyntin.modules import modutils
 
 class SpeedwalkHash:
@@ -337,7 +337,7 @@ class SpeedwalkManager(manager.Manager):
     verbatim = args["verbatim"]
     text = args["dataadj"]
     
-    if not self._hashes.has_key(ses) or config.speedwalk == 0 or verbatim == 1:
+    if not self._hashes.has_key(ses) or exported.get_config("speedwalk", ses) == 0 or verbatim == 1:
       return text
 
     sdata = self._hashes[ses]
@@ -495,6 +495,11 @@ def load():
   exported.hook_register("user_filter_hook", sm.userfilter, 80)
   exported.hook_register("write_hook", sm.persist)
 
+  from lyntin import config
+  exported.add_config("speedwalk", config.BoolConfig("speedwalk", 1, 1,
+       "Allows you to turn on and turn off speedwalk handling."),
+       exported.get_session("common"))
+
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global sm
@@ -503,6 +508,10 @@ def unload():
 
   exported.hook_unregister("user_filter_hook", sm.userfilter)
   exported.hook_unregister("write_hook", sm.persist)
+
+  # remove configuration items for every session involved
+  for mem in exported.get_active_sessions():
+    exported.remove_config("speedwalk", mem)
 
 # Local variables:
 # mode:python

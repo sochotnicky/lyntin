@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.9 2003/08/27 03:19:58 willhelm Exp $
+# $Id: engine.py,v 1.10 2003/08/28 01:46:47 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -79,7 +79,7 @@ class Engine:
     self._managers["command"] = commandmanager.CommandManager(self)
 
     # our config manager
-    self._managers["config"] = config.ConfigManager()
+    self._managers["config"] = config.ConfigManager(self)
 
     # there is only one ui in the system.
     self._ui = None
@@ -125,7 +125,29 @@ class Engine:
     """
     c = self._managers["config"]
 
-    c.add("commandchar", config.CharConfig("commandchar", "#", 0, "command character"))
+    # this one doesn't seem to do anything
+    # c.add("variablechar", config.CharConfig("variablechar", "$", 0, "denotes variables"))
+
+    c.add("commandchar", config.CharConfig("commandchar", "#", 0, 
+        "The character used to denote a command."))
+
+    c.add("debugmode", config.BoolConfig("debugmode", 0, 0, 
+        "Debug mode helps you to figure out how your commands are being "
+        "evaluated."))
+
+    c.add("promptdetection", config.BoolConfig("promptdetection", 0, 0, 
+        "Prompt detection is done in net.py when mud data comes in.  " +
+        "This toggles whether we detect prompts or not.  This won't help " +
+        "you unless you have a plugin which requires it."))
+
+    c.add("ansicolor", config.BoolConfig("ansicolor", 1, 1,
+        "Allows you to enable or disable ansi color handling."))
+
+    c.add("mudecho", config.BoolConfig("mudecho", 1, 0,
+        "Whether (1) or not (0) we're echoing user input to the ui."))
+
+    c.add("datadir", config.StringConfig("datadir", "", 1,
+        "Allows you to set the default directory for your Lyntin data."))
 
   ### ------------------------------------------
   ### hook stuff
@@ -285,7 +307,7 @@ class Engine:
         exactly what the user typed--this is for the history manager)
     @rtype: string
     """ 
-    if config.debugmode == 1:
+    if self._managers["config"].get("debugmode") == 1:
       exported.write_message("evaluating: %s" % input)
 
     inputlist = utils.split_commands(input)
@@ -365,7 +387,7 @@ class Engine:
     # we don't record internal stuff or input that isn't supposed
     # to be echo'd
     executed = ";".join(historyitems)
-    if internal == 0 and config.mudecho == 1:
+    if internal == 0 and self.getConfigManager().get("mudecho") == 1:
       self.getManager("history").recordHistory(executed)
 
     return executed
@@ -614,7 +636,7 @@ class Engine:
     data.append("   queue size: %d" % self._event_queue.qsize())
     data.append("   ui: %s" % repr(self._ui))
     data.append("   speedwalking: %d" % config.speedwalk)
-    data.append("   ansicolor: %d" % config.ansicolor)
+    data.append("   ansicolor: %d" % self.getConfigManager().get("ansicolor"))
     data.append("   ticks: %d" % self._current_tick)
     data.append("   errors: %d" % self._errorcount)
 
@@ -815,14 +837,14 @@ def main(defaultui="text"):
         config.options['readfile'].append(mem[1])
 
       elif mem[0] in ["--moduledir", "-m"]:
-        d = config.fixdir(mem[1])
+        d = utils.fixdir(mem[1])
         if d:
           config.options['moduledir'].append(d)
         else:
           startuperrors.append("Module dir '%s' does not exist." % mem[1])
 
       elif mem[0] in ["--datadir", "-d"]:
-        d = config.fixdir(mem[1])
+        d = utils.fixdir(mem[1])
         if d:
           datadir = d
         else:
@@ -854,9 +876,7 @@ def main(defaultui="text"):
     # we go see if they have a HOME in their environment variables....
     if not datadir:
       if os.environ.has_key("HOME"):
-        datadir = config.fixdir(os.environ["HOME"])
-
-    config.options['datadir'] = datadir
+        datadir = utils.fixdir(os.environ["HOME"])
 
     import atexit
     atexit.register(shutdown)
@@ -864,6 +884,7 @@ def main(defaultui="text"):
     # instantiate the engine
     myengine = Engine()
     myengine._setupConfiguration()
+    myengine.getConfigManager().change("datadir", datadir)
 
     # instantiate the ui
     uiinstance = None
@@ -886,8 +907,8 @@ def main(defaultui="text"):
 
     # do some more silly initialization stuff
     # adds the .lyntinrc file to the readfile list if it exists.
-    if config.options['datadir']:
-      lyntinrcfile = config.options['datadir'] + ".lyntinrc"
+    if datadir:
+      lyntinrcfile = datadir + ".lyntinrc"
       if os.path.exists(lyntinrcfile):
         # we want the .lyntinrc file read in first, so then other
         # files can overwrite the contents therein

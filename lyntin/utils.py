@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.6 2003/08/21 02:53:57 willhelm Exp $
+# $Id: utils.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
 in the application, but are useful in a variety of places.  They're 
 not dependent on application things, so it's easier to test them.
 """
-import string, re, time, types
+import string, re, time, types, os
 import ansi, constants
 
 # for finding non-escaped semi-colons in user input
@@ -143,6 +143,28 @@ def chomp(text):
   """
   global CHOMP_EOL
   return CHOMP_EOL.sub('', text)
+
+def fixdir(d):
+  """
+  Takes in a directory (datadir, moduledir, ...) and fixes it (by
+  adding an os.sep to the end) as well as verifies that it exists.
+
+  If it does not exist, then it returns a None.  If it does exist,
+  then it returns the adjusted directory name.
+
+  @param d: the directory in question
+  @type  d: string
+
+  @returns: None or the fixed directory
+  @rtype: string
+  """
+  if not os.path.exists(d):
+    return None
+
+  if len(d) > 0 and d[-1] != os.sep:
+    d = d + os.sep
+
+  return d
 
 
 def http_get(url):

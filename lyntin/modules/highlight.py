@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
+# $Id: highlight.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -245,8 +245,9 @@ class HighlightData:
 
 
 class HighlightManager(manager.Manager):
-  def __init__(self):
+  def __init__(self, c):
     self._highlights = {}
+    self._config = c
 
   def addHighlight(self, ses, style, text):
     if not self._highlights.has_key(ses):
@@ -308,7 +309,7 @@ class HighlightManager(manager.Manager):
     ses = args["session"]
     text = args["dataadj"]
 
-    if config.ansicolor == 0:
+    if self._config.get("ansicolor") == 0:
       return ansi.filter_ansi(text)
     else:
       if self._highlights.has_key(ses):
@@ -403,7 +404,7 @@ def load():
   """ Initializes the module by binding all the commands."""
   global hm
   modutils.load_commands(commands_dict)
-  hm = HighlightManager()
+  hm = HighlightManager(exported.get_engine().getConfigManager())
   exported.add_manager("highlight", hm)
 
   exported.hook_register("mud_filter_hook", hm.mudfilter, 90)

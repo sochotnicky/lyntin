@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.8 2003/08/27 03:19:58 willhelm Exp $
+# $Id: exported.py,v 1.9 2003/08/28 01:46:47 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -144,6 +144,40 @@ def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
   @type  defaultvalue: varies
   """
   return get_engine().getConfigManager().get(name, ses, defaultvalue)
+
+def add_config(name, configitem, ses=None):
+  """
+  Adds a new configuration item.
+
+  @param name: the name of the item
+  @type  name: string
+
+  @param configitem: the configuration item to add
+  @type  configitem: ConfigBase
+
+  @param ses: if this item is session based, then this is the session
+      to associate the item with
+  @type  ses: Session
+
+  @raises ValueError: if there is already an item with that name for
+      that session
+  """
+  get_engine().getConfigManager().add(name, configitem, ses)
+
+def remove_config(name, ses=None):
+  """
+  Allows you to remove a configuration item from the system.
+
+  @param name: the name of the item to remove
+  @type  name: string
+
+  @param ses: the session from which to remove the item (None if
+      it's a general Lyntin item)
+  @type  ses: Session
+
+  @raises ValueError: if the item does not exist
+  """
+  get_engine().getConfigManager().remove(name, ses)
 
 def add_help(fqn, helptext):
   """

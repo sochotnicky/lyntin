@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
+# $Id: event.py,v 1.7 2003/08/28 01:46:47 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -65,26 +65,6 @@ class ShutdownEvent(Event):
   def execute(self):
     """ Execute the shutdown."""
     sys.exit(0)
-
-class EchoEvent(Event):
-  """
-  Echo events get created when the connected server sends a Telnet
-  Echo request--either to tell us that the server is handling echo
-  (echo off) or that the server will not handle echo (echo on).
-  """
-  def __init__(self, onoff):
-    """
-    Initializes the EchoEvent.
-
-    @param onoff: sets the new echo value.  1 for echo on, 0 for echo off.
-    @type  onoff: int
-    """
-    self._state = onoff
-
-  def execute(self):
-    """ Runs the echo event through anything listening."""
-    exported.hook_spam("mudecho_hook", {"yesno": self._state})
-    config.mudecho = self._state
 
 
 class MudEvent(Event):

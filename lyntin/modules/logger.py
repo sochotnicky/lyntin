@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: logger.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
+# $Id: logger.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This module defines the LoggerManager which handles logging.
@@ -293,7 +293,7 @@ def log_cmd(ses, args, input):
   # handle starting logging
   try:
     if os.sep not in logfile:
-      logfile = config.options['datadir'] + logfile
+      logfile = exported.get_config("datadir") + logfile
 
     if databuffer:
       f = open(logfile, "w")

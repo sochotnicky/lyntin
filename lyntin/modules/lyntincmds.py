@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
+# $Id: lyntincmds.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This module holds commands that are new and unique to Lyntin.
@@ -14,11 +14,6 @@ from lyntin import net, utils, engine, constants, exported, config
 from lyntin.modules import modutils
 
 commands_dict = {}
-
-def bv(bool):
-  if bool:
-    return "on"
-  return "off"
 
 def _fixmap(w, themap):
   keys = themap.keys()
@@ -37,11 +32,32 @@ def _fixmap(w, themap):
       output.append("   %s %s" % (mem.ljust(w), themap[mem]))
   return "\n".join(output)
 
+
+def bv(bool):
+  if bool:
+    return "on"
+  return "off"
+
 def config_cmd(ses, args, input):
   """
-  Allows you to set a wide variety of options, some of which are
-  session oriented and some of which are global.  Typing "#config"
-  by itself will print out all the options it knows about.
+  Allows you to view and change configuration options that affect
+  how Lyntin functions.  Configuration options can be session
+  oriented or global to all of Lyntin.
+
+  examples: 
+    #config
+        displays global configuration and session configuration for the 
+        current session
+
+    #a #config
+        displays global configuration and session configuration for the 
+        session named 'a'
+
+    #config ansicolor
+        displays information about the mudecho configuration option
+
+    #config ansicolor on
+        sets the ansicolor configuration option to on
 
   category: commands
   """
@@ -49,14 +65,15 @@ def config_cmd(ses, args, input):
   value = args["value"]
   quiet = args["quiet"]
 
-  if not name:
+  c = exported.get_engine().getConfigManager()
 
-    globmap = {"ansicolor": bv(config.ansicolor) + " (boolean)",
-               "commandchar": config.commandchar + " (char)",
-               "mudecho": bv(config.mudecho) + " (boolean)",
-               "speedwalk": bv(config.speedwalk) + " (boolean)",
-               "debugmode": bv(config.debugmode) + " (boolean)",
-               "promptdetection": bv(config.promptdetection) + " (boolean)"}
+  # if they didn't specify a name, then we print out all the
+  # configuration stuff for general and this session
+  if not name:
+    general = c.getConfigItems(None)
+    globmap = {}
+    for mem in general:
+      globmap[mem._name] = mem.toString()
 
     sesmap = {"ignoreactions": bv(ses._ignoreactions) + " (boolean)",
               "ignoresubs": bv(ses._ignoresubs) + " (boolean)",
@@ -74,69 +91,30 @@ def config_cmd(ses, args, input):
     exported.write_message(output, ses)
     return
 
-  # set the variable to this value
-  if name in ["ignoreactions", "ignoresubs", "verbatim"]:
-    if not value:
-      value = getattr(ses, "_%s" % name)
-      exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-    else:
-      value = utils.convert_boolean(value)
-      if value == 1 or value == 0:
-        setattr(ses, "_%s" % name, value)
-        if not quiet:
-          exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-      else:
-        exported.write_error("config: '%s' is not a valid boolean value." % (value), ses)
+  # try to find a session item first
+  ci = c.getConfigItem(name, ses)
+  if not ci:
+    ci = c.getConfigItem(name)
+
+  if not ci:
+    exported.write_error("config: config manager does not recognize %s as a config item." % name)
     return
 
-  if name in ["variablechar", "commandchar"]:
-    if not value:
-      value = getattr(config, name)
-      exported.write_message("config: %s set to '%s'." % (name, value), ses)
-    else:
-      if len(value) == 1:
-        setattr(config, name, value)
-        if not quiet:
-          exported.write_message("config: %s set to '%s'." % (name, value), ses)
-      else:
-        exported.write_error("config: '%s' is not a valid %s value." % (value, name), ses)
+
+  if not value:
+    # we print out everything we know about this config item.
+    output = "config: %s\n\n%s\n\n%s\n" % \
+             (name, ci.toString(), utils.wrap_text(ci._description))
+    exported.write_message(output)
     return
 
-  if name in ["ansicolor", "speedwalk", "debugmode", "promptdetection"]:
-    if not value:
-      value = getattr(config, name)
-      exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-    else:
-      value = utils.convert_boolean(value)
-      if value == 1 or value == 0:
-        setattr(config, name, value)
-        if not quiet:
-          exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-      else:
-        exported.write_error("config: '%s' is not a valid boolean value." % (value), ses)
-    return
 
-  if name == "mudecho":
-    if not value:
-      value = config.mudecho
-      exported.write_message("config: %s set to %s." % (name, bv(value)))
-      return
+  try:
+    oldvalue = ci.set(value)
+    exported.write_message("config: %s set to %s." % (name, value), ses)
+  except Exception, e:
+    exported.write_error(e)
 
-    import event
-    old = config.mudecho
-    value = utils.convert_boolean(value)
-
-    if value == 1:
-      event.EchoEvent(1).enqueue() 
-    else:
-      event.EchoEvent(0).enqueue() 
-
-    if not quiet:
-      exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-    return
-
-  exported.write_error("config: did not recognize '%s' as an attribute." % name, ses)
-      
 commands_dict["config"] = (config_cmd, "name= value= quiet:boolean=false")
   
 def grep_cmd(ses, args, input):

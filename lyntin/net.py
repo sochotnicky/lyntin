@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.8 2003/08/21 02:54:19 willhelm Exp $
+# $Id: net.py,v 1.9 2003/08/28 01:46:48 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
 connections with a mud and polling the connection for data.
 """
 import socket, select, re, os
-from lyntin import event, config, exported
+from lyntin import event, config
 from lyntin.ui import message
 
 ### --------------------------------------------
@@ -76,7 +76,10 @@ class SocketCommunicator:
   The SocketCommunicator handles all incoming and outgoing data from 
   and to the mud, telnet control codes, and some data transformations.
   """
-  def __init__(self):
+  def __init__(self, e):
+    self._engine = e
+    self._config = e.getConfigManager()
+
     self._sessionname = ''
     self._host = ''
     self._port = 0
@@ -241,6 +244,7 @@ class SocketCommunicator:
         self._session.shutdown(())
 
     except:
+      import exported
       exported.write_traceback("socket exception")
       if self._session:
         self._session.shutdown(())
@@ -257,7 +261,7 @@ class SocketCommunicator:
 
     # sometimes the mud will hose up with echo off--we want to kick it
     # on again.
-    event.EchoEvent(1).enqueue()
+    self._config.change("mudecho", "on")
 
     # output message so the user knows what happened.
     event.OutputEvent(message.Message("Lost connection to: %s\n" % self._host)).enqueue()
@@ -314,10 +318,11 @@ class SocketCommunicator:
     if IAC in data:
       data = self.handleNego(data)
 
-    if not config.promptdetection or data.endswith("\n"):
+    if not self._config.get("promptdetection") or data.endswith("\n"):
       event.MudEvent(self._session, data).enqueue() 
     else:
-      event.SpamEvent(exported.get_hook("prompt_hook"), (self._session, data)).enqueue()
+      h = self._engine.getHook("prompt_hook")
+      event.SpamEvent(h, (self._session, data)).enqueue()
 
 
   def handleNego(self, data):
@@ -364,9 +369,9 @@ class SocketCommunicator:
           if data[i+2] == ECHO:
             self.logControl("receive: IAC " + CODES[ord(data[i+1])]+" ECHO")
             if data[i+1] == WILL:
-              event.EchoEvent(0).enqueue()
+              self._config.change("mudecho", "off")
             elif data[i+1] == WONT:
-              event.EchoEvent(1).enqueue()
+              self._config.change("mudecho", "on")
 
           elif data[i+2] == TERMTYPE:
             self.logControl("receive: IAC " + CODES[ord(data[i+1])]+" TERMTYPE")
