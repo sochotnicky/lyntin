@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: scheduler.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: scheduler.py,v 1.3 2003/06/08 16:13:23 willhelm Exp $
 #######################################################################
 """
 This module defines the ScheduleManager which manages scheduling 
@@ -118,6 +118,7 @@ class Scheduler:
         if mem._ses == ses:
           output.append(repr(mem))
 
+    output.sort()
     return output
 
   def getEventById(self, id):
@@ -150,7 +151,7 @@ class Scheduler:
 
   def removeById(self, id):
     """
-    Removes an event from the scheduler by id or by tag.
+    Removes an event from the scheduler by id or by tag or by '*'.
 
     @param id: the id or tag of the event to remove
     @type  id: string
@@ -158,19 +159,21 @@ class Scheduler:
     @returns: a list of the events unscheduled
     @rtype: list of strings
     """
+    output = []
     for listing in self._events.values():
       for mem in listing:
-        if mem._id == id or mem._tag == id:
+        if id == '*' or mem._id == id or mem._tag == id:
+          output.append(repr(mem))
           listing.remove(mem)
-          return [repr(mem)]
 
     for listing in self._tevents.values():
       for mem in listing:
-        if mem._id == id or mem._tag == id:
+        if id == '*' or mem._id == id or mem._tag == id:
+          output.append(repr(mem))
           listing.remove(mem)
-          return [repr(mem)]
 
-    return []
+    output.sort()
+    return output
 
   def addEvent(self, tick, sevent, real=0, id=-1):
     """
@@ -299,7 +302,8 @@ def schedule_cmd(ses, args, input):
       exported.write_message("schedule: there are no scheduled events.")
       return
 
-    exported.write_message("scheduled events:\n" + "\n".join(output))
+    if not quiet:
+      exported.write_message("scheduled events:\n" + "\n".join(output))
     return
 
   setimespan = 0
@@ -331,10 +335,12 @@ commands_dict["schedule"] = (schedule_cmd, "tick= event= repeat:boolean=false qu
 
 def unschedule_cmd(ses, args, input):
   """
-  Allows you to remove a scheduled event by id.  To see a list of the
-  events and ids for the current session use the #sched command.
+  Allows you to remove a scheduled event by id.  To remove all events
+  scheduled use *.  To see a list of the events and ids for the current 
+  session use the #sched command.
 
   examples:
+    #unschedule *
     #unschedule 44
 
   category: commands
@@ -342,13 +348,18 @@ def unschedule_cmd(ses, args, input):
   global myscheduler
 
   id = args["str"]
+  quiet = args["quiet"]
 
   if id:
     ret = myscheduler.removeById(id)
     if not ret:
-      exported.write_error("unschedule: id '%s' is not valid." % id)
+      if id == "*":
+        exported.write_error("unschedule: no scheduled events to unschedule.")
+      else:
+        exported.write_error("unschedule: id '%s' is not valid." % id)
       return
-    exported.write_message("events removed:\n%s" % "\n".join(ret))
+    if not quiet:
+      exported.write_message("events removed:\n%s" % "\n".join(ret))
     return
  
   exported.write_message("not implemented yet.")
