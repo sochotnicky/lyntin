@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.4 2003/06/07 03:58:10 willhelm Exp $
+# $Id: net.py,v 1.5 2003/06/13 14:58:24 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -215,7 +215,8 @@ class SocketCommunicator:
         newdata = self._pollForData()
 
         if newdata:
-          lines = re.split(self._line_regex, data + newdata)
+          lines = re.split(self._line_regex, 
+                           (data + newdata).replace("\r", ""))
           map(self.handleData, filter(None, lines[:-1]))
           data = lines[-1]
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.3 2003/06/10 23:30:48 willhelm Exp $
+# $Id: tintincmds.py,v 1.4 2003/06/13 14:58:25 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, __init__, exported, event
@@ -460,6 +460,7 @@ def session_cmd(ses, args, input):
 
   except:
     exported.write_traceback("session: had problems creating the session.")
+    ses.setSocketCommunicator(None)
 
     if preexistingsession == 0:
       try:    exported.get_engine().unregisterSession(ses)
