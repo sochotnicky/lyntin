@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.9 2003/09/09 22:44:08 willhelm Exp $
+# $Id: session.py,v 1.10 2003/09/11 00:23:53 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -129,7 +129,10 @@ class Session:
     import config
     c = self._engine.getConfigManager()
 
-    tc = config.BoolConfig("snoop", config.options['snoopdefault'], 0,
+    if type(config.options["snoopdefault"]) is list:
+      config.options["snoopdefault"] = config.options["snoopdefault"][0]
+
+    tc = config.BoolConfig("snoop", utils.convert_boolean(config.options['snoopdefault']), 0,
           "Whether or not you see the data from this session when it's not "
           "active.")
     c.add("snoop", tc, self)

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.13 2003/09/09 22:44:07 willhelm Exp $
+# $Id: engine.py,v 1.14 2003/09/11 00:23:53 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -874,7 +874,7 @@ def shutdown():
   exported.hook_spam("shutdown_hook", {})
 
 
-def main(defaultui="text"):
+def main(defaultoptions={}):
   """
   This parses the command line arguments and makes sure they're all valid,
   instantiates a ui, does some setup, spins off an engine thread, and
@@ -888,41 +888,18 @@ def main(defaultui="text"):
   startuperrors = []
 
   try:
-    import sys, os, traceback
+    import sys, os, traceback, ConfigParser
     from lyntin import config, event, utils, exported
     from lyntin.ui import base
 
-    config.options["ui"] = defaultui
+    config.options.update(defaultoptions)
 
     # read through options and arguments
     optlist = utils.parse_args(sys.argv[1:])
     datadir = ""
 
     for mem in optlist:
-      if mem[0] in ["--ui", "-u"]:
-        config.options['ui'] = mem[1]
-
-      elif mem[0] in ["--readfile", "--read", "-r"]:
-        config.options['readfile'].append(mem[1])
-
-      elif mem[0] in ["--moduledir", "-m"]:
-        d = utils.fixdir(mem[1])
-        if d:
-          config.options['moduledir'].append(d)
-        else:
-          startuperrors.append("Module dir '%s' does not exist." % mem[1])
-
-      elif mem[0] in ["--datadir", "-d"]:
-        d = utils.fixdir(mem[1])
-        if d:
-          datadir = d
-        else:
-          startuperrors.append("Data dir '%s' does not exist." % mem[1])
-
-      elif mem[0] == '--nosnoop':
-        config.options['snoopdefault'] = 0
-
-      elif mem[0] == '--help':
+      if mem[0] == '--help':
         print HELPTEXT
         sys.exit(0)
 
@@ -930,9 +907,28 @@ def main(defaultui="text"):
         print VERSION
         sys.exit(0)
 
+      elif mem[0] in ["--configuration", "-c"]:
+        # ini files OVERRIDE the default options
+        # they can provide multiple ini files, but each new
+        # ini file will OVERRIDE the contents of the previous ini file
+        # where the two files intersect.
+        parser = ConfigParser.ConfigParser()
+        parser.read([mem[1]])
+
+        newoptions = {}
+        for s in parser.sections():
+          for o in parser.options(s):
+            c = parser.get(s, o).split(",")
+            if newoptions.has_key(o):
+              newoptions[o] += c
+            else:
+              newoptions[o] = c
+            
+        config.options.update(newoptions)
+
       else:
         opt = mem[0]
-        while len(opt) > 0 and opt[0] == "-":
+        while opt.startswith("-"):
           opt = opt[1:]
 
         if len(opt) > 0:
@@ -941,13 +937,18 @@ def main(defaultui="text"):
           else:
             config.options[opt] = [mem[1]]
 
+    for mem in ["datadir", "ui"]:
+      if type(config.options[mem]) is list:
+        config.options[mem] = config.options[mem][0]
+
     # if they haven't set the datadir via the command line, then
     # we go see if they have a HOME in their environment variables....
-    if not datadir:
+    if not config.options["datadir"]:
       if os.environ.has_key("HOME"):
-        datadir = utils.fixdir(os.environ["HOME"])
+        config.options["datadir"] = os.environ["HOME"]
+    config.options["datadir"] = utils.fixdir(config.options["datadir"])
 
-    config.options["datadir"] = datadir
+    print repr(config.options)
 
     import atexit
     atexit.register(shutdown)
@@ -959,7 +960,7 @@ def main(defaultui="text"):
     # instantiate the ui
     uiinstance = None
     try:
-      uiname = config.options['ui']
+      uiname = str(config.options['ui'])
       modulename = uiname + "ui"
       uiinstance = base.get_ui(modulename)
       if not uiinstance:
