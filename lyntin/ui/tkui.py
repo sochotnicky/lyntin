@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.14 2003/09/02 01:20:54 willhelm Exp $
+# $Id: tkui.py,v 1.15 2003/09/19 00:23:40 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -186,6 +186,14 @@ class Tkui(base.BaseUI):
 
     exported.hook_register("config_change_hook", self.configChangeHandler)
     exported.hook_register("to_user_hook", self.write)
+
+    # FIXME - fix this explanation.  this is just terrible.
+    tc = config.BoolConfig("saveinputhighlight", 0, 1,
+         "Allows you to change the behavior of the command entry.  When "
+         "saveinputhighlight is off, we discard whatever is on the entry "
+         "line.  When it is on, we will retain the contents allowing you "
+         "to press the enter key to do whatever you typed again.")
+    exported.add_config("saveinputhighlight", tc)
 
   def runui(self):
     global HELP_TEXT
@@ -517,7 +525,6 @@ class CommandEntry(Entry):
 
     self.hist_index = -1
     self._partk = partk
-    self.saveinputhighlight = 0
         
   def createInputEvent(self, tkevent):
     """ Handles the <KeyPress-Return> event."""
@@ -528,7 +535,7 @@ class CommandEntry(Entry):
     # if len(self._inputstack) > 30:
     #   self._inputstack = self._inputstack[:-1]
 
-    if self.saveinputhighlight == 1:
+    if exported.get_config("saveinputhighlight") == 1:
       self.selection_range(0, 'end')
     else:
       self.delete(0, 'end')
