@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.6 2004/03/30 22:35:42 willhelm Exp $
+# $Id: alias.py,v 1.7 2004/04/02 00:04:23 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -92,19 +92,6 @@ class AliasData:
     listing.sort()
     return listing
 
-  def getAlias(self, alias):
-    """
-    Does an alias lookup and returns the alias in question or
-    an empty string.
-
-    @returns: empty string or the alias expansion
-    @rtype: string
-    """
-    if self._aliases.has_key(alias):
-      return self._aliases[alias]
-    else:
-      return ""
-
   def expand(self, input):
     """
     Looks at user input and expands any aliases involved.
@@ -184,40 +171,21 @@ class AliasManager(manager.Manager):
     # session -> AliasData objects
     self._aliasdata = {}
 
-  def addAlias(self, ses, name, expansion):
+  def getAliasData(self, ses):
     if not self._aliasdata.has_key(ses):
       self._aliasdata[ses] = AliasData()
-    self._aliasdata[ses].addAlias(name, expansion)
+    return self._aliasdata[ses]
 
   def clear(self, ses):
     if not self._aliasdata.has_key(ses):
       return
     self._aliasdata[ses].clear()
 
-  def removeAliases(self, ses, text):
-    if not self._aliasdata.has_key(ses):
-      return []
-    return self._aliasdata[ses].removeAliases(text)
-
-  def getAlias(self, ses, name):
-    if not self._aliasdata.has_key(ses):
-      return ""
-    return self._aliasdata[ses].getAlias(name)
-
-  def expand(self, ses, input):
-    if not self._aliasdata.has_key(ses):
-      return None
-    return self._aliasdata[ses].expand(input)
-
   def getStatus(self, ses):
-    if not self._aliasdata.has_key(ses):
-      return "0 alias(es)."
-    return self._aliasdata[ses].getStatus()
+    return self.getAliasData(ses).getStatus()
 
   def getInfo(self, ses, text=""):
-    if not self._aliasdata.has_key(ses):
-      return []
-    return self._aliasdata[ses].getInfo(text)
+    return self.getAliasData(ses).getInfo(text)
 
   def getInfoMappings(self, item, ses):
     if item != "alias":
@@ -276,9 +244,11 @@ class AliasManager(manager.Manager):
   def addSession(self, newsession, basesession=None):
     if basesession:
       if self._aliasdata.has_key(basesession):
-        aldata = self._aliasdata[basesession]
-        for mem in aldata._aliases.keys():
-          self.addAlias(newsession, mem, aldata._aliases[mem])
+        bdata = self.getAliasData(basesession)
+        ndata = self.getAliasData(newsession)
+
+        for mem in bdata._aliases.keys():
+          ndata.addAlias(mem, bdata._aliases[mem])
 
   def removeSession(self, ses):
     if self._aliasdata.has_key(ses):
@@ -316,10 +286,11 @@ def alias_cmd(ses, args, input):
   quiet = args["quiet"]
 
   am = exported.get_manager("alias")
+  ad = am.getAliasData(ses)
 
   # they typed '#alias' or '#alias x' so we print the relevant aliases
   if not command:
-    data = am.getInfo(ses, name)
+    data = ad.getInfo(name)
     if not data:
       data = ["alias: no aliases defined."]
 
@@ -328,7 +299,7 @@ def alias_cmd(ses, args, input):
 
   # they're creating an alias
   try:
-    am.addAlias(ses, name, command)
+    ad.addAlias(name, command)
   except ValueError, e:
     exported.write_error("alias: %s" % e, ses)
 
@@ -344,8 +315,8 @@ def unalias_cmd(ses, args, input):
 
   category: commands
   """
-  func = exported.get_manager("alias").removeAliases
-  modutils.unsomething_helper(args, func, ses, "alias", "aliases")
+  func = exported.get_manager("alias").getAliasData(ses).removeAliases
+  modutils.unsomething_helper(args, func, None, "alias", "aliases")
 
 commands_dict["unalias"] = (unalias_cmd, "str= quiet:boolean=false")
 

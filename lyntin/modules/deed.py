@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: deed.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: deed.py,v 1.2 2004/04/02 00:04:23 willhelm Exp $
 #######################################################################
 """
 This module defines the DeedManager which handles deeds (user events).
@@ -40,32 +40,6 @@ class DeedData:
     Removes all the deeds.
     """
     self._deeds = []
-  
-  def removeDeeds(self, text):
-    """
-    Removes deeds from the list and returns a list of the deeds
-    that were removed.
-    
-    @param text: the text that matches the deeds to be removed.
-    @type  text: string
-
-    @return: the list of removed deeds
-    @rtype: list of strings
-    """
-    baddeeds = utils.expand_text(text, self._deeds)
-    for mem in baddeeds:
-      self._deeds.remove(mem)
-    return baddeeds
-  
-  def getDeeds(self):
-    """
-    Returns a list of all the deeds currently stored for this
-    session.
-    
-    @return: the list of deeds
-    @rtype: list of strings
-    """
-    return self._deeds
   
   def getInfo(self, num=""):
     """
@@ -104,34 +78,20 @@ class DeedManager(manager.Manager):
   def __init__(self):
     self._deeds = {}
 
-  def addDeed(self, ses, deed):
+  def getDeedData(self, ses):
     if not self._deeds.has_key(ses):
       self._deeds[ses] = DeedData()
-    self._deeds[ses].addDeed(deed)
+    return self._deeds[ses]
 
   def clear(self, ses):
     if self._deeds.has_key(ses):
       self._deeds[ses].clear()
 
-  def removeDeeds(self, text):
-    if self._deeds.has_key(ses):
-      return self._deeds[ses].removeDeeds(text)
-    return []
-
-  def getDeeds(self, ses):
-    if self._deeds.has_key(ses):
-      return self._deeds[ses].getDeeds()
-    return []
-
   def getInfo(self, ses, num=""):
-    if self._deeds.has_key(ses):
-      return self._deeds[ses].getInfo(num)
-    return ""
+    return self.getDeedData(ses).getInfo(num)
 
   def getStatus(self, ses):
-    if self._deeds.has_key(ses):
-      return self._deeds[ses].getStatus()
-    return "0 deed(s)."
+    return self.getDeedData(ses).getStatus()
 
 
 commands_dict = {}
@@ -145,6 +105,7 @@ def deed_cmd(ses, args, input):
     #deed                             -- prints all the deeds for 
                                          that session
     #deed {$TIMESTAMP Joe healed me}  -- adds a new deed to the list
+    #deed 10                          -- prints the last 10 deeds
 
   Before a deed is stored, variables are expanded--this allows you
   to use system, global, and session variables in your deeds like
@@ -177,7 +138,7 @@ def deed_cmd(ses, args, input):
     exported.write_message(data, ses)
     return
 
-  exported.get_manager("deed").addDeed(ses, deedtext)
+  exported.get_manager("deed").getDeedData(ses).addDeed(deedtext)
   if not quiet:
     exported.write_message("deed: {%s} added." % deedtext, ses)
 
