@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.9 2003/08/27 03:19:58 willhelm Exp $
+# $Id: action.py,v 1.10 2003/08/29 21:48:11 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -156,12 +156,12 @@ class ActionData:
     actionlist = self._actions.values()
     actionlist.sort(lambda x,y:cmp(x[3], y[3]))
 
+    line = utils.filter_cm(ansi.filter_ansi(text))
     # go through all the lines in the data and see if we have
     # any matches
     for (action, actioncompiled, response, priority, onetime, tag) in actionlist:
       if self._disabled.has_key(tag):
         continue
-      line = utils.filter_cm(ansi.filter_ansi(text))
       match = actioncompiled.search(line)
       if match:
         # for every match we figure out what the expanded response
