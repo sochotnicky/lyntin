@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.22 2004/05/10 13:59:02 glasssnake Exp $
+# $Id: tkui.py,v 1.23 2004/05/23 07:26:03 glasssnake Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -18,7 +18,21 @@ import locale
 from lyntin import ansi, event, engine, exported, utils, constants, config
 from lyntin.ui import base, message
 
-UNICODE_ENCODING = locale.getlocale()[1] or 'latin-1'
+
+if locale.__dict__.has_key('getpreferredencoding'):
+  UNICODE_ENCODING = locale.getpreferredencoding() # python2.3 and later
+else:  
+  UNICODE_ENCODING = locale.getlocale()[1]
+
+try:
+  ''.decode(UNICODE_ENCODING).encode(UNICODE_ENCODING)
+except:
+  try:
+    UNICODE_ENCODING = 'CP' + UNICODE_ENCODING # Kludge for 2.2
+    ''.decode(UNICODE_ENCODING).encode(UNICODE_ENCODING)
+  except:  
+    UNICODE_ENCODING = 'latin-1'
+  
 
 HELP_TEXT = """The tkui uses the Tk widget set and provides a graphical interface 
 to Lyntin.  It also has the following additional functionality:
