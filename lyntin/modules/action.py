@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.10 2003/08/29 21:48:11 willhelm Exp $
+# $Id: action.py,v 1.11 2003/08/31 19:49:34 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -43,6 +43,7 @@ class ActionData:
     self._actions = {}
     self._ses = ses
     self._disabled = {}
+    self._actionlist = None
 
   def addAction(self, trigger, response, priority=5, onetime=0, tag=None):
     """
@@ -72,6 +73,7 @@ class ActionData:
       expansion = trigger
     compiled = utils.compile_regexp(expansion, 1)
     self._actions[trigger] = (trigger, compiled, response, priority, onetime, tag)
+    self._actionlist = None       # invalidating action list
     return 1
 
   def _recompileRegexps(self):
@@ -95,6 +97,7 @@ class ActionData:
     """
     self._actions.clear()
     self._disabled = {}
+    self._actionlist = None
 
   def removeActions(self, text, mytag):
     """
@@ -128,6 +131,8 @@ class ActionData:
         ret.append((trigger, response, tag))
         del actions[mem]
 
+    self._actionlist = None       # invalidating action list
+
     return ret
 
   def getActions(self):
@@ -151,17 +156,19 @@ class ActionData:
     @type  text: string
     """
     # FIXME - make sure this works even when lines are broken up.
-    matched = []
+    # matched = [] # XXX What is it for? Seems dead code.
 
-    actionlist = self._actions.values()
-    actionlist.sort(lambda x,y:cmp(x[3], y[3]))
+    actionlist = self._actionlist
+    if not actionlist:
+      actionlist = filter(lambda x: not self._disabled.has_key(x[5]),
+                          self._actions.values())
+      actionlist.sort(lambda x,y:cmp(x[3], y[3]))
+      self._actionlist = actionlist
 
     line = utils.filter_cm(ansi.filter_ansi(text))
     # go through all the lines in the data and see if we have
     # any matches
     for (action, actioncompiled, response, priority, onetime, tag) in actionlist:
-      if self._disabled.has_key(tag):
-        continue
       match = actioncompiled.search(line)
       if match:
         # for every match we figure out what the expanded response
@@ -271,6 +278,7 @@ class ActionData:
     """
     if self._disabled.has_key(tag):
       del self._disabled[tag]
+      self._actionlist = None
 
   def disable(self, tag):
     """
@@ -280,6 +288,7 @@ class ActionData:
     @type tag: string
     """
     self._disabled[tag] = 1
+    self._actionlist = None
 
   def listTags(self):
     """
