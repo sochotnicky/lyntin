@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.10 2003/08/08 00:15:25 willhelm Exp $
+# $Id: tkui.py,v 1.11 2003/08/16 01:15:13 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -365,7 +365,7 @@ class Tkui(base.BaseUI):
   def write_internal(self, args):
     mess = args["message"]
     if type(mess) == types.StringType:
-      mess = base.Message(mess, message.LTDATA)
+      mess = message.Message(mess, message.LTDATA)
 
     line = mess.data
     ses = mess.session
