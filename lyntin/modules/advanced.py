@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: advanced.py,v 1.3 2004/02/15 16:15:54 willhelm Exp $
+# $Id: advanced.py,v 1.4 2004/04/03 10:36:47 glasssnake Exp $
 #######################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -14,6 +14,8 @@ module exists, it executes it in this module.
 It also holds load_cmd which does a lot of other magic stuff.
 """
 import sys
+import StringIO
+from code import compile_command
 from lyntin import exported, config
 
 usermodule = None
@@ -64,19 +66,53 @@ def python_cmd(ses, words, input):
   # NOTE: if we ever get to handling multiple-lines, we'll need
   # to change this function completely.
   try:
-    my_usermodule = _get_user_module() 
     if execdictlocals == None:
       execdictlocals = {}
       
     execdictlocals["session"] = ses
 
-    if my_usermodule == None:
+    my_usermodule = _get_user_module() 
+    if my_usermodule:
+      dictglobals = my_usermodule.__dict__
+    else:
       if execdictglobals == None:
         execdictglobals = {}
         exported.write_error("No lyntinuser module loaded--executing in advanced.py.")
-      exec input[1:].lstrip() in execdictglobals, execdictlocals
-    else:
-      exec input[1:].lstrip() in usermodule.__dict__, execdictlocals
+      dictglobals = execdictglobals
+
+    source = input[1:].lstrip()
+    compiled = compile_command(source)
+
+    #
+    # XXX for one-liners only:
+    #
+    if not compiled:
+      compiled = compile_command(source+"\n")
+
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys_stdout = StringIO.StringIO()
+    sys_stderr = StringIO.StringIO()
+    try:
+      sys.stdout = sys_stdout
+      sys.stderr = sys_stderr
+      
+      exec compiled in dictglobals, execdictlocals
+
+    finally:
+      sys.stdout = old_stdout
+      sys.stderr = old_stderr
+      
+    error = sys_stderr.getvalue()
+    if error:
+      exported.write_error(error)
+
+    text = sys_stdout.getvalue()
+    if text.endswith("\n"):
+      text = text[:-1]
+    if text:  
+      exported.write_message(text)  
+
   except:
     exported.write_traceback("@: error in raw python stuff.")
     exported.tally_error()
