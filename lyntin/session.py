@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
+# $Id: session.py,v 1.3 2003/07/14 19:57:15 glasssnake Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -157,13 +157,13 @@ class Session:
     @param args: the args tuple for the write_hook
     @type  args: tuple
     """
-    ses = args[0]
+    ses = args["session"]
 
     if not ses == self:
       return
 
-    file = args[1]
-    quiet = args[2]
+    file = args["file"]
+    quiet = args["quiet"]
     if quiet == 1:
       quiet = " quiet={true}"
     else:
