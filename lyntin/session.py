@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.10 2003/09/11 00:23:53 willhelm Exp $
+# $Id: session.py,v 1.11 2004/03/30 22:05:11 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -303,7 +303,7 @@ class Session:
         self._databuffer[-1] += mem
 
     if len(self._databuffer) > self._databuffersize:
-      self._databuffer = self._databuffer[-self._databuffersize:]
+      self._databuffer[:-self._databuffersize] = []
 
   def clearDataBuffer(self):
     """ 
@@ -349,8 +349,7 @@ class Session:
     spamargs = {"session": self, "internal": internal, 
                 "verbatim": exported.get_config("verbatim", self), 
                 "data": input, "dataadj": input}
-    spamargs = exported.hook_spam("user_filter_hook", argmap=spamargs, 
-          mappingfunc=exported.filter_mapper)
+    spamargs = exported.filter_mapper_hook_spam("user_filter_hook", spamargs)
 
     if spamargs == None:
       return
@@ -402,7 +401,7 @@ class Session:
       # call the pre-filter hook
       spamargs = {"session": self, "data": mem, "dataadj": mem}
 
-      spamargs = exported.hook_spam("mud_filter_hook", spamargs, mappingfunc=exported.filter_mapper)
+      spamargs = exported.filter_mapper_hook_spam("mud_filter_hook", spamargs)
       if spamargs != None:
         mem = spamargs["dataadj"]
       else:

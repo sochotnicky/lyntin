@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.14 2004/03/30 00:22:00 willhelm Exp $
+# $Id: exported.py,v 1.15 2004/03/30 22:05:11 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -424,7 +424,7 @@ def get_current_session():
   @return: the current session
   @rtype: session.Session
   """
-  return myengine.currentSession()
+  return myengine._current_session
 
 def set_current_session(ses):
   """
@@ -666,6 +666,27 @@ def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x,
 
   return donefunc(argmap)
 
+def filter_mapper_hook_spam(hookname, argmap={}, emptyfunc=lambda x:x, 
+    donefunc=lambda x:x):
+  """
+  This is a slightly optimized filter_mapper hook because it's used so
+  often in the system.  It incorproates the filter_mapper, but skips
+  any exception handling.
+
+  Arguments correspond to hook_spam.
+  """
+  hooklist = get_hook(hookname).getList()
+  if hooklist:
+    for mem in hooklist:
+      output = mem(argmap)
+      if output == None:
+        return None
+
+      argmap["dataadj"] = output
+  else:
+    argmap = emptyfunc(argmap)
+
+  return donefunc(argmap)
 
 def filter_mapper(x, y):
   """
