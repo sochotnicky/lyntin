@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.13 2003/09/18 23:18:05 willhelm Exp $
+# $Id: action.py,v 1.14 2003/10/16 17:47:33 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -163,7 +163,7 @@ class ActionData:
 
     actionlist = self._actionlist
     if not actionlist:
-      actionlist = filter(lambda x: not self._disabled.has_key(x[5]),
+      actionlist = filter(lambda x: not self._disabled.has_key(x[6]),
                           self._actions.values())
       actionlist.sort(lambda x,y:cmp(x[3], y[3]))
       self._actionlist = actionlist
@@ -248,7 +248,7 @@ class ActionData:
     for mem in listing:
       actup = self._actions[mem]
       
-      if not tag or actup[5] == tag:
+      if not tag or actup[6] == tag:
         data.append("action {%s} {%s} color={%d} priority={%d} onetime={%s} tag={%s}" % 
                 (utils.escape(mem), utils.escape(actup[2]), actup[3], actup[4], actup[5], actup[6]))
 
@@ -307,7 +307,7 @@ class ActionData:
     """
     tags = {}
     for action in self._actions.values():
-      tags[action[5]] = 0
+      tags[action[6]] = 0
     tags.update(self._disabled)  
     list = [ "%s tag={%s}" % ((" enabled", "disabled")[disabled], mem)
              for (mem, disabled) in tags.items() ]
@@ -373,7 +373,7 @@ class ActionManager(manager.Manager):
       if self._actions.has_key(basesession):
         acdata = self._actions[basesession]._actions
         for (mem, act) in acdata.items():
-          self.addAction(newsession, mem, act[2], act[3], act[4], act[5])
+          self.addAction(newsession, mem, *act[2:])
         for tag in self._actions[basesession]._disabled.keys():
           self.disable(newsession, tag)
 
