@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.30 2004/04/29 21:36:34 willhelm Exp $
+# $Id: engine.py,v 1.31 2004/04/29 23:40:34 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -197,32 +197,40 @@ class Engine:
     # this one doesn't seem to do anything
     # c.add("variablechar", config.CharConfig("variablechar", "$", 0, "denotes variables"))
 
-    c.add("repeathistory", config.BoolConfig("repeathistory", 1, 0, 
-        "Whether (yes) or not (no) we record repeated user input in the " +
-        "history buffer.  For example, if you type \"north\" and then " +
-        "\"north\" again, if repeathistory is on, we record both.  " +
-        "Otherwise we would only record the first one."))
+    cops = config.options
 
-    c.add("commandchar", config.CharConfig("commandchar", "#", 0, 
-        "The character used to denote a command."))
+    c.add("repeathistory", config.BoolConfig("repeathistory", 
+          utils.convert_boolean(cops.get("repeathistory", 1)), 0, 
+          "Whether (yes) or not (no) we record repeated user input in the " +
+          "history buffer.  For example, if you type \"north\" and then " +
+          "\"north\" again, if repeathistory is on, we record both.  " +
+          "Otherwise we would only record the first one."))
 
-    c.add("debugmode", config.BoolConfig("debugmode", 0, 0, 
-        "Debug mode helps you to figure out how your commands are being " +
-        "evaluated."))
+    c.add("commandchar", config.CharConfig("commandchar", 
+          config.options.get("commandchar", "#"), 0, 
+          "The character used to denote a command."))
 
-    c.add("promptdetection", config.BoolConfig("promptdetection", 0, 0, 
-        "Prompt detection is done in net.py when mud data comes in.  " +
-        "This toggles whether we detect prompts or not.  This won't help " +
-        "you unless you have a plugin which requires it."))
+    c.add("debugmode", config.BoolConfig("debugmode", 
+          utils.convert_boolean(cops.get("debugmode", 0)), 0, 
+          "Debug mode helps you to figure out how your commands are being " +
+          "evaluated."))
 
-    c.add("ansicolor", config.BoolConfig("ansicolor", 1, 1,
-        "Allows you to enable or disable ansi color handling."))
+    c.add("promptdetection", config.BoolConfig("promptdetection", 
+          utils.convert_boolean(cops.get("promptdetection", 0)), 0, 
+          "Prompt detection is done in net.py when mud data comes in.  " +
+          "This toggles whether we detect prompts or not.  This won't help " +
+          "you unless you have a plugin which requires it."))
 
-    c.add("mudecho", config.BoolConfig("mudecho", 1, 0,
-        "Whether (1) or not (0) we're echoing user input to the ui."))
+    c.add("ansicolor", config.BoolConfig("ansicolor", 
+          utils.convert_boolean(cops.get("ansicolor", 1)), 1,
+          "Allows you to enable or disable ansi color handling."))
+
+    c.add("mudecho", config.BoolConfig("mudecho", 
+          utils.convert_boolean(cops.get("mudecho", 1)), 0,
+          "Whether (1) or not (0) we're echoing user input to the ui."))
 
     c.add("datadir", config.StringConfig("datadir",
-                     config.options["datadir"], 0,
+          config.options["datadir"], 0,
           "Default directory to find config files etc."))           
 
     self._sessions["common"].setupCommonSession()
@@ -957,7 +965,7 @@ def main(defaultoptions={}):
             config.options[opt] = [mem[1]]
 
     for mem in ["datadir", "ui", "commandchar"]:
-      if type(config.options[mem]) is list:
+      if config.options.has_key(mem) and type(config.options[mem]) is list:
         config.options[mem] = config.options[mem][0]
 
     # if they haven't set the datadir via the command line, then
