@@ -399,7 +399,7 @@ class inputbox:
     elif ch in (ascii.ENQ, curses.KEY_END): # ^e
       self.curx_ = len(self.string_)
       self._align()
-    elif ch in (ascii.SO, curses.KEY_UP): # ^p
+    elif ch in (ascii.DLE, curses.KEY_UP): # ^p
       #
       # search the history back
       #
@@ -412,7 +412,7 @@ class inputbox:
         self.history_.append(found)
         self.set( found )
 
-    elif ch in (ascii.FF, curses.KEY_DOWN): # ^n
+    elif ch in (ascii.SO, curses.KEY_DOWN): # ^n
       #
       # search the history forward
       #
