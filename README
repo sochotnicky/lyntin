@@ -1,0 +1,278 @@
+Title:  Lyntin Readme
+Author: Will Guaraldi
+
+
+
+VERSION
+=======
+
+Tue, 29 Apr 2003 02:04:47 +0000
+
+For more up-to-date information and documentation, please check the 
+web-site: http://Lyntin.sourceforge.net/
+
+
+OPERATING SYSTEM NOTES
+======================
+
+Lyntin works in most environments we can think of, but it has some
+caveats with the various operating systems due to differences 
+between them.
+
+WINDOWS
+-------
+
+Windows users should use either \\ or / to denote directory 
+separaters.
+
+ex::
+
+   #write c:\\commandfile
+   #write c:/commandfile
+
+
+REDHAT LINUX
+------------
+
+Depending on which version of RedHat Linux you have, you will have 
+to install the Python RPM as well as the Python Tkinter RPM.  If 
+you don't install the Tkinter RPM, then you won't be able to use 
+the Tk ui and it'll complain that it's missing a library when you 
+try.
+
+
+MAC OSX
+-------
+
+I have no experience with Mac OSX but after reading the various 
+pages on Python and how it works on OSX, I'm hesitant to say 
+Lyntin is fully supported.  However, I don't know of any reason 
+it shouldn't be supported either except that one person on the 
+mailing list has had problems with getting #write to work.
+
+
+OTHER NOTES
+-----------
+
+If you encounter other operating system issues, let us know both 
+the problem and the solution so we can add them here.
+
+
+
+GETTING STARTED
+===============
+
+"lyntin.py --help" lists command line arguments and what they do.
+
+Type "#help help" for help on how to use the in-game help system.
+
+Read through the "#help readme" topics.  These will help as they 
+will walk you through how Lyntin works, how to get additional 
+help, where to go for answers, and what to do if you find a bug.  
+These are also exported into the README file.
+
+You should read through the topics in "#help commands" for all 
+the currently registered Lyntin commands.
+
+Each user interface has its own help topic--these will be on the 
+top level of the help structure.
+
+To start, the "#session" command will allow you to start a 
+session.  When you're done, "#end" will close Lyntin.
+
+All documentation that comes with Lyntin is also available on the
+Lyntin web-site.  If you find problems with the documentation or
+have fixes for it, let us know on the lyntin-devl mailing list.
+
+
+
+COMMAND LINE ARGUMENTS
+======================
+
+syntax: lyntin.py [[OPTIONS] | [--help] | [--version]]
+
+  --help
+       displays this text and exits.
+
+  -v or --version
+       prints out the version information and exits.
+
+
+OPTIONS:
+
+  -d or --datadir
+       If you don't set your datadir, Lyntin will set the 
+       datadir to the HOME environment variable.  Using this 
+       option allows you to set it manually.  You can specify 
+       only one --datadir flag.  Specifying additional ones 
+       will overwrite the last one.
+
+  -e or --evalmode
+       Lyntin has two user input evaluation modes: lyntin and 
+       tintin.  This allows you to set the mode at the command 
+       line.
+
+  -m or --moduledir
+       Lyntin dynamically loads everything in the lyntin/modules 
+       dir, but will additionally dynamically load modules in dirs 
+       specified by this flag.  You can specify multiple 
+       --moduledir flags.
+         
+  -r or --read or --readfile
+       Reads a file in at startup populating the common session 
+       with aliases, actions, and whatnot.  You can specify 
+       multiple files to read with multiple --read flags.
+
+  --nosnoop
+       Lyntin defaults to snooping.  This sets it so Lyntin will
+       default to no snooping.
+
+  -u or --ui
+       Launches a specific ui for Lyntin.  Lyntin comes with two 
+       ui's: 'text' and 'tk'.  Other ui's can be dropped into the 
+       ui/ subdirectory and this switch can be used for starting 
+       them as well.
+
+
+
+A NOTE ABOUT EVALMODES
+======================
+
+There are two user input evaluation modes in Lyntin: Lyntin mode 
+and Tintin mode.  You can switch modes using the command-line 
+argument:
+
+   --evalmode [mode]
+
+with valid modes being "tintin" and "lyntin".  You can also switch
+it ingame using the #config command:
+
+   #config evalmode [mode]
+
+with valid modes being "tintin" and "lyntin".
+
+The evalmodes differ in how variables, placement variables, and
+command arguments are expanded as well as the time at which 
+they're expanded.  Tintin mode emulates how Tintin works.  Lyntin 
+mode is born from our own preferred user input evaluation.
+
+Lyntin defaults to lyntin mode--so if you're a Tintin user and 
+want to user your Tintin command files, you should make sure to 
+start Lyntin up in tintin mode.
+
+Note: Lyntin 4.0 will no longer have the tintin evalmode and the 
+idea of evalmodes will go away.
+
+
+
+LYNTIN'S REGULAR EXPRESSION SYNTAX
+==================================
+
+Lyntin allows the use of regular expressions in various arguments
+for commands like #action, #highlight, and such.  It uses a 
+specific format to trigger using raw regular expressions rather 
+than having your argument get escaped so it can be compiled into 
+a regular expression.  This allows you to write arguments using 
+the simplest form that you can without having to adjust toggles 
+and such.
+
+For example:
+
+  #highlight {red} {*says:}
+
+is the same as:
+
+  #highlight {red} {r[^.*?says:]}
+
+The first one will undergo escaping and get transformed into 
+"^.*?says\:" (without the quotes) before being compiled into a
+regular expression.
+
+The second one gets compiled without being escaped.
+
+For regular expression documentation, refer to the Python 
+documentation at:
+
+  http://www.python.org/doc/current/lib/re-syntax.html
+
+Note: It may have moved since this was written.
+
+
+
+BUG REPORTS, QUESTIONS, COMMENTS, CURSES?
+=========================================
+
+Lyntin was originally written by Lyn Headley.  Lyntin is 
+currently being maintained by Will Guaraldi, 
+willhelm@users.sourceforge.net as of 1.3.2.
+
+We appreciate ALL types of feedback.
+
+Inevitably you will either run across a bug in Lyntin or the need 
+for a feature to be implemented.  When this happens, we ask you 
+to provide as much information as you can:
+
+  - operating system, version of Python and version of Lyntin
+    (from #diagnostics)
+  - stacktrace (if it's a bug and kicked up a stacktrace)
+  - explanation of what happened vs. what should be happening
+  - any other pertinent information
+
+Enter this in the bugs forum or send it to the mailing list.  
+Details for both are on the Lyntin web-site:
+
+   http://lyntin.sourceforge.net/
+
+
+
+HOW TO CONTRIBUTE
+=================
+
+Development and maintenance is entirely managed by the maintainer 
+right now.  If you're interested in sending in bug fixes, please 
+feel welcome.  I'm extremely accomodating to most methods of 
+sending in patches, however a diff -u output file is great for 
+this sort of thing.
+
+All patches and such things should be sent to the mailing list at:
+
+   lyntin-devl@lists.sourceforge.net
+
+Note: Patches will not be applied unless the author either yields 
+the copyright to the FSF or to us (and then we'll yield it to the 
+FSF).
+
+Please read through the web-site areas on coding conventions and 
+such before sending in code.
+
+
+
+ERRATA
+======
+
+The latest release of Lyntin is always available from:
+
+   http://lyntin.sourceforge.net/
+
+under Download.  We also have snapshots of what's in CVS under
+Development.
+
+There are very few developers working on Lyntin, but we turn
+around bugs in very short periods of time.  Issues are tracked
+via the Sourceforge bug-tracker or through email.  If you have
+problems, feel free to submit a bug report--please include as
+much information as you can so we can reproduce and then fix
+the bug.  If you want to fix it yourself, please do!  Feel free
+to send in patches.
+
+In-game help is accessed by typing ``#help``.  When you start 
+Lyntin for the first time, type ``#help general`` and that'll 
+get you started.  Read through the various help files at your 
+leisure.
+
+
+
+Enjoy!
+
+the Lyntin development folks
+http://lyntin.sourceforge.net/
