@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.32 2004/05/10 13:59:02 glasssnake Exp $
+# $Id: engine.py,v 1.33 2004/07/23 18:26:26 glasssnake Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -97,6 +97,18 @@ X{too_many_errors_hook}::
    then Lyntin shuts down.
 
    Arg mapping: {}
+
+
+X{session_change_hook}::
+
+   This hook gets spammed whenever the current session changes,
+   after changing.
+
+   Arg mapping: { "new": session.Session, "previous": session.Session }
+
+   new - the session that is being changed to
+
+   previous - the session that was previously the current session
 """
 import Queue, thread, sys, traceback, os.path
 from threading import Thread
@@ -457,8 +469,7 @@ class Engine:
         if self._sessions.has_key(ses):
           input = mem.split(" ", 1)
           if len(input) < 2:
-            self._current_session = self._sessions[ses]
-            exported.write_message("%s now current session." % ses)
+            self.set_current_session(self._sessions[ses])
           else:
             self.handleUserData(input[1], internal=1, session=self._sessions[ses])
           historyitems.append(mem)
@@ -618,17 +629,27 @@ class Engine:
       if not name == "common":
         keys.remove("common")
         keys.append("common")        
-      self._current_session = self._sessions[keys[0]]
+      self.set_current_session(self._sessions[keys[0]])
 
     # if they pass in a name, we switch to that session.
     elif self._sessions.has_key(name):
-      self._current_session = self._sessions[name]
+      self.set_current_session(self._sessions[name])
 
     else:
       exported.write_error("No session of that name.")
-      return
 
-    exported.write_message("Switching to session '%s'." % self._current_session.getName())
+  def set_current_session(self, newsession):    
+    """
+    Changes the current session to another session.
+
+    @param newsession: the session to change to
+    @type  newsession: session.Session instance
+    """
+    previous_session = self._current_session
+    self._current_session = newsession
+    exported.hook_spam("session_change_hook", {"new": newsession,
+                                      "previous": previous_session})
+    exported.write_message("%s now current session." % newsession.getName())
 
   def writeSession(self, message):
     """
