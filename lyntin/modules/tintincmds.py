@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.15 2004/02/15 16:15:06 willhelm Exp $
+# $Id: tintincmds.py,v 1.16 2004/02/19 23:51:50 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -411,6 +411,11 @@ def session_cmd(ses, args, input):
 
     #session 3k www.3k.org 5000
 
+  To create a session and initialize it with commands from a specific
+  file:
+
+    #session 3k www.3k.org 5000 /home/david/3k/3k.lyntin
+
   Then to create another session to another mud:
 
     #session eto gytje.pvv.unit.no 4000
@@ -427,6 +432,7 @@ def session_cmd(ses, args, input):
   name = args["sessionname"]
   host = args["host"]
   port = args["port"]
+  filename = args["filename"]
 
   if not name and not host and (not port or port == -1):
     data = "Sessions available:\n"
@@ -489,8 +495,11 @@ def session_cmd(ses, args, input):
       try:    e.closeSession(name)
       except: pass
 
+  # populate the session using the specified file
+  if filename:
+    read_cmd(ses, args, '')
 
-commands_dict["session"] = (session_cmd, "sessionname= host= port:int=-1")
+commands_dict["session"] = (session_cmd, "sessionname= host= port:int=-1 filename=")
 
 
 def showme_cmd(ses, args, input):
