@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.8 2003/09/09 22:44:07 willhelm Exp $
+# $Id: event.py,v 1.9 2004/03/30 00:22:00 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -55,7 +55,7 @@ class Event:
     This enqueues this event into the event queue.
     Don't overload this unless you have to.
     """
-    exported.get_engine()._enqueue(self)
+    exported.myengine._enqueue(self)
 
   def execute(self):
     """
@@ -99,7 +99,7 @@ class MudEvent(Event):
   def execute(self):
     """ Execute."""
     exported.hook_spam("from_mud_hook", {"session": self._session, "data": self._input})
-    exported.get_engine().handleMudData(self._session, self._input)
+    exported.myengine.handleMudData(self._session, self._input)
 
 
 class InputEvent(Event):

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.18 2004/01/18 17:21:55 glasssnake Exp $
+# $Id: tkui.py,v 1.19 2004/03/30 00:22:00 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -1091,7 +1091,7 @@ def colorcheck_cmd(ses, args, input):
   Prints out all the colors so you can verify that things are working
   properly.
   """
-  myengine = exported.get_engine()
+  myengine = exported.myengine
   myengine._ui._event_queue.put(_ColorCheckEvent())
 
 # Local variables:

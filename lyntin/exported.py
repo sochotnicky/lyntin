@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.13 2003/10/15 02:19:02 willhelm Exp $
+# $Id: exported.py,v 1.14 2004/03/30 00:22:00 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -41,6 +41,15 @@ from lyntin.ui import message
 
 LAST = 99
 FIRST = 1
+
+myengine = None
+
+def get_engine():
+  """
+  This is a helper function provided for backwards compatibility with
+  older modules.
+  """
+  return myengine
 
 class StopSpammingException(Exception):
   """
@@ -84,9 +93,9 @@ def lyntin_command(text, internal=0, session=None):
   @type  session: Session
   """
   if session != None:
-    get_engine().handleUserData(text, internal, session)
+    myengine.handleUserData(text, internal, session)
   else:
-    get_engine().handleUserData(text, internal)
+    myengine.handleUserData(text, internal)
 
 
 def add_command(cmd, func, arguments=None, argoptions=None, helptext=""):
@@ -201,7 +210,7 @@ def add_manager(name, mgr):
   @param mgr: the manager instance being registered
   @type  mgr: manager.Manager
   """
-  get_engine().addManager(name, mgr)
+  myengine.addManager(name, mgr)
 
 def remove_manager(name):
   """
@@ -213,7 +222,7 @@ def remove_manager(name):
   @return: 0 if nothing happened, 1 if the manager was removed
   @rtype: boolean
   """
-  return get_engine().removeManager(name)
+  return myengine.removeManager(name)
 
 def get_manager(name):
   """
@@ -225,7 +234,7 @@ def get_manager(name):
   @return: the manager instance
   @rtype: manager.Manager
   """
-  return get_engine().getManager(name)
+  return myengine.getManager(name)
 
 def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
   """
@@ -258,7 +267,7 @@ def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
       raise a ValueError.
   @type  defaultvalue: varies
   """
-  return get_engine().getConfigManager().get(name, ses, defaultvalue)
+  return myengine.getConfigManager().get(name, ses, defaultvalue)
 
 def add_config(name, configitem, ses=None):
   """
@@ -289,7 +298,7 @@ def add_config(name, configitem, ses=None):
   @raises ValueError: if there is already an item with that name for
       that session
   """
-  get_engine().getConfigManager().add(name, configitem, ses)
+  myengine.getConfigManager().add(name, configitem, ses)
 
 def remove_config(name, ses=None):
   """
@@ -304,7 +313,7 @@ def remove_config(name, ses=None):
 
   @raises ValueError: if the item does not exist
   """
-  get_engine().getConfigManager().remove(name, ses)
+  myengine.getConfigManager().remove(name, ses)
 
 def add_help(fqn, helptext):
   """
@@ -397,7 +406,7 @@ def get_session(name):
   @return: the session instance or None
   @rtype: session.Session
   """
-  return get_engine().getSession(name)
+  return myengine.getSession(name)
 
 def get_active_sessions():
   """
@@ -406,7 +415,7 @@ def get_active_sessions():
   @return: the list of active sessions
   @rtype: list of session.Session's
   """
-  return get_engine()._sessions.values()
+  return myengine._sessions.values()
 
 def get_current_session():
   """
@@ -415,7 +424,7 @@ def get_current_session():
   @return: the current session
   @rtype: session.Session
   """
-  return get_engine().currentSession()
+  return myengine.currentSession()
 
 def set_current_session(ses):
   """
@@ -424,7 +433,7 @@ def set_current_session(ses):
   @param ses: the session instance to set the current session to
   @type  ses: session.Session
   """
-  get_engine()._current_session = ses
+  myengine._current_session = ses
     
 def get_num_errors():
   """
@@ -433,7 +442,7 @@ def get_num_errors():
   @return: the number of unhandled errors Lyntin has encountered so far
   @rtype: int
   """
-  return get_engine()._errorcount
+  return myengine._errorcount
  
 def set_num_errors(num):
   """
@@ -445,7 +454,7 @@ def set_num_errors(num):
   @param num: the number of errors to set
   @type  num: int
   """
-  get_engine()._errorcount = num
+  myengine._errorcount = num
 
 def write_ui(text):
   """
@@ -455,8 +464,8 @@ def write_ui(text):
   @param text: the message to write to the ui
   @type  text: string or ui.Message
   """
-  if get_engine():
-    get_engine().writeUI(text)
+  if myengine:
+    myengine.writeUI(text)
   else:
     print text
 
@@ -472,8 +481,8 @@ def write_message(text, ses=None):
   @type  ses: session.Session
   """
   text = str(text)
-  if get_engine():
-    get_engine().writeUI(message.Message(text + "\n", message.LTDATA, ses))
+  if myengine:
+    myengine.writeUI(message.Message(text + "\n", message.LTDATA, ses))
   else:
     print "message:", text
 
@@ -489,8 +498,8 @@ def write_error(text, ses=None):
   @type  ses: session.Session
   """
   text = str(text)
-  if get_engine():
-    get_engine().writeUI(message.Message(text + "\n", message.ERROR, ses))
+  if myengine:
+    myengine.writeUI(message.Message(text + "\n", message.ERROR, ses))
   else:
     print "error:", text
 
@@ -506,8 +515,8 @@ def write_user_data(text, ses=None):
   @type  ses: session.Session
   """
   text = str(text)
-  if get_engine():
-    get_engine().writeUI(message.Message(text + "\n", message.USERDATA, ses))
+  if myengine:
+    myengine.writeUI(message.Message(text + "\n", message.USERDATA, ses))
   else:
     print "userdata:", text
 
@@ -523,8 +532,8 @@ def write_mud_data(text, ses=None):
   @type  ses: session.Session
   """
   text = str(text)
-  if get_engine():
-    get_engine().writeUI(message.Message(text, message.MUDDATA, ses))
+  if myengine:
+    myengine.writeUI(message.Message(text, message.MUDDATA, ses))
   else:
     print "muddata:", text
 
@@ -561,27 +570,13 @@ def get_history(count=30):
   """
   return get_manager("history").getHistory(count)
 
-myengine = None
-def get_engine():
-  """
-  Nice way of retrieving the engine instance.
-
-  @return: the Engine singleton instance
-  @rtype: engine.Engine
-  """
-  global myengine
-  if not myengine:
-    import engine
-    myengine = engine
-  return myengine.myengine
-
 def tally_error():
   """
   This adds one to the current error count and checks to see
   if we're over our limit.  If we are, it enqueues a shutdown
   event which will shutdown Lyntin.
   """
-  get_engine().tallyError()
+  myengine.tallyError()
 
 def get_hook(hookname):
   """
@@ -594,8 +589,7 @@ def get_hook(hookname):
   @returns: the Hook by the name of hookname
   @rtype: Hook
   """
-  engine = get_engine()
-  return engine.getHook(hookname)
+  return myengine.getHook(hookname)
 
 def hook_register(hookname, func, place=constants.LAST):
   """
@@ -612,8 +606,7 @@ def hook_register(hookname, func, place=constants.LAST):
       arbitrary ordering.  defaults to constants.LAST.
   @type  place: int
   """
-  engine = get_engine()
-  engine.hookRegister(hookname, func, place)
+  myengine.hookRegister(hookname, func, place)
 
 def hook_unregister(hookname, func):
   """
@@ -625,9 +618,8 @@ def hook_unregister(hookname, func):
   @param func: the function to remove from the hook
   @type  func: function
   """
-  engine = get_engine()
-  if engine._hooks.has_key(hookname):
-    engine._hooks[hookname].remove(func)
+  if myengine._hooks.has_key(hookname):
+    myengine._hooks[hookname].remove(func)
 
 def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x, 
       emptyfunc=lambda x:x, donefunc=lambda x:x):

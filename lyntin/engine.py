@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.23 2003/12/13 20:46:28 willhelm Exp $
+# $Id: engine.py,v 1.24 2004/03/30 00:22:00 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -231,6 +231,20 @@ class Engine:
   ### ------------------------------------------
   ### hook stuff
   ### ------------------------------------------
+  def checkHooks(self):
+    """
+    Goes through all the hooks and returns a list of strings of
+    basic information about them.
+
+    @returns: information about the hooks
+    @rtype: list of strings
+    """
+    data = []
+    for mem in self._hooks.keys():
+      data.append("   %s - %d registered functions" % (mem, self._hooks[mem].count()))
+
+    return data
+
   def getHook(self, hookname, newhook=1):
     """
     Retrieves the hook in question.  If the hook doesn't 
@@ -307,8 +321,10 @@ class Engine:
     @rtype: list of strings
     """
     data = []
+    alive = { 0: "not alive", 1: "alive" }
+
     for mem in self._threads:
-      data.append("   %s %d" % (mem.getName(), mem.isAlive()))
+      data.append("   %s - %s" % (mem.getName(), alive[mem.isAlive()]))
 
     return data
 
@@ -539,6 +555,9 @@ class Engine:
     if not self._sessions.has_key(ses.getName()):
       raise ValueError("No session of that name.")
 
+    if ses == self._current_session:
+      self.changeSession()
+
     for mem in self._managers.values():
       try:
         mem.removeSession(ses)
@@ -546,9 +565,6 @@ class Engine:
         exported.write_error("Exception with removing session %s." % e)
 
     del self._sessions[ses.getName()]
-
-    if ses == self._current_session:
-      self.changeSession()
 
   def currentSession(self):
     """
@@ -966,6 +982,7 @@ def main(defaultoptions={}):
 
     # instantiate the engine
     myengine = Engine()
+    exported.myengine = myengine
     myengine._setupConfiguration()
 
     # instantiate the ui
