@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.3 2003/08/08 00:15:24 willhelm Exp $
+# $Id: action.py,v 1.4 2003/08/09 11:11:34 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -20,6 +20,7 @@ An action consists of:
 2. the response statement
 3. the priority of the action
 4. whether or not the action is a onetime action
+5. optional action tag - the name of the action or action group
 
 We also store a compiled regular expression of the trigger which
 we use on incoming mud_data to check for triggered actions.
@@ -32,6 +33,7 @@ import re, string, copy
 from lyntin import manager, utils, event, config, exported, ansi
 from lyntin.modules import modutils
 
+
 # the placement variable regular expression
 VARREGEXP = re.compile('%_?(\d+)')
 
@@ -40,8 +42,9 @@ class ActionData:
   def __init__(self, ses):
     self._actions = {}
     self._ses = ses
+    self._disabled = {}
 
-  def addAction(self, trigger, response, priority=5, onetime=0):
+  def addAction(self, trigger, response, priority=5, onetime=0, tag=None):
     """
     Compiles a trigger pattern and adds the entire action to the
     hash.
@@ -68,7 +71,7 @@ class ActionData:
     if not expansion:
       expansion = trigger
     compiled = utils.compile_regexp(expansion, 1)
-    self._actions[trigger] = (trigger, compiled, response, priority, onetime)
+    self._actions[trigger] = (trigger, compiled, response, priority, onetime, tag)
     return 1
 
   def _recompileRegexps(self):
@@ -77,20 +80,21 @@ class ActionData:
     regular expressions for the actions in this session.
     """
     for mem in self._actions.keys():
-      (trigger, compiled, response, priority, onetime) = self._actions[mem]
+      (trigger, compiled, response, priority, onetime, tag) = self._actions[mem]
       expansion = exported.expand_ses_vars(trigger, self._ses)
       if not expansion:
         expansion = trigger
 
       compiled = utils.compile_regexp(expansion, 1)
 
-      self._actions[trigger] = (trigger, compiled, response, priority, onetime)
+      self._actions[trigger] = (trigger, compiled, response, priority, onetime, tag)
 
   def clear(self):
     """
     Clears all the stored actions from the action manager.
     """
     self._actions.clear()
+    self._disabled = {}
 
   def removeActions(self, text):
     """
@@ -144,7 +148,9 @@ class ActionData:
 
     # go through all the lines in the data and see if we have
     # any matches
-    for (action, actioncompiled, response, priority, onetime) in actionlist:
+    for (action, actioncompiled, response, priority, onetime, tag) in actionlist:
+      if self._disabled.has_key(tag):
+        continue
       line = utils.filter_cm(ansi.filter_ansi(text))
       match = actioncompiled.search(line)
       if match:
@@ -188,7 +194,7 @@ class ActionData:
     """
     return "%d action(s)." % len(self._actions)
 
-  def getInfo(self, text=""):
+  def getInfo(self, text="", tag=None):
     """
     Returns information about the actions in here.
 
@@ -200,9 +206,13 @@ class ActionData:
         wants information about.
     @type  text: string
 
+    @param tag: the tag which to find actions for.
+    @type  tag: string
+
     @return: a string containing all the action information
     @rtype: string
     """
+
     if len(self._actions.keys()) == 0:
       return ''
 
@@ -214,10 +224,15 @@ class ActionData:
     data = []
     for mem in listing:
       actup = self._actions[mem]
+      
+      if not tag or actup[5] == tag:
+        data.append("%saction {%s} {%s} priority={%d} onetime={%s} tag={%s}" % 
+                (config.commandchar, utils.escape(mem), 
+                 utils.escape(actup[2]), actup[3], actup[4], actup[5]))
 
-      data.append("%saction {%s} {%s} priority={%d} onetime={%s}" % 
-              (config.commandchar, utils.escape(mem), 
-               utils.escape(actup[2]), actup[3], actup[4]))
+    for mem in self._disabled.keys():
+      if not tag or mem == tag:
+        data.append("%sadisable tag={%s}" % (config.commandchar, mem))
 
     return string.join(data, "\n")
 
@@ -230,15 +245,34 @@ class ActionData:
     """
     return len(self._actions)
 
+  def enable(self, tag):
+    """
+    Enables all the actions with given tag.
+
+    @param tag: tag name
+    @type tag: string
+    """
+    if self._disabled.has_key(tag):
+      del self._disabled[tag]
+
+  def disable(self, tag):
+    """
+    Disables all the actions with given tag.
+
+    @param tag: tag name
+    @type tag: string
+    """
+    self._disabled[tag] = 1
+
 
 class ActionManager(manager.Manager):
   def __init__(self):
     self._actions = {}
 
-  def addAction(self, ses, trigger, response, priority, onetime=0):
+  def addAction(self, ses, *args, **nargs):
     if not self._actions.has_key(ses):
       self._actions[ses] = ActionData(ses)
-    return self._actions[ses].addAction(trigger, response, priority, onetime)
+    return self._actions[ses].addAction(*args, **nargs)
     
   def clear(self, ses):
     if self._actions.has_key(ses):
@@ -258,17 +292,29 @@ class ActionManager(manager.Manager):
     if self._actions.has_key(ses):
       self._actions[ses].checkActions(text)
 
-  def getInfo(self, ses, text=""):
+  def getInfo(self, ses, text="", tag=None):
     if self._actions.has_key(ses):
-      return self._actions[ses].getInfo(text)
+      return self._actions[ses].getInfo(text, tag=tag)
     return ""
+
+  def enable(self, ses, tag):
+    actiondata = self._actions.get(ses)
+    if actiondata:
+      actiondata.enable(tag)
+
+  def disable(self, ses, tag):
+    actiondata = self._actions.get(ses)
+    if actiondata:
+      actiondata.disable(tag)
 
   def addSession(self, newsession, basesession=None):
     if basesession:
       if self._actions.has_key(basesession):
         acdata = self._actions[basesession]._actions
         for mem in acdata.keys():
-          self.addAction(newsession, mem, acdata[mem][2], acdata[mem][3], acdata[mem][4])
+          self.addAction(newsession, mem, acdata[mem][2], acdata[mem][3], acdata[mem][4], acdata[mem][5])
+        for tag in self._actions[basesession]._disabled.keys():
+          self.disable(newsession, tag)
 
   def removeSession(self, ses):
     if self._actions.has_key(ses):
@@ -288,6 +334,7 @@ class ActionManager(manager.Manager):
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
+
     if data:
       if quiet == 1:
         data = data.replace("\n", " quiet={true}\n")
@@ -344,7 +391,8 @@ commands_dict = {}
 
 def action_cmd(ses, args, input):
   """
-  With no trigger and no action, prints all actions.
+  With no trigger, no action and no tag, prints all actions.
+  With no trigger and no action, prints all actions with given tag.
   With a trigger and no action, prints actions that match the
   trigger statement.
   With a trigger and an action, creates an action.
@@ -383,16 +431,20 @@ def action_cmd(ses, args, input):
   priority = args["priority"]
   onetime = args["onetime"]
   quiet = args["quiet"]
+  tag = args["tag"]
 
   am = exported.get_manager("action")
 
   # they typed '#action'--print out all the current actions
   if not trigger and not action:
-    data = am.getInfo(ses)
+    data = am.getInfo(ses, tag=tag)
     if data == '':
       data = "action: no actions defined."
 
-    exported.write_message("actions:\n" + data, ses)
+    message = "actions"
+    if tag:
+      message += " with tag={%s}" % tag
+    exported.write_message(message + "\n" + data, ses)
     return
 
   # they typed '#action dd*' and are looking for matching actions
@@ -405,13 +457,13 @@ def action_cmd(ses, args, input):
     return
 
   try:
-    am.addAction(ses, trigger, action, priority, onetime)
+    am.addAction(ses, trigger, action, priority, onetime, tag)
     if not quiet:
-      exported.write_message("action: {%s} {%s} {%d} added." % (trigger, action, priority), ses)
+      exported.write_message("action: {%s} {%s} priority={%d} tag={%s} added." % (trigger, action, priority, str(tag)), ses)
   except:
     exported.write_traceback("action: exception thrown.", ses)
 
-commands_dict["action"] = (action_cmd, "trigger= action= priority:int=5 onetime:boolean=false quiet:boolean=false")
+commands_dict["action"] = (action_cmd, "trigger= action= priority:int=5 onetime:boolean=false quiet:boolean=false tag=")
 
 def unaction_cmd(ses, args, input):
   """
@@ -429,6 +481,33 @@ def unaction_cmd(ses, args, input):
 
 commands_dict["unaction"] = (unaction_cmd, "str= quiet:boolean=false")
 
+
+def action_enable_cmd(ses, args, input):
+  """
+  Enables actions with given tag.
+  By default, all the tags are enabled.
+  """
+  tag = args["tag"]
+  exported.get_manager("action").enable(ses, tag)
+  if not args["quiet"]:
+    exported.write_message("Enabling actions tagged as {%s}" % tag)
+  
+commands_dict["aenable"] = (action_enable_cmd, "tag= quiet:boolean=false")
+  
+
+def action_disable_cmd(ses, args, input):
+  """
+  Temporarily disables all the actions with given tag, so their triggers
+  won't trigger any actions (well, this desciption is a bit obscure,
+  but I've tried my best :)
+  """
+  tag = args["tag"]
+  exported.get_manager("action").disable(ses, tag)
+  if not args["quiet"]:
+    exported.write_message("Disabling actions tagged as {%s}" % tag)
+  
+commands_dict["adisable"] = (action_disable_cmd, "tag= quiet:boolean=false")
+  
 
 
 am = None
