@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.8 2003/10/25 18:41:21 willhelm Exp $
+# $Id: highlight.py,v 1.9 2004/03/30 00:23:22 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -431,7 +431,7 @@ def load():
   """ Initializes the module by binding all the commands."""
   global hm
   modutils.load_commands(commands_dict)
-  hm = HighlightManager(exported.get_engine().getConfigManager())
+  hm = HighlightManager(exported.myengine.getConfigManager())
   exported.add_manager("highlight", hm)
 
   exported.hook_register("mud_filter_hook", hm.mudfilter, 90)

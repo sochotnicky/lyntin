@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.8 2003/10/25 22:07:42 willhelm Exp $
+# $Id: gag.py,v 1.9 2004/03/30 00:23:22 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
@@ -62,7 +62,7 @@ class GagData:
 
     return ret
 
-  def removeAntiGags(self, text):
+  def removeAntiGags(self, text=''):
     """
     Removes antigags from the list.
 
@@ -77,17 +77,6 @@ class GagData:
       del self._antigags[mem]
 
     return ret
-
-  def getGags(self):
-    """
-    Returns the keys of the gag dict.
-
-    @returns: list of all the gag items
-    @rtype: list of strings
-    """
-    listing = self._gags.keys()
-    listing.sort()
-    return listing
 
   def getAntiGags(self):
     """
@@ -157,7 +146,7 @@ class GagData:
 
     return l
 
-  def getAntiGagsInfo(self, text):
+  def getAntiGagsInfo(self, text=""):
     """
     Returns information about the antigags in here.
 
@@ -203,39 +192,17 @@ class GagManager(manager.Manager):
   def __init__(self):
     self._gagdata = {}
 
-  def addGag(self, ses, item):
+  def getGagData(self, ses):
     if not self._gagdata.has_key(ses):
       self._gagdata[ses] = GagData()
-    self._gagdata[ses].addGag(item)
-
-  def addAntiGag(self, ses, item):
-    if not self._gagdata.has_key(ses):
-      self._gagdata[ses] = GagData()
-    self._gagdata[ses].addAntiGag(item)
-
+    return self._gagdata[ses]
+    
   def clear(self, ses):
     if self._gagdata.has_key(ses):
       self._gagdata[ses].clear()
 
-  def removeGags(self, ses, text):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].removeGags(text)
-    return []
-
-  def removeAntiGags(self, ses, text):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].removeAntiGags(text)
-    return []
-
-  def getGags(self, ses):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].getGags()
-    return []
-
   def getInfo(self, ses, text=''):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].getInfo(text)
-    return []
+    return self.getGagData(ses).getInfo(text)
 
   def getItems(self):
     return ["gag", "antigag"]
@@ -261,33 +228,23 @@ class GagManager(manager.Manager):
 
     return self._gagdata.getAntiGagInfoMappings()
 
-  def getAntiGagsInfo(self, ses, text=''):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].getAntiGagsInfo(text)
-    return []
-
   def getStatus(self, ses):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].getStatus()
-    return "0 gag(s). 0 antigag(s)."
+    return self.getGagData(ses).getStatus()
 
   def addSession(self, newsession, basesession=None):
     if basesession:
       if self._gagdata.has_key(basesession):
-        sdata = self._gagdata[basesession]
-        for mem in sdata._gags.keys():
-          self.addGag(newsession, mem)
-        for mem in sdata._antigags.keys():
-          self.addAntiGag(newsession, mem)
+        bdata = self.getGagData(basesesion)
+        ndata = self.getGagData(newsession)
+
+        for mem in bdata._gags.keys():
+          ndata.addGag(mem)
+        for mem in bdata._antigags.keys():
+          ndaga.addAntiGag(mem)
 
   def removeSession(self, ses):
     if self._gagdata.has_key(ses):
       del self._gagdata[ses]
-
-  def expand(self, ses, text):
-    if self._gagdata.has_key(ses):
-      return self._gagdata[ses].expand(text)
-    return text
 
   def persist(self, args):
     """
@@ -296,7 +253,8 @@ class GagManager(manager.Manager):
     ses = args["session"]
     quiet = args["quiet"]
 
-    data = self.getInfo(ses) + self.getAntiGagsInfo(ses)
+    gd = self.getGagData(ses)
+    data = gd.getInfo() + gd.getAntiGagsInfo()
 
     if quiet == 1:
       data = [m + " quiet={true}" for m in data]
@@ -311,8 +269,8 @@ class GagManager(manager.Manager):
     ses = args["session"]
     text = args["dataadj"]
 
-    if exported.get_config("ignoresubs", ses, 0) == 0:
-      text = self.expand(ses, text)
+    if exported.get_config("ignoresubs", ses, 0) == 0 and self._gagdata.has_key(ses):
+      text = self._gagdata[ses].expand(text)
     return text
 
 
@@ -330,16 +288,17 @@ def antigag_cmd(ses, args, input):
   quiet = args["quiet"]
 
   gm = exported.get_manager("gag")
+  gd = gm.getGagData(ses)
 
   if not item:
-    data = gm.getAntiGagsInfo(ses)
+    data = gd.getAntiGagsInfo()
     if not data:
       data = ["antigag: no antigags defined."]
 
     exported.write_message("antigags\n" + "\n".join(data), ses)
     return
 
-  gm.addAntiGag(ses, item)
+  gd.addAntiGag(item)
   if not quiet:
     exported.write_message("antigag: {%s} added." % item, ses)
 
@@ -351,8 +310,14 @@ def unantigag_cmd(ses, args, input):
 
   category: commands
   """
-  func = exported.get_manager("gag").removeAntiGags
-  modutils.unsomething_helper(args, func, ses, "antigag", "antigags")
+  str = args["str"]
+  quiet = args["quiet"]
+
+  gm = exported.get_manager("gag")
+  gd = gm.getGagData(ses)
+
+  func = gd.removeAntiGags
+  modutils.unsomething_helper(args, func, None, "antigag", "antigags")
 
 commands_dict["unantigag"] = (unantigag_cmd, "str= quiet:boolean=false")
 
@@ -384,16 +349,17 @@ def gag_cmd(ses, args, input):
   quiet = args["quiet"]
 
   gm = exported.get_manager("gag")
+  gd = gm.getGagData(ses)
 
   if not gaggedtext:
-    data = gm.getInfo(ses)
+    data = gd.getInfo()
     if not data:
       data = ["gag: no gags defined."]
 
     exported.write_message("gags\n" + "\n".join(data), ses)
     return
 
-  gm.addGag(ses, gaggedtext)
+  gd.addGag(gaggedtext)
   if not quiet:
     exported.write_message("gag: {%s} added." % gaggedtext, ses)
 
@@ -406,10 +372,14 @@ def ungag_cmd(ses, args, input):
 
   category: commands
   """
-  gm = exported.get_manager("gag")
+  str = args["str"]
+  quiet = args["quiet"]
 
-  func = gm.removeGags
-  modutils.unsomething_helper(args, func, ses, "gag", "gags")
+  gm = exported.get_manager("gag")
+  gd = gm.getGagData(ses)
+
+  func = gd.removeGags
+  modutils.unsomething_helper(args, func, None, "gag", "gags")
 
 commands_dict["ungag"] = (ungag_cmd, "str= quiet:boolean=false")
 

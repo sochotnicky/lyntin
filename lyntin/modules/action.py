@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.19 2004/01/18 15:19:54 glasssnake Exp $
+# $Id: action.py,v 1.20 2004/03/30 00:23:22 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -115,7 +115,7 @@ class ActionData:
                   "onetime": mem[5] } )
     return l
 
-  def removeActions(self, text, mytag):
+  def removeActions(self, text, mytag=None):
     """
     Removes actions that match the given text and have given tag 
     from the list and returns the list of actions that were removed
@@ -150,18 +150,6 @@ class ActionData:
     self._actionlist = None       # invalidating action list
 
     return ret
-
-  def getActions(self):
-    """
-    Returns a list of all the actions this actionmanager is currently
-    managing.
-
-    @return: list of triggers for the actions we're managing.
-    @rtype: list of strings
-    """
-    listing = self._actions.keys()
-    listing.sort()
-    return listing
 
   def checkActions(self, text):
     """
@@ -330,11 +318,11 @@ class ActionManager(manager.Manager):
   def __init__(self):
     self._actions = {}
 
-  def addAction(self, ses, *args, **nargs):
+  def getActionData(self, ses):
     if not self._actions.has_key(ses):
       self._actions[ses] = ActionData(ses)
-    return self._actions[ses].addAction(*args, **nargs)
-    
+    return self._actions[ses]
+
   def clear(self, ses):
     if self._actions.has_key(ses):
       self._actions[ses].clear()
@@ -343,9 +331,7 @@ class ActionManager(manager.Manager):
     if item != "action":
       raise ValueError("%s is not a valid item for this manager." % item)
 
-    if self._actions.has_key(ses):
-      return self._actions[ses].getInfoMappings()
-    return []
+    return self.getActionData(ses).getInfoMappings()
 
   def getItems(self):
     return [ "action" ]
@@ -360,67 +346,33 @@ class ActionManager(manager.Manager):
              ("color", "Whether we try to match the line with color or not."),
              ("priority", "The priority to test this trigger at."),
              ("onetime", "Whether this action should be removed after it's triggered.")]
-             
     
-  def removeActions(self, ses, text, tag=None):
-    if self._actions.has_key(ses):
-      return self._actions[ses].removeActions(text, tag)
-    return []
-
-  def getActions(self, ses):
-    if self._actions.has_key(ses):
-      return self._actions[ses].getActions()
-    return []
-
-  def checkActions(self, ses, text):
-    if self._actions.has_key(ses):
-      self._actions[ses].checkActions(text)
-
   def getInfo(self, ses, text="", tag=None):
-    if self._actions.has_key(ses):
-      return self._actions[ses].getInfo(text, tag)
-    return []
+    return self.getActionData(ses).getInfo(text, tag)
 
   def getDisabledInfo(self, ses, tag=None):
-    if self._actions.has_key(ses):
-      return self._actions[ses].getDisabledInfo(tag)
-    return []
+    return self.getActionData(ses).getDisabledInfo(tag)
 
   def listTags(self, ses):
-    actions = self._actions.get(ses)
-    if actions:
-      return actions.listTags()
-    return []  
-
-  def enable(self, ses, tag):
-    actiondata = self._actions.get(ses)
-    if actiondata:
-      actiondata.enable(tag)
-
-  def disable(self, ses, tag):
-    actiondata = self._actions.get(ses)
-    if not actiondata:
-      actiondata = ActionData(ses)
-      self._actions[ses] = actiondata
-    actiondata.disable(tag)
+    return self.getActionData(ses).listTags()
 
   def addSession(self, newsession, basesession=None):
     if basesession:
       if self._actions.has_key(basesession):
-        acdata = self._actions[basesession]._actions
-        for (mem, act) in acdata.items():
-          self.addAction(newsession, mem, *act[2:])
-        for tag in self._actions[basesession]._disabled.keys():
-          self.disable(newsession, tag)
+        bdata = self.getActionData(basesession)
+        ndata = self.getActionData(newsession)
+
+        for (mem, act) in adata._actions.items():
+          ndata.addAction(mem, *act[2:])
+        for tag in bdata._disabled.keys():
+          ndata.disable(tag)
 
   def removeSession(self, ses):
     if self._actions.has_key(ses):
       del self._actions[ses]
 
   def getStatus(self, ses):
-    if self._actions.has_key(ses):
-      return self._actions[ses].getStatus()
-    return "0 action(s)."
+    return self.getActionData(ses).getStatus()
 
   def persist(self, args):
     """
@@ -429,7 +381,9 @@ class ActionManager(manager.Manager):
     ses = args["session"]
     quiet = args["quiet"]
 
-    data = self.getInfo(ses) + self.getDisabledInfo(ses)
+    ad = self.getActionData(ses)
+
+    data = ad.getInfo() + ad.getDisabledInfo()
 
     if quiet == 1:
       data = [m + " quiet={true}" for m in data]
@@ -456,7 +410,9 @@ class ActionManager(manager.Manager):
     text = args["dataadj"]
 
     if exported.get_config("ignoreactions", ses, 0) == 0:
-      self.checkActions(ses, text)
+      if self._actions.has_key(ses):
+        self._actions[ses].checkActions(text)
+
     return text
 
 
@@ -530,22 +486,23 @@ def action_cmd(ses, args, input):
   tag = args["tag"]
 
   am = exported.get_manager("action")
+  ad = am.getActionData(ses)
 
   # they typed '#action'--print out all the current actions
   if not action:
-    data = am.getInfo(ses, trigger, tag)
+    data = ad.getInfo(trigger, tag)
     if not data:
       data = ["action: no actions defined."]
 
     message = "actions"
     if tag:
       message += " with tag={%s}" % tag
-      data += am.getDisabledInfo(ses, tag)
+      data += ad.getDisabledInfo(tag)
     exported.write_message(message + "\n" + "\n".join(data), ses)
     return
 
   try:
-    am.addAction(ses, trigger, action, color, priority, onetime, tag)
+    ad.addAction(trigger, action, color, priority, onetime, tag)
     if not quiet:
       exported.write_message("action: {%s} {%s} color={%d} priority={%d} tag={%s} added." % (trigger, action, color, priority, str(tag)), ses)
   except:
@@ -567,8 +524,9 @@ def unaction_cmd(ses, args, input):
   category: commands
   """
   am = exported.get_manager("action")
-  func = lambda x, y: am.removeActions(x, y, args["tag"])
-  modutils.unsomething_helper(args, func, ses, "action", "actions")
+  ad = am.getActionData(ses)
+  func = lambda x, y: ad.removeActions(x, y, args["tag"])
+  modutils.unsomething_helper(args, func, None, "action", "actions")
 
 commands_dict["unaction"] = (unaction_cmd, "str= tag= quiet:boolean=false")
 
@@ -583,7 +541,10 @@ def action_enable_cmd(ses, args, input):
   category: commands
   """
   tag = args["tag"]
-  exported.get_manager("action").enable(ses, tag)
+  am = exported.get_manager("action")
+  ad = am.getActionData(ses)
+  ad.enable(tag)
+
   if not args["quiet"]:
     exported.write_message("Enabling actions tagged as {%s}" % tag)
     
@@ -600,7 +561,11 @@ def action_disable_cmd(ses, args, input):
   category: commands
   """
   tag = args["tag"]
-  exported.get_manager("action").disable(ses, tag)
+  am = exported.get_manager("action")
+  ad = am.getActionData(ses)
+
+  ad.disable(tag)
+
   if not args["quiet"]:
     exported.write_message("Disabling actions tagged as {%s}" % tag)
   

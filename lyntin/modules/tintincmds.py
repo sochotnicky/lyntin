@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.16 2004/02/19 23:51:50 willhelm Exp $
+# $Id: tintincmds.py,v 1.17 2004/03/30 00:23:22 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -201,7 +201,7 @@ def info_cmd(ses, args, input):
 
   category: commands
   """
-  data = exported.get_engine().getStatus(ses)
+  data = exported.myengine.getStatus(ses)
   data = string.join(data, "\n")
   exported.write_message(data, ses)
 
@@ -450,7 +450,7 @@ def session_cmd(ses, args, input):
     exported.write_error("session: session name cannot be all numbers.")
     return
 
-  e = exported.get_engine()
+  e = exported.myengine
   ses = e.getSession(name)
 
   if ses != None:
@@ -627,7 +627,7 @@ def write_cmd(ses, args, input):
 
   f = None
 
-  c = exported.get_engine().getConfigManager().get("commandchar")
+  c = exported.myengine.getConfigManager().get("commandchar")
 
   if os.sep not in filename:
     filename = config.options["datadir"] + filename
@@ -663,12 +663,12 @@ def zap_cmd(ses, args, input):
   """
   sesname = args["session"]
   if sesname:
-    ses = exported.get_engine().getSession(sesname)
+    ses = exported.myengine.getSession(sesname)
     if ses == None:
       exported.write_error("zap: session %s does not exist." % sesname)
       return
 
-  if exported.get_engine().closeSession(ses):
+  if exported.myengine.closeSession(ses):
     exported.write_message("zap: session %s zapped!" % ses.getName())
   else:
     exported.write_message("zap: session %s cannot be zapped!" % ses.getName())
