@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.29 2004/04/20 18:06:30 glasssnake Exp $
+# $Id: engine.py,v 1.30 2004/04/29 21:36:34 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -956,7 +956,7 @@ def main(defaultoptions={}):
           else:
             config.options[opt] = [mem[1]]
 
-    for mem in ["datadir", "ui"]:
+    for mem in ["datadir", "ui", "commandchar"]:
       if type(config.options[mem]) is list:
         config.options[mem] = config.options[mem][0]
 
