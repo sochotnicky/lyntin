@@ -1,3 +1,5 @@
+import socket
+
 import catcher
 import sock
 import mudcommands
@@ -10,6 +12,7 @@ class Session(object):
     self.config = None
     self.ui = None
     self.commands = []
+    self.mode = []
     self.mud = None
     self.modes = None
     self.timecron = None
@@ -17,33 +20,96 @@ class Session(object):
     self.player = None
     self.ocatch = None
     self.icatch = None
-    self.rawcatch = []
     self.name = opts.get('name', 'unnamed')
+    self.prompt = opts.get('prompt', None)
+    self.log = None
     self.sock = None
-    return
+    self.rawcatch = []
+    self.__lb = libmisc.LineBuffer(prompt=self.prompt)
 
-  def engine_init(self, engine):
-    self.config = Congif(engine.config)
+  def from_mud(self):
+    """ This is run in it's own thread created by the engine,
+        DO NOT call this yourself
+    """
+    while not self.shutdown and not self.sock.shutdown:
+      try:
+        txt = self.sock.read()
+        if (not txt):
+          continue
+      except socket.timeout:
+        # we didn't get a newline we were hoping for
+        # assume we are looking at a prompt and paint the pending line anyway
+        if (self.__lb.pending):
+          self.ui.write_prompt_text(self.__lb.pending)
+          self.__lb.pending = ''
+        continue
+      except: # bad things, just get out
+        self.shutdown.flag_true()
+        continue # finishes the tread
+
+      # iterate over all the full lines (newline terminated)
+      for (line) in self.__lb.add(txt):
+        final_line = self.icatch.line(line)
+        if (final_line.strip()): # not just whitespace on the line
+          self.ui.write_mud_text(final_line)
+          if (self.log):
+            self.log.write(final_line)
+
+      if (self.__lb.pending):
+        # if we have a partial line see if it matches our rawcacthers
+        # this is where login prompts are handled
+        if (self.rawcatch):
+          for (i, rawcatcher) in enumerate(self.rawcatch):
+            output = rawcatcher.raw_input(self.__lb.pending)
+            if (output):
+              self.sock.write(output+"\n")
+              self.rawcatch.pop(i)
+    # end while
+    print "Shutting down sock", self.name
+    return
+  
+  def to_mud(self, txt):
+    """Call this function to output text to the mud"""
+    final_text = self.ocatch.line(txt)
+    if (final_text):
+      if (self.sock and not self.sock.shutdown):
+        self.sock.write(final_text)
+        if (self.log):
+          self.log.write('%' + final_text)
+      else:
+        self.ui.write("# WARNING, output ignored.  You aren't attached to anything\n")
+        print self.sock, self.sock.shutdown and 1
     return
 
 class Connect(mudcommands.Command):
   command = 'connect'
-  def do_command(dummy, arg):
+  def do_command(sess, arg):
+    eng = engine.Engine()
     if (arg != '_default'):
       if (arg not in login.Login.all):
-        engine.Engine().ui.write("No idea, choices are %s" % (','.join(login.Login.all.keys())))
+        # write to the current UI
+        sess.ui.write("No idea, choices are %s" % (','.join(login.Login.all.keys())))
+        return
+      if (arg in map(lambda x:x.name, eng.sessions)): # already have one of those
+        sess.ui.write("Already connected to '%s'\n"
+                      "Use 'session %s' to change to that session" % (arg, arg))
         return
       name = arg
       info = login.Login.all[name]
+      prompt = info.mud_class.prompt
     else:
       info = None
+      prompt = None
       
-    sess = Session(name=arg)
+    sess = Session(name=arg, prompt=prompt)
     sess.ui = engine.Engine().ui.session_ui()
-    sess.shutdown = libmisc.Shutdown()
+    sess.shutdown = libmisc.Flag()
     sess.ocatch = catcher.CatchQueue()
     if (arg != '_default'):
-      sess.sock = sock.Sock(info.mud_class.host, info.mud_class.port, shutdown=sess.shutdown)
+      sess.sock = sock.Sock(info.mud_class.host, info.mud_class.port,
+                            timeout=0.3,
+                            shutdown=sess.shutdown,
+                            echo_callback=sess.ui.echo_change)
       sess.timecron = libmisc.Cron()
       sess.turncron = libmisc.Cron()
       sess.icatch = catcher.CatchQueue()
@@ -52,11 +118,14 @@ class Connect(mudcommands.Command):
       # give everyone a chance to hook into the catchers, least likely to need it first
       for (ob) in [sess.timecron, sess.turncron, sess.mud, sess.player]:
         ob.sess_init(sess)
-      if (sess.mud.name_prompt):
+      if (sess.mud.name_prompt and info.user_name is not None):
         sess.rawcatch.append(catcher.CallAndResponse(sess.mud.name_prompt, info.user_name))
-      if (sess.mud.pass_prompt):
+      if (sess.mud.pass_prompt and info.password is not None):
         sess.rawcatch.append(catcher.CallAndResponse(sess.mud.pass_prompt, info.password))
-    print "Adding session", sess.name
+      if (info.log_dir):
+        libmisc.ensure_path_built(info.log_dir)
+        sess.log = open('%s/%s.log' % (info.log_dir, info.name), 'a+')
+    
     engine.Engine().add_session(sess)
     if (info is not None):
       info.ui_init(sess.ui)
@@ -69,7 +138,7 @@ class Disconnect(mudcommands.Command):
       sess.ui.write("You aren't connected to anything!")
       return
 
-    sess.shutdown.shutdown()
+    sess.shutdown.flag_true()
     engine.Engine().rm_session(sess)
     return
 
