@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.7 2003/09/02 01:20:54 willhelm Exp $
+# $Id: base.py,v 1.8 2004/04/16 22:05:48 willhelm Exp $
 #######################################################################
 """
 Holds the base ui class for Lyntin as well as the get_ui function
@@ -26,18 +26,12 @@ def get_ui(uiname):
       could not be found or instantiated.
   @rtype: BaseUI subclass
   """
-  index = __file__.rfind(os.sep)
-  if index == -1:
-    path = "." + os.sep
-  else:
-    path = __file__[:index]
-
-  if uiname + ".py" not in os.listdir(path):
-    raise ValueError("ui '%s' does not exist." % uiname)
-
   path = "lyntin.ui." + uiname
-  _module = __import__(path)
-  _module = sys.modules[path]
+  try:
+    _module = __import__(path)
+    _module = sys.modules[path]
+  except ImportError:
+    raise ValueError("ui '%s' does not exist." % uiname)
   return _module.get_ui_instance()
 
 class BaseUI:
