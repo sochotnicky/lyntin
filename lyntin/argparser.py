@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: argparser.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: argparser.py,v 1.2 2003/05/27 02:06:38 willhelm Exp $
 #######################################################################
 """
 This provides the ArgumentParser class which parses X{command argument}s
@@ -42,7 +42,7 @@ Supported options::
 Refer to the modules.lyntincmds and modules.tintincmds for examples
 on arg specs and commands and how it all intertwines.
 """
-import string, re, time
+import re, time
 import utils
 
 defaultOptions={ "stripBraces": 1, "noparsing": 0, "limitparsing": -1, "nodefaults":0 }

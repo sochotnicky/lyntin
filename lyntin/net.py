@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.2 2003/05/17 17:52:10 willhelm Exp $
+# $Id: net.py,v 1.3 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -296,7 +296,7 @@ class SocketCommunicator:
     # handle the bell
     count = data.count(BELL)
     for i in range(count):
-      event.SpamEvent(exported.get_hook("bell_hook"), (self._session,)).enqueue()
+      event.SpamEvent(hookname="bell_hook", argmap={"session": self._session}).enqueue()
     data = data.replace(BELL, "")
 
     # handle IAC GA, IAC TELOPT_EOR, and text prompts
@@ -309,7 +309,7 @@ class SocketCommunicator:
     # calls.  this allows inline prompt detection in the stream.
     for d in splitdata:
       if __init__.promptdetection and self._prompt_regex.match(d):
-        event.SpamEvent(exported.get_hook("prompt_hook"), (self._session, d)).enqueue()
+        event.SpamEvent(hookname="prompt_hook", argmap={"session": self._session,"prompt": d}).enqueue()
       else:
         
         # handle telnet option stuff

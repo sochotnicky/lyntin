@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: highlight.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -17,7 +17,7 @@ We might at some point want to highlight things with [[ ... ]] or
 something like that when ansi is off.
 """
 import string
-from lyntin import ansi, manager, utils, __init__, hooks, exported
+from lyntin import ansi, manager, utils, __init__, exported
 from lyntin.modules import modutils
 
 
@@ -297,9 +297,9 @@ class HighlightManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -314,8 +314,8 @@ class HighlightManager(manager.Manager):
     """
     mud_filter_hook function for filtering incoming data from the mud.
     """
-    ses = args[0]
-    text = args[-1]
+    ses = args["session"]
+    text = args["dataadj"]
 
     if __init__.ansicolor == 0:
       return ansi.filter_ansi(text)
@@ -423,16 +423,17 @@ def load():
   hm = HighlightManager()
   exported.add_manager("highlight", hm)
 
-  hooks.mud_filter_hook.register(hm.mudfilter, 90)
-  hooks.write_hook.register(hm.persist)
+  exported.hook_register("mud_filter_hook", hm.mudfilter, 90)
+  exported.hook_register("write_hook", hm.persist)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global hm
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("highlight")
-  hooks.mud_filter_hook.unregister(hm.mudfilter)
-  hooks.write_hook.unregister(hm.persist)
+
+  exported.hook_unregister("mud_filter_hook", hm.mudfilter)
+  exported.hook_unregister("write_hook", hm.persist)
 
 # Local variables:
 # mode:python

@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: substitute.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the SubstituteManager which handles substitutes and
 gags.
 """
 import string
-from lyntin import ansi, manager, utils, __init__, hooks, exported
+from lyntin import ansi, manager, utils, __init__, exported
 from lyntin.modules import modutils
 
 class SubstituteData:
@@ -281,9 +281,9 @@ class SubstituteManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -308,8 +308,8 @@ class SubstituteManager(manager.Manager):
     mud_filter_hook function to perform substitutions on data 
     that comes from the mud.
     """
-    ses = args[0]
-    text = args[-1]
+    ses = args["session"]
+    text = args["dataadj"]
 
     if not ses._ignoresubs:
       text = self.expand(ses, text)
@@ -474,16 +474,17 @@ def load():
   sm = SubstituteManager()
   exported.add_manager("substitute", sm)
 
-  hooks.mud_filter_hook.register(sm.mudfilter, 50)
-  hooks.write_hook.register(sm.persist)
+  exported.hook_register("mud_filter_hook", sm.mudfilter, 50)
+  exported.hook_register("write_hook", sm.persist)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global sm
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("substitute")
-  hooks.mud_filter_hook.unregister(sm.mudfilter)
-  hooks.write_hook.unregister(sm.persist)
+
+  exported.hook_unregister("mud_filter_hook", sm.mudfilter)
+  exported.hook_unregister("write_hook", sm.persist)
 
 # Local variables:
 # mode:python

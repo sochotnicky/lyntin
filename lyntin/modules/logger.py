@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: logger.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: logger.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the LoggerManager which handles logging.
@@ -12,7 +12,7 @@ This module defines the LoggerManager which handles logging.
 Logging can be turned on and shut off on a session by session basis.
 """
 import string, os
-from lyntin import ansi, manager, __init__, utils, hooks, exported
+from lyntin import ansi, manager, __init__, utils, exported
 from lyntin.modules import modutils
 
 
@@ -141,8 +141,8 @@ class LoggerManager(manager.Manager):
     """
     mud_filter_hook function for filtering incoming data from the mud.
     """
-    ses = args[0]
-    text = args[-1]
+    ses = args["session"]
+    text = args["dataadj"]
 
     if self._loggers.has_key(ses):
       self._loggers[ses].log(ses, text)
@@ -154,12 +154,10 @@ class LoggerManager(manager.Manager):
     from_user_hook function for logging user input.
     """
     ses = exported.get_current_session()
-    text = args[0]
+    text = args["data"]
 
     if self._loggers.has_key(ses):
       self._loggers[ses].log(ses, text+"\n")
-
-    return text
 
 
 commands_dict = {}
@@ -232,16 +230,18 @@ def load():
   modutils.load_commands(commands_dict)
   lm = LoggerManager()
   exported.add_manager("logger", lm)
-  hooks.from_user_hook.register(lm.fromuser, 30)
-  hooks.mud_filter_hook.register(lm.mudfilter, 30)
+
+  exported.hook_register("from_user_hook", lm.fromuser, 30)
+  exported.hook_register("mud_filter_hook", lm.mudfilter, 30)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global lm
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("logger")
-  hooks.from_user_hook.unregister(lm.fromuser)
-  hooks.mud_filter_hook.unregister(lm.mudfilter)
+
+  exported.hook_unregister("from_user_hook", lm.fromuser)
+  exported.hook_unregister("mud_filter_hook", lm.mudfilter)
 
 # Local variables:
 # mode:python

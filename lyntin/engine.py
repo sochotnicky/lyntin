@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.2 2003/05/17 17:52:10 willhelm Exp $
+# $Id: engine.py,v 1.3 2003/05/27 02:06:38 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -32,7 +32,7 @@ import Queue, thread, sys
 from threading import Thread
 
 import session, __init__, utils, event
-import exported, hooks, helpmanager, history, commandmanager
+import exported, helpmanager, history, commandmanager
 
 # this is the singleton reference to the Engine instance.
 myengine = None
@@ -74,9 +74,6 @@ class Engine:
     # our command manager
     self._managers["command"] = commandmanager.CommandManager()
 
-    # our hook manager
-    self._managers["hook"] = hooks.get_hook_manager()
-
     # there is only one ui in the system.
     self._ui = None
 
@@ -95,8 +92,12 @@ class Engine:
     # the current session.  points to a Session object.
     self._current_session = None
 
+    # map of hook name -> utils.PriorityQueue objects
+    self._hooks = {}
+
     # we register ourselves with the shutdown hook
-    self.getManager("hook").register("shutdown_hook", self.shutdown)
+    self._hooks["shutdown_hook"] = utils.PriorityQueue()
+    self._hooks["shutdown_hook"].add(self.shutdown)
 
 
   def initialize(self):
@@ -187,7 +188,9 @@ class Engine:
     while not self._shutdownflag:
       try:
         time.sleep(1)
-        event.SpamEvent(exported.get_hook("timer_hook"), (self._current_tick,)).enqueue()
+        event.SpamEvent(hookname="timer_hook", 
+                        argmap={"tick": self._current_tick}
+                       ).enqueue()
         self._current_tick += 1
       except KeyboardInterrupt:
         return
@@ -243,7 +246,7 @@ class Engine:
 
       # if it's not internal we spam the hook with the raw input
       if internal == 0:
-        exported.get_hook("from_user_hook").spamhook((mem,))
+        exported.hook_spam("from_user_hook", {"data": mem})
 
       if mem.startswith("!"):
         memhistory = self.getManager("history").getHistoryItem(mem)
@@ -527,9 +530,9 @@ class Engine:
     __init__.errorcount = __init__.errorcount + 1
     exported.write_error("WARNING: Unhandled error encountered (%d out of %d)." 
                          % (__init__.errorcount, 20))
-    exported.get_hook("error_occurred_hook").spamhook((__init__.errorcount,))
+    exported.hook_spam("error_occurred_hook", {"count": __init__.errorcount})
     if __init__.errorcount > 20:
-      exported.get_hook("too_many_errors_hook").spamhook()
+      exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
       sys.exit("Error count exceeded--shutting down.")
 
@@ -607,7 +610,7 @@ class Engine:
     """
     self._ui_lock.acquire(1)
     try:
-      exported.get_hook("to_user_hook").spamhook((text,))
+      exported.hook_spam("to_user_hook", {"message": text})
     finally:
       self._ui_lock.release()
 

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: scheduler.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: scheduler.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the ScheduleManager which manages scheduling 
@@ -19,7 +19,7 @@ as well as the completely re-implemented #tick* suite of
 commands.
 """
 import time
-from lyntin import hooks, exported, manager, utils, event
+from lyntin import exported, manager, utils, event
 from lyntin.modules import modutils
 
 myscheduler = None
@@ -92,10 +92,10 @@ class Scheduler:
     self._eid = 0
 
   def startup(self):
-    hooks.timer_hook.register(self.timeUpdate)
+    exported.hook_register("timer_hook", self.timeUpdate)
 
   def shutdown(self):
-    hooks.timer_hook.unregister(self.timeUpdate)
+    exported.hook_unregister("timer_hook", self.timeUpdate)
  
   def getEvents(self, ses):
     """
@@ -214,7 +214,7 @@ class Scheduler:
     It also handles tossing events back in the schedule if they
     need repeating.
     """
-    tick = args[0]
+    tick = args["tick"]
 
     events = []
 
@@ -623,7 +623,6 @@ def load():
   myscheduler = Scheduler()
   myscheduler.startup()
   modutils.load_commands(commands_dict)
-
 
 def unload():
   global myscheduler

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: session.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -121,7 +121,7 @@ class Session:
     if self.getName() != "common":
       if quiet == 0:
         event.OutputEvent("Session %s disconnected.\n\"#zap %s\" to kill the session.\n" % (self._name, self._name)).enqueue()
-      exported.get_hook("disconnect_hook").spamhook((self, self._host, self._port))
+      exported.hook_spam("disconnect_hook", {"session": self, "host": self._host,  "port": self._port})
 
       if self._socket:
         self._socket.shutdown()
@@ -242,7 +242,7 @@ class Session:
     @type  tag: varies
     """
     for line in message.strip().split("\n"):
-      exported.get_hook("to_mud_hook").spamhook((self, line, tag))
+      exported.hook_spam("to_mud_hook", {"session": self, "data": line, "tag": tag})
 
     if self._socket:
       retval = self._socket.write(str(message))
@@ -329,12 +329,14 @@ class Session:
     """
     # this is the point of much recursion.  everything is registered
     # as a filter and recurses accordingly.
-    spamtuple = self,internal,self._verbatim,input,input
-    spamtuple = exported.get_hook("user_filter_hook").spamhook(spamtuple)
-    if spamtuple == None:
+    spamargs = {"session": self, "internal": internal, "verbatim": self._verbatim, "data": input, "dataadj": input}
+    spamargs = exported.hook_spam("user_filter_hook", argmap=spamargs, 
+          mappingfunc=exported.filter_mapper)
+
+    if spamargs == None:
       return
     else:
-      input = spamtuple[-1]
+      input = spamargs["dataadj"]
 
     # after this point we don't do any more recursion.  so it's
     # safe to unescape things and such.
@@ -379,10 +381,11 @@ class Session:
     for i in range(0, len(inputlines)):
       mem = inputlines[i]
       # call the pre-filter hook
-      spamtuple = self,mem,mem
-      spamtuple = exported.get_hook("mud_filter_hook").spamhook(spamtuple)
-      if spamtuple != None:
-        mem = spamtuple[-1]
+      spamargs = {"session": self, "data": mem, "dataadj": mem}
+
+      spamargs = exported.hook_spam("mud_filter_hook", spamargs, mappingfunc=exported.filter_mapper)
+      if spamargs != None:
+        mem = spamargs["dataadj"]
       else:
         mem = ""
 

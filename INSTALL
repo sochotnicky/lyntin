@@ -4,7 +4,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-$Id: INSTALL,v 1.3 2003/05/05 05:53:37 willhelm Exp $
+$Id: INSTALL,v 1.4 2003/05/27 02:06:38 willhelm Exp $
 
 For more up-to-date documentation, check out the web-site at:
 http://lyntin.sourceforge.net/
@@ -32,18 +32,19 @@ Requirements:
 
 Steps:
 
-1. Make sure you have at least Python 2.2--you can do this by 
-   running "python" and seeing what version it says it is.  If 
-   you don't have Python 2.2 or later installed, Lyntin won't work.
-2. Download the version of Lyntin you're looking for (below) 
-3. Untar the client into ~/lyntin or something along those lines
-4. Run "python lyntin.py"
+Untar and unzip the client.  Then run "python setup.py install".  That'll
+install a "lyntin" and a "lyntintk" scripts into /usr/bin or /usr/local/bin
+depending on how you have Python installed.  Those two scripts will start
+Lyntin.
 
-lyntin.py takes a series of options.  For a list of options 
+Lyntin takes a series of command-line options.  For a list of options 
 and explanations, run:
 
-   python lyntin.py --help
+   lyntin --help
 
+The lyntintk script is exactly like running:
+
+   lyntin --ui tk
 
 
 WINDOWS

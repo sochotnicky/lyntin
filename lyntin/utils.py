@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: utils.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -12,7 +12,7 @@ in the application, but are useful in a variety of places.  They're
 not dependent on application things, so it's easier to test them.
 """
 import os, string, re, time, types
-import ansi
+import ansi, constants
 
 # for finding non-escaped semi-colons in user input
 SEMI_REGEXP = re.compile(r'(?<!\\);')
@@ -28,6 +28,95 @@ PVAR_REGEXP = re.compile(r'%+(-?(\d+):?-?(\d*)|:-?(\d+))')
 # for finding $... variables
 DVAR_REGEXP = re.compile(r'\$+(-?(\d+):?-?(\d*)|:-?(\d+))')
 
+class PriorityQueue:
+  """
+  This is a pretty basic priority queue.
+  """
+  def __init__(self):
+    # holds the maps of priorities to items
+    self._prioritymap = {}
+
+    # the ordered list of items
+    self._orderedlist = []
+
+    # whether or not our orderedlist is dirty
+    self._dirty = 0
+
+  def _generateList(self):
+    """
+    Goes through the prioritymap and generates an orderedlist.  This
+    saves cycles since it puts the ordering of the list up front
+    rather than when the orderedlist is retrieved.
+    """
+    priorities = self._prioritymap.keys();
+    priorities.sort()
+
+    self._orderedlist = []
+
+    for priority in priorities:
+      for mem in self._prioritymap[priority]:
+        self._orderedlist.append(mem)
+
+  def add(self, func, priority=constants.LAST):
+    """
+    Adds a function to the prioritymap and marks the PriorityQueue as
+    "dirty" which means it needs to regenerate the ordered list before
+    it hands it out.
+
+    @param func: the function to call when the hook is spammed
+    @type  func: function
+
+    @param priority: the function will get this place in the call
+        order.  functions with the same priority specified will get
+        arbitrary ordering.  defaults to onstants.LAST.
+    @type  priority: int
+    """
+    if not callable(func):
+      exported.write_error("Function %s not callable." % repr(func))
+      return
+
+    if self._prioritymap.has_key(priority):
+      self._prioritymap[priority].append(func)
+    else:
+      self._prioritymap[priority] = [func]
+
+    self._dirty = 1
+
+  def remove(self, func):
+    """
+    Removes a func from the priority map.
+
+    @param func: the function to unregister
+    @type  func: function
+    """
+    for priority in self._prioritymap.keys():
+      if func in self._prioritymap[priority]:
+        self._prioritymap[priority].remove(func)
+
+        if len(self._prioritymap[priority]) == 0:
+          del self._prioritymap[priority]
+
+        break
+
+    self._dirty = 1
+  
+  def getList(self):
+    """
+    Retrieves the list.  It might regenerate it if the prioritymap
+    has been adjusted since the last time we regenerated the list.
+    """
+    if self._dirty == 1:
+      self._generateList()
+    return self._orderedlist
+
+  def count(self):
+    """
+    Returns how many functions are in the list.
+
+    @returns: the number of functions registered
+    @rtype: int
+    """
+    return len(self.getList())
 
 def filter_cm(text):
   """
@@ -652,9 +741,6 @@ def parse_time(timearg):
     raise ValueError, "Invalid time string: %s" % e
 
 
-TRUE_VALUES = ["yes", "true", "1", "on"]
-FALSE_VALUES = ["no", "false", "0", "off"]
-
 def convert_boolean(text):
   """
   Returns 1 if true, 0 if false, or -1 if it's not a boolean.
@@ -665,9 +751,9 @@ def convert_boolean(text):
   @returns: 1 if true, 0 if false, -1 if not a boolean
   @rtype: int
   """
-  if text in TRUE_VALUES:
+  if text in constants.TRUE_VALUES:
     return 1
-  elif text in FALSE_VALUES:
+  elif text in constants.FALSE_VALUES:
     return 0
   else:
     return -1

@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: variable.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
 It also defines global variables like $TIMESTAMP.
 """
 import string, time
-from lyntin import manager, utils, __init__, engine, hooks, exported
+from lyntin import manager, utils, __init__, engine, exported
 from lyntin.modules import modutils
 
 class TimeStampBuiltin:
@@ -223,18 +223,22 @@ class VariableManager(manager.Manager):
     vdata.addVariable(var, expansion)
 
     # spam the hook
-    hooks.variable_change_hook.spamhook((ses, var, oldvalue, expansion))
+    self._varChangeHook(ses, var, oldvalue, expansion)
 
   def clear(self, ses):
     if self._variables.has_key(ses):
       self._variables[ses].clear()
+
+  def _varChangeHook(self, ses, var, old, new):
+    exported.hook_spam("variable_change_hook", 
+          {"session": ses, "variable": var, "oldvalue": old, "newvalue": new})
 
   def removeVariables(self, ses, text):
     vars = []
     if self._variables.has_key(ses):
       vars = self._variables[ses].removeVariables(text)
       for mem in vars:
-        hooks.variable_change_hook.spamhook((ses, mem[0], mem[1], None))
+        self._varChangeHook(ses, mem[0], mem[1], None)
     return vars
 
   def getVariables(self, ses):
@@ -290,9 +294,9 @@ class VariableManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -307,10 +311,10 @@ class VariableManager(manager.Manager):
     """
     Handles denesting variables for Lyntin evaluation mode.
     """
-    ses = args[0]
-    internal = args[1]
-    verbatim = args[2]
-    text = args[-1]
+    ses = args["session"]
+    internal = args["internal"]
+    verbatim = args["verbatim"]
+    text = args["dataadj"]
 
     if verbatim == 1:
       return text
@@ -321,10 +325,10 @@ class VariableManager(manager.Manager):
     """
     user_filter_hook for handling incoming user data.
     """
-    ses = args[0]
-    internal = args[1]
-    verbatim = args[2]
-    text = args[-1]
+    ses = args["session"]
+    internal = args["internal"]
+    verbatim = args["verbatim"]
+    text = args["dataadj"]
 
     if verbatim == 1:
       return text
@@ -418,20 +422,22 @@ def load():
   modutils.load_commands(commands_dict)
   vm = VariableManager()
   exported.add_manager("variable", vm)
-  hooks.user_filter_hook.register(vm.userfilter, 10)
-  hooks.user_filter_hook.register(vm.denestVars, 95)
-  hooks.default_resolver_hook.register(vm.defaultResolver)
-  hooks.write_hook.register(vm.persist)
+
+  exported.hook_register("user_filter_hook", vm.userfilter, 10)
+  exported.hook_register("user_filter_hook", vm.denestVars, 95)
+  exported.hook_register("default_resolver_hook", vm.defaultResolver)
+  exported.hook_register("write_hook", vm.persist)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global vm
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("variable")
-  hooks.user_filter_hook.unregister(vm.userfilter)
-  hooks.user_filter_hook.unregister(vm.denestVars)
-  hooks.default_resolver_hook.unregister(vm.defaultResolver)
-  hooks.write_hook.unregister(vm.persist)
+
+  exported.hook_unregister("user_filter_hook", vm.userfilter)
+  exported.hook_unregister("user_filter_hook", vm.denestVars)
+  exported.hook_unregister("default_resolver_hook", vm.defaultResolver)
+  exported.hook_unregister("write_hook", vm.persist)
 
 # Local variables:
 # mode:python

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: action.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -29,7 +29,7 @@ changes--this allows us to handle Lyntin variables in the action trigger
 statements.
 """
 import re, string, copy
-from lyntin import manager, utils, event, __init__, hooks, exported, ansi
+from lyntin import manager, utils, event, __init__, exported, ansi
 from lyntin.modules import modutils
 
 # the placement variable regular expression
@@ -283,9 +283,9 @@ class ActionManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -303,7 +303,7 @@ class ActionManager(manager.Manager):
 
     This is registered with the variable_change hook.
     """
-    ses = args[0]
+    ses = args["session"]
     if self._actions.has_key(ses):
       self._actions[ses]._recompileRegexps()
 
@@ -312,8 +312,8 @@ class ActionManager(manager.Manager):
     mud_filter_hook function to check for actions when data
     comes from the mud.
     """
-    ses = args[0]
-    text = args[-1]
+    ses = args["session"]
+    text = args["dataadj"]
 
     if not ses._ignoreactions:
       self.checkActions(ses, text)
@@ -440,9 +440,9 @@ def load():
   am = ActionManager()
   exported.add_manager("action", am)
 
-  hooks.mud_filter_hook.register(am.mudfilter, 75)
-  hooks.write_hook.register(am.persist)
-  hooks.variable_change_hook.register(am.variableChange)
+  exported.hook_register("mud_filter_hook", am.mudfilter, 75)
+  exported.hook_register("write_hook", am.persist)
+  exported.hook_register("variable_change_hook", am.variableChange)
 
 
 def unload():
@@ -450,9 +450,10 @@ def unload():
   global am, var_module
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("alias")
-  hooks.mud_filter_hook.unregister(am.mudfilter)
-  hooks.write_hook.unregister(am.persist)
-  hooks.variable_change_hook.unregister(am.variableChange)
+
+  exported.hook_unregister("mud_filter_hook", am.mudfilter)
+  exported.hook_unregister("write_hook", am.persist)
+  exported.hook_unregister("variable_change_hook", am.variableChange)
 
 
 # Local variables:

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.1 2003/05/05 05:57:08 willhelm Exp $
+# $Id: tkui.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -14,7 +14,7 @@ Lyntin, but largely re-coded in various areas.
 from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
-from lyntin import ansi, hooks, event, engine, exported, utils
+from lyntin import ansi, event, engine, exported, utils
 from lyntin.ui import ui
 import lyntin.__init__
 

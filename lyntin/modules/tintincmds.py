@@ -4,10 +4,10 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: tintincmds.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 import string, os
-from lyntin import net, utils, engine, __init__, exported, hooks, event
+from lyntin import net, utils, engine, constants, __init__, exported, event
 from lyntin.modules import modutils
 
 """
@@ -26,7 +26,7 @@ def bell_cmd(ses, words, input):
 
   category: commands
   """
-  exported.get_hook("bell_hook").spamhook((ses,))
+  exported.hook_spam("bell_hook", {"session": ses})
 
 commands_dict["bell"] = (bell_cmd, "")
 
@@ -459,7 +459,7 @@ def session_cmd(ses, args, input):
     exported.get_engine().startthread("network", sock.run)
 
     # spam the hook
-    hooks.connect_hook.spamhook((ses, host, port))
+    exported.hook_spam("connect_hook", {"session": ses, "host": host, "port": port})
 
   except:
     exported.write_traceback("session: had problems creating the session.")
@@ -578,7 +578,7 @@ def version_cmd(ses, args, input):
 
   category: commands
   """
-  exported.write_message(__init__.VERSION)
+  exported.write_message(constants.VERSION)
 
 commands_dict["version"] = (version_cmd, "")
 
@@ -610,7 +610,7 @@ def write_cmd(ses, args, input):
 
   try:
     f = open(filename, "w")
-    hooks.write_hook.spamhook((ses, f, quiet))
+    exported.hook_spam("write_hook", {"session": ses, "file": f, "quiet": quiet})
     f.close()
     exported.write_message("write: file %s has been written for session %s." % 
                            (filename, ses.getName()), ses)

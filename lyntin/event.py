@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: event.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: event.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 Holds the X{event} structures in Lyntin.  All events inherit from 
@@ -15,7 +15,7 @@ event queue.  You can use the __init__ function to initialize
 your event as it is not used in the base Event class.
 """
 import string, os, sys, traceback
-import ui.ui, __init__, exported
+import ui.ui, __init__, exported, constants
 
 class Event:
   """
@@ -149,7 +149,7 @@ class StartupEvent(Event):
       ShutdownEvent().enqueue()
 
     # spam the startup hook 
-    exported.get_hook("startup_hook").spamhook()
+    exported.hook_spam("startup_hook", {})
 
     # handle command files
     for mem in __init__.options['readfile']:
@@ -163,7 +163,7 @@ class StartupEvent(Event):
     exported.get_engine().startthread("timer", exported.get_engine().runtimer)
 
     # we're done initialization!
-    exported.write_message(__init__.STARTUPTEXT)
+    exported.write_message(constants.STARTUPTEXT)
     exported.get_engine().writePrompt()
 
 
@@ -196,7 +196,7 @@ class EchoEvent(Event):
 
   def execute(self):
     """ Runs the echo event through anything listening."""
-    exported.get_hook("mudecho_hook").spamhook((self._state,))
+    exported.hook_spam("mudecho_hook", {"yesno": self._state})
     __init__.mudecho = self._state
 
 
@@ -220,7 +220,7 @@ class MudEvent(Event):
 
   def execute(self):
     """ Execute."""
-    exported.get_hook("from_mud_hook").spamhook((self._session, self._input))
+    exported.hook_spam("from_mud_hook", {"session": self._session, "data": self._input})
     exported.get_engine().handleMudData(self._session, self._input)
 
 
@@ -283,23 +283,16 @@ class SpamEvent(Event):
   it off in its own event.  The timer uses this to handle kicking
   anything that's listening to the timer_hook.
   """
-  def __init__(self, hook, args):
+  def __init__(self, *vargs, **nargs):
     """
     Initializes the SpamEvent.
-
-    @param hook: the hook to spam
-    @type  hook: Hook
-
-    @param args: the arguments to send to the functions registered
-        with the hook--refer to the hook documentation for details
-    @type  args: tuple
     """
-    self._hook = hook
-    self._args = args
+    self._vargs = vargs
+    self._nargs = nargs
 
   def execute(self):
     """ Execute."""
-    self._hook.spamhook(self._args)
+    exported.hook_spam(*(self._vargs), **(self._nargs))
 
 # Local variables:
 # mode:python

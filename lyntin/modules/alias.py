@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: alias.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -29,7 +29,7 @@ expressions.  At some point in the future, this will be changed to
 regular expressions to better handle a wider variety of aliases.
 """
 import string
-from lyntin import manager, utils, __init__, exported, hooks
+from lyntin import manager, utils, __init__, exported
 from lyntin.modules import modutils
 
 class AliasData:
@@ -228,9 +228,9 @@ class AliasManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -247,10 +247,10 @@ class AliasManager(manager.Manager):
     """
     # we check for aliases here--and if we find some, we
     # do the variable expansion and then recurse over the result
-    ses = args[0]
-    internal = args[1]
-    verbatim = args[2]
-    text = args[-1]
+    ses = args["session"]
+    internal = args["internal"]
+    verbatim = args["verbatim"]
+    text = args["dataadj"]
   
     if not self._aliasdata.has_key(ses) or verbatim == 1:
       return text
@@ -357,16 +357,17 @@ def load():
   am = AliasManager()
   exported.add_manager("alias", am)
 
-  hooks.user_filter_hook.register(am.userfilter, 20)
-  hooks.write_hook.register(am.persist)
+  exported.hook_register("user_filter_hook", am.userfilter, 20)
+  exported.hook_register("write_hook", am.persist)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global am
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("alias")
-  hooks.user_filter_hook.unregister(am.userfilter)
-  hooks.write_hook.unregister(am.persist)
+
+  exported.hook_register("user_filter_hook", am.userfilter)
+  exported.hook_register("write_hook", am.persist)
 
 # Local variables:
 # mode:python

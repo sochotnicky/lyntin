@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: ui.py,v 1.1 2003/05/05 05:57:08 willhelm Exp $
+# $Id: ui.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 Holds the ui components in lyntin as well as the Message
@@ -14,7 +14,7 @@ will display the message differently depending on the type.
 """
 import string, re, sys
 import lyntin.__init__, lyntin.exported
-from lyntin import hooks, event, utils
+from lyntin import event, utils
 
 
 """ The message type constants."""
@@ -80,7 +80,7 @@ class BaseUI:
     then go on to do the initializing you need to do.
     """
     self.shutdownflag = 0
-    hooks.shutdown_hook.register(self.shutdown)
+    lyntin.exported.hook_register("shutdown_hook", self.shutdown)
 
   def startui(self):
     """

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: commandmanager.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: commandmanager.py,v 1.2 2003/05/27 02:06:38 willhelm Exp $
 #######################################################################
 """
 Lyntin comes with a series of X{command}s for manipulating aliases, 
@@ -31,7 +31,7 @@ command examples.  Additionally, check out the Lyntin module repository
 on http://lyntin.sourceforge.net/ for more examples.
 """
 import inspect, re
-import manager, __init__, exported, argparser, hooks, utils
+import manager, __init__, exported, argparser, utils
 
 class _CommandData:
   """
@@ -218,9 +218,9 @@ class CommandManager(manager.Manager):
         we didn't
     @rtype:  None or string
     """
-    ses = args[0]
-    internal = args[1]
-    input = args[-1]
+    ses = args["session"]
+    internal = args["internal"]
+    input = args["dataadj"]
 
     if len(input) > 1 and input.startswith(__init__.commandchar):
       input = input[1:]
@@ -261,7 +261,10 @@ class CommandManager(manager.Manager):
             if len(fixedmem) > 0 and fixedmem.startswith("^"):
               fixedmem = fixedmem[1:]
 
-            resolver = hooks.default_resolver_hook.spamhook( (ses, mem) )
+            resolver = exported.hook_spam("default_resolver_hook", 
+                                {"session": ses, "commandname": mem}, 
+                                mappingfunc=exported.query_mapper, 
+                                donefunc=exported.query_done)
 
             try:
               dict = argumentparser.parse(words[1],resolver)
@@ -284,7 +287,7 @@ class CommandManager(manager.Manager):
           ses.prompt()
         exported.write_error("Not a valid command: %s" % (words[0]))
       return
-    return args[-1]
+    return args["dataadj"]
 
 # Local variables:
 # mode:python

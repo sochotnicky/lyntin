@@ -4,14 +4,14 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: textui.py,v 1.1 2003/05/05 05:57:08 willhelm Exp $
+# $Id: textui.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 Holds the text ui class.
 """
 import re, sys, os, select, types
 import lyntin.__init__
-from lyntin import ansi, engine, hooks, event, utils, exported
+from lyntin import ansi, engine, event, utils, exported
 from lyntin.ui import ui
 
 
@@ -158,7 +158,7 @@ class Textui(ui.BaseUI):
 
   def echo(self, args):
     """ This turns echo on and off on the CommandEntry widget."""
-    yesno = args[0]
+    yesno = args["yesno"]
     if yesno == 0:
       # echo off
       self._do_i_echo = 0
@@ -241,7 +241,7 @@ class Textui(ui.BaseUI):
     Handles writing information from the mud and/or Lyntin
     to the user.
     """
-    message = args[0]
+    message = args["message"]
 
     if type(message) == types.StringType:
       message = ui.Message(message, ui.LTDATA)

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: exported.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -12,7 +12,17 @@ very rarely even though we might change Lyntin's internals.  If
 it does change it'll be between major Lyntin versions.
 """
 import sys, traceback
-import engine, ui.ui, __init__
+import engine, ui.ui, __init__, utils
+
+LAST = 99
+FIRST = 1
+
+class StopSpammingException(Exception):
+  pass
+
+class DoneSpammingException(Exception):
+  def __init__(self, output):
+    self.output = output
 
 def lyntin_command(text, internal=0, session=None):
   """
@@ -368,6 +378,23 @@ def tally_error():
   """
   get_engine().tallyError()
 
+def get_hook(hookname):
+  """
+  If the hook exists, returns the hook.  Otherwise it creates
+  a new hook and returns that.
+
+  @param hookname: the name of the hook to retrieve
+  @type  hookname: string
+
+  @returns: the Hook by the name of hookname
+  @rtype: Hook
+  """
+  engine = get_engine()
+  if not engine._hooks.has_key(hookname):
+    engine._hooks[hookname] = utils.PriorityQueue()
+
+  return engine._hooks[hookname]
+
 def hook_register(hookname, func, place=None):
   """
   Registers a function with a hook.
@@ -383,11 +410,13 @@ def hook_register(hookname, func, place=None):
       arbitrary ordering.  defaults to hooks.LAST.
   @type  place: int
   """
+  hook = get_hook(hookname)
+
   if place == None:
-    get_manager("hook").register(hookname, func)
+    hook.add(func)
   else:
-    get_manager("hook").register(hookname, func, place)
-    
+    hook.add(func, place)
+
 def hook_unregister(hookname, func):
   """
   If the hook exists, unregisters the func from the hook.
@@ -398,20 +427,98 @@ def hook_unregister(hookname, func):
   @param func: the function to remove from the hook
   @type  func: function
   """
-  get_manager("hook").unregister(hookname, func)
+  engine = get_engine()
+  if engine._hooks.has_key(hookname):
+    engine._hooks[hookname].remove(func)
 
-def get_hook(hookname):
+def hook_spam(hookname, argmap={}, mappingfunc=lambda x,y:x, emptyfunc=lambda x:x, donefunc=lambda x:x):
   """
-  If the hook exists, returns the hook.  Otherwise it creates
-  a new hook and returns that.
+  Sends out input to all the registrants of a hook.
 
-  @param hookname: the name of the hook to retrieve
+  @param hookname: the name of the hook to spam
   @type  hookname: string
 
-  @returns: the Hook by the name of hookname
-  @rtype: Hook
+  @param argmap: the map of arguments that gets passed to
+      each function in the hook.  the actual arguments differs
+      from hook to hook.
+  @type  argmap: dict of arguments
+
+  @param mappingfunc: function whose output will be passed to the next
+      function in the hook.  Must take two arguments: the previous 
+      arglist and the return from the previous function.
+  @type  mappingfunc: function
+
+  @param emptyfunc: Function to be called with arglist if there are no
+      objects registered with this hook.  Must take 1 argument, the arglist
+      tuple, and return what spamhook should return.
+  @type  emptyfunc: function
+
+  @param donefunc: Functino to be called when spamming finishes normally.
+      Should take 1 argument and return what spamhook should return.
+  @type  donefunc: function
+        
+  @return: argmap
+  @rtype:  map of output arguments
   """
-  return get_manager("hook").getHook(hookname)
+  hooklist = get_hook(hookname).getList()
+  try:
+    if hooklist:
+      for mem in hooklist:
+        output = mem(argmap)
+        argmap = mappingfunc(argmap, output)
+    else:
+      argmap = emptyfunc(argmap)
+  except StopSpammingException, e:
+    return None
+  except DoneSpammingException, d:
+    return d, output
+
+  return donefunc(argmap)
+
+
+def filter_mapper(x, y):
+  """
+  This is the mapping function to use for filter-style hooks.  
+  Spamhook should be called as:
+
+    1. spamargs = {"session": ses, "data": data, "dataadj": data... }
+    2. spamargs = exported.hook_spam(... spamargs ...)
+    3. output = spamargs["dataadj"]
+
+  Each filter function will get a map with at least the following keys when 
+  it is called:
+
+    session - the session
+    data - the original data
+    dataadj - the adjusted data
+  """
+  if y != None:
+    x["dataadj"] = y
+    return x
+  else:
+    raise StopSpammingException
+
+def query_mapper(x, y):
+  """
+  This is the mapping function to be used for query-style hooks.
+  Spamhook should be called as:
+
+    1. output = hook.spamhook( arguments )
+
+  Each hook function will be called with the arguments until one function
+  returns non-None.  That non-None value will be returned from spamhook
+  """
+  if y != None:
+    raise DoneSpammingException(y)
+  else:
+    return x
+
+def query_done(x):
+  """
+  This is the done hook function to go with the query mapper for proper 
+  behaviour.
+  """
+  return None
 
 # Local variables:
 # mode:python

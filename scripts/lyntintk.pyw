@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntintk.pyw,v 1.1 2003/05/05 06:02:55 willhelm Exp $
+# $Id: lyntintk.pyw,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module holds the Lyntin "global variables" and constants as well
@@ -58,11 +58,11 @@ if __name__ == '__main__':
         __init__.options['snoopdefault'] = 0
 
       elif mem[0] == '--help':
-        print HELPTEXT
+        print constants.HELPTEXT
         sys.exit(0)
 
       elif mem[0] == '--version':
-        print VERSION
+        print constants.VERSION
         sys.exit(0)
 
       else:

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.1 2003/05/05 05:56:02 willhelm Exp $
+# $Id: speedwalk.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -34,7 +34,7 @@ really don't want them to be, we use #swexclude::
 # Originally written 2002 by Sebastian John
 
 import re, string
-from lyntin import manager, utils, __init__, hooks, exported
+from lyntin import manager, utils, __init__, exported
 from lyntin.modules import modutils
 
 class SpeedwalkHash:
@@ -331,9 +331,9 @@ class SpeedwalkManager(manager.Manager):
     """
     write_hook function for persisting the state of our session.
     """
-    ses = args[0]
-    file = args[1]
-    quiet = args[2]
+    ses = args["session"]
+    file = args["file"]
+    quiet = args["quiet"]
 
     data = self.getInfo(ses)
     if data:
@@ -348,10 +348,10 @@ class SpeedwalkManager(manager.Manager):
     """
     user_filter_hook function to check for speedwalking expansion.
     """
-    ses = args[0]
-    internal = args[1]
-    verbatim = args[2]
-    text = args[-1]
+    ses = args["session"]
+    internal = args["internal"]
+    verbatim = args["verbatim"]
+    text = args["dataadj"]
     
     if not self._hashes.has_key(ses) or __init__.speedwalk == 0 or verbatim == 1:
       return text
@@ -517,16 +517,17 @@ def load():
   sm = SpeedwalkManager()
   exported.add_manager("speedwalk", sm)
 
-  hooks.user_filter_hook.register(sm.userfilter, 80)
-  hooks.write_hook.register(sm.persist)
+  exported.hook_register("user_filter_hook", sm.userfilter, 80)
+  exported.hook_register("write_hook", sm.persist)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global sm
   modutils.unload_commands(commands_dict.keys())
   exported.remove_manager("speedwalk")
-  hooks.user_filter_hook.unregister(sm.userfilter)
-  hooks.write_hook.unregister(sm.persist)
+
+  exported.hook_unregister("user_filter_hook", sm.userfilter)
+  exported.hook_unregister("write_hook", sm.persist)
 
 # Local variables:
 # mode:python

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: hooks.py,v 1.2 2003/05/27 02:06:39 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -312,7 +312,6 @@ class Hook:
     @param doneFunction: Functino to be called when spamming finishes normally.
         Should take 1 argument and return what spamhook should return.
     @type  doneFunction: function
-        
 
     @return: arglist
     @rtype:  tuple of arguments
@@ -433,31 +432,31 @@ shutdown_hook = get_hook_manager().getHook("shutdown_hook")
 # When the mud sends an echo on or an echo off.
 # 
 # arg tuple: (boolean)
-#  - new echo state: 1 if on, 0 if off
+#  - yesno - new echo state: 1 if on, 0 if off
 mudecho_hook = get_hook_manager().getHook("mudecho_hook")
 
 # When the mud sends a ^G character, we kick off a SpamEvent
 # which spams the bell_hook.
 #
 # arg tuple: (Session)
-#  - the session the bell was kicked off in
+#  - session - the session the bell was kicked off in
 bell_hook = get_hook_manager().getHook("bell_hook")
 
 # Some muds send a GA/TELOPT_EOR character indicating a prompt.  This
 # hook allows you to react to those prompts.
 #
 # arg tuple: (Session, string)
-#  - the session the prompt came from
-#  - the prompt text
+#  - session - the session the prompt came from
+#  - prompt - the prompt text
 prompt_hook = get_hook_manager().getHook("prompt_hook")
 
 # This hook will get called every time a variable is changed.
 #
 # arg tuple: (session, string, string, string)
-#  - session instance
-#  - the variable name
-#  - the old value
-#  - the new value
+#  - session - session instance
+#  - variable - the variable name
+#  - oldvalue - the old value
+#  - newvalue - the new value
 variable_change_hook = get_hook_manager().getHook("variable_change_hook")
 
 # When a session dies or ends.
@@ -469,23 +468,23 @@ death_hook = get_hook_manager().getHook("death_hook")
 # When a session connects to a mud.
 #
 # arg tuple: (session, string, int)
-#  - session instance
-#  - hostname
-#  - port
+#  - session - session instance
+#  - host - hostname
+#  - port - port
 connect_hook = get_hook_manager().getHook("connect_hook")
 
 # When a session disconnects from a mud.
 #
 # arg tuple: (session, string, int)
-#  - the session instance that just disconnected
-#  - the hostname of where it was connected to
-#  - the port at which it was connected
+#  - session - the session instance that just disconnected
+#  - host - the hostname of where it was connected to
+#  - port - the port at which it was connected
 disconnect_hook = get_hook_manager().getHook("disconnect_hook")
 
 # Everything the user types gets sent on the from_user_hook.
 #
 # arg tuple: (string)
-#  - the data the user just entered
+#  - "data" - the data the user just entered
 from_user_hook = get_hook_manager().getHook("from_user_hook")
 
 # When the mud sends data, this will trigger the from_mud_hook.
@@ -494,8 +493,8 @@ from_user_hook = get_hook_manager().getHook("from_user_hook")
 # mud_filter_hook.
 #
 # arg tuple: (session, string)
-#  - the session instance data is coming from
-#  - the raw data we just got from the mud
+#  - session - the session instance data is coming from
+#  - data - the raw data we just got from the mud
 from_mud_hook = get_hook_manager().getHook("from_mud_hook")
 
 # This differs from the from_user_hook in that this is everything
@@ -503,23 +502,23 @@ from_mud_hook = get_hook_manager().getHook("from_mud_hook")
 # the user types--much of it goes to the mud.
 #
 # arg tuple: (session, string, tag)
-#  - the session instance we're sending this data to
-#  - the string being sent
-#  - the tag used in session.writeSocket (usually None)
+#  - session - the session instance we're sending this data to
+#  - data - the string being sent
+#  - tag - the tag used in session.writeSocket (usually None)
 to_mud_hook = get_hook_manager().getHook("to_mud_hook")
 
 # The ui's listen on this hook to display stuff.  Data on this hook
 # is meant for the user to see as Lyntin output or mud output.
 #
 # arg tuple: (string | ui.ui.Message)
-#  - either a string or a ui.ui.Message instance--this is the data
+#  - message - either a string or a ui.ui.Message instance--this is the data
 to_user_hook = get_hook_manager().getHook("to_user_hook")
 
 # The timer hook runs every second.  The tickers for the various sessions
 # use this hook to figure out when to tick.
 # 
 # arg tuple: (int)
-#  - the current tick since Lyntin started
+#  - tick - the current tick since Lyntin started
 timer_hook = get_hook_manager().getHook("timer_hook")
 
 # The write hook runs whenever someone does "#write <filename>".
@@ -540,16 +539,17 @@ timer_hook = get_hook_manager().getHook("timer_hook")
 #   #alias {g} {get all} quiet={true}
 # 
 # arg tuple: (session, file object, boolean)
-#  - the session instance
-#  - the file object we're writing to
-#  - whether (1) or not (0) we should be persisting things quietly
+#  - session - the session instance
+#  - file - the file object we're writing to
+#  - quiet - whether (1) or not (0) we should be persisting things quietly
 write_hook = get_hook_manager().getHook("write_hook")
 
 # When an error is kicked up via the event loop.  The arg tuple
 # is empty--you should check sys.exc_traceback if you're interested
 # in what just happened.
 # 
-# arg tuple: ()
+# arg tuple: (int)
+#  - count - the number of errors that have occurred so far
 error_occurred_hook = get_hook_manager().getHook("error_occurred_hook")
 
 # When the user_custom variable too_many_errors is exceeded.
@@ -606,9 +606,9 @@ def query_done(x):
 # the mud.
 # 
 # arg tuple: (session, string, string)
-#  - the session the mud data came from
-#  - the original text the mud sent
-#  - the filtered text (this allows people to adjust it as they go along)
+#  - session - the session the mud data came from
+#  - data - the original text the mud sent
+#  - dataadj - the filtered text (this allows people to adjust it as they go along)
 # 
 # Functions that register with this hook should return the adjusted text.
 # For example, the SubstituteManager returns text with substitutions
@@ -622,12 +622,12 @@ mud_filter_hook = get_hook_manager().getHook("mud_filter_hook")
 # These should return the text that should be sent to the mud.
 # 
 # arg tuple: (session, boolean, boolean, string, string)
-#  - the session instance
-#  - 0 or 1: whether or not the data is internal
-#  - 0 or 1: whether or not we're in verbatim mode where we don't adjust
-#    the user data at all (from the session)
-#  - the original text the user typed
-#  - the adjusted text
+#  - session - the session instance
+#  - internal - 0 or 1: whether or not the data is internal
+#  - verbatim - 0 or 1: whether or not we're in verbatim mode where we don't
+#    adjust the user data at all (from the session)
+#  - data - the original text the user typed
+#  - dataadj - the adjusted text
 #
 # Functions that register with this hook should return the adjusted text.
 # For example, the AliasManager returns text with aliases expanded.
@@ -639,6 +639,8 @@ user_filter_hook = get_hook_manager().getHook("user_filter_hook")
 # this hook.
 #
 # arg tuple: (session, commandname)
+#   - session - session
+#   - commandname - commandname
 # output: function that can accept 1 paramter, the argument name, and will 
 # return the default string value, or None if no default is present
 get_hook_manager().addHook("default_resolver_hook", QueryHook())
