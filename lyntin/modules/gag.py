@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.7 2003/10/25 18:41:21 willhelm Exp $
+# $Id: gag.py,v 1.8 2003/10/25 22:07:42 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
@@ -260,7 +260,6 @@ class GagManager(manager.Manager):
       return self._gagdata.getGagInfoMappings()
 
     return self._gagdata.getAntiGagInfoMappings()
-
 
   def getAntiGagsInfo(self, ses, text=''):
     if self._gagdata.has_key(ses):

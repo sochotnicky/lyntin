@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.6 2003/09/02 01:20:52 willhelm Exp $
+# $Id: speedwalk.py,v 1.7 2003/10/25 22:07:42 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -132,6 +132,13 @@ class SpeedwalkHash:
     listing = ["swdir {%s} {%s}" % (mem, self._dirs[mem]) for mem in listing]
     
     return listing
+
+  def getDirsInfoMappings(self):
+    l = []
+    for mem in self._dirs.keys():
+      l.append( { "alias": mem, "dir": self._dirs[mem] } )
+
+    return l
   
   def getDirStatus(self):
     """
@@ -225,6 +232,12 @@ class SpeedwalkHash:
     
     return listing
   
+  def getExcludesInfoMappings(self):
+    l = []
+    for mem in self._excludes:
+      l.append( { "exclude": mem } )
+    return l
+
   def getExcludeStatus(self):
     """
     Returns a one-line string describing how many excludes we have.
@@ -290,6 +303,30 @@ class SpeedwalkManager(manager.Manager):
     if self._hashes.has_key(ses):
       return self._hashes[ses].getExcludesInfo()
     return []
+
+  def getItems(self):
+    return ["swdir", "swexclude"]
+
+  def getParameters(self, item):
+    if item == "swdir":
+      return [ ("alias", "The speedwalk alias."),
+               ("dir", "The speedwalk direction expansion.") ]
+    if item == "swexclude":
+      return [ ("exclude", "The word to exclude from swdir expansion.") ]
+
+    raise ValueError("%s is not a valid item for this manager." % item)
+
+  def getInfoMappints(self, item, ses):
+    if item not in ["swexclude", "swdir"]:
+      raise ValueError("%s is not a valid item for this manager." % item)
+
+    if not self._hashes.has_key(ses):
+      return []
+
+    if item == "swdir":
+      return self._hashes.getDirsInfoMappings()
+    
+    return self._hashes.getExcludesInfoMappings()
 
   def getInfo(self, ses):
     if self._hashes.has_key(ses):

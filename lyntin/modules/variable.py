@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.11 2003/10/04 18:08:08 willhelm Exp $
+# $Id: variable.py,v 1.12 2003/10/25 22:07:42 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -218,6 +218,11 @@ class VariableData:
 
     return data
 
+  def getInfoMappings(self):
+    l = []
+    for mem in self._variables.keys():
+      l.append({"var": mem, "expansion": self._variables[mem]})
+
 class VariableManager(manager.Manager):
   def __init__(self):
     self._variables = {}
@@ -309,6 +314,22 @@ class VariableManager(manager.Manager):
       return self._variables[ses].getInfo(text)
     return []
 
+  def getItems(self):
+    return [ "variable" ]
+
+  def getParameters(self, item):
+    if item != "variable":
+      raise ValueError("%s is not a valid item for this manager." % item)
+    return [ ("var", "The variable"), 
+             ("expansion", "The thing the variable expands into." ) ]
+
+  def getInfoMappings(self, item, ses):
+    if item != "variable":
+      raise ValueError("%s is not a valid item for this manager." % item)
+    if not self._variables.has_key(ses):
+      return []
+    return self._variables[ses].getInfoMappings()
+      
   def getStatus(self, ses):
     if self._variables.has_key(ses):
       return self._variables[ses].getStatus()

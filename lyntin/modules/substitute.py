@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.7 2003/09/02 01:20:53 willhelm Exp $
+# $Id: substitute.py,v 1.8 2003/10/25 22:07:42 willhelm Exp $
 #######################################################################
 """
 This module defines the SubstituteManager which handles substitutes.
@@ -147,6 +147,13 @@ class SubstituteData:
 
     return listing
 
+  def getSubstituteInfoMapping(self):
+    l = []
+    for mem in self._substitutes.keys():
+      l.append( { "item": mem,
+                  "substitution": utils.escape(self._substitutes[mem]) } )
+    return l
+
   def getAntiSubstitutesInfo(self, text):
     """
     Returns information about the antisubstitutes in here.
@@ -168,6 +175,12 @@ class SubstituteData:
     listing = ["antisubstitute {%s}" % mem for mem in listing]
 
     return listing
+
+  def getAntiSubstituteInfoMapping(self):
+    l = []
+    for mem in self._antisubs:
+      l.append( {"item": mem } )
+    return l
 
   def getStatus(self):
     """
@@ -219,6 +232,31 @@ class SubstituteManager(manager.Manager):
     if self._subs.has_key(ses):
       return self._subs[ses].getInfo(text)
     return []
+
+  def getItems(self):
+    return [ "substitute", "antisubstitute" ]
+
+  def getParameters(self, item):
+    if item == "substitute":
+      return [ ("item", "The thing to substitute."),
+               ("substitution", "The thing to substitute with.") ]
+
+    if item == "antisubstitute":
+      return [ ( "item", "The thing whose presence denotes we shouldn't substitute." ) ]
+
+    raise ValueError("%s is not a valid item for this manager." % item)
+
+  def getInfoMappings(self, item, ses):
+    if item not in ["substitute", "antisubstitute"]:
+      raise ValueError("%s is not a valid item for this manager." % item)
+    
+    if not self._subs.has_key(ses):
+      return []
+
+    if item == "substitute":
+      return self._subs[ses].getSubstituteInfoMapping()
+
+    return self._subs[ses].getAntiSubstituteInfoMapping()
 
   def getAntiSubstitutesInfo(self, ses, text=''):
     if self._subs.has_key(ses):
