@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.9 2003/11/09 23:24:30 willhelm Exp $
+# $Id: utils.py,v 1.10 2004/01/27 21:22:41 glasssnake Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -200,7 +200,7 @@ def http_get(url):
 
 
 # handles regular expression syntax and flags
-REG_REGEXP = re.compile("^r\[.*\][Ii]*$")
+REG_REGEXP = re.compile("^(r\[.*?)(\$?\][Ii]*)$")
 
 # for finding variables in the subject
 SUBVAR_REGEXP = re.compile("%_?[0-9]+")
@@ -818,7 +818,10 @@ def escape(s):
   # should probably build a regexp to do the substitution with
   # which handles the various situations.  or something along
   # those lines.
-  if s.endswith("$") or s.endswith("$]"):
+  rr = REG_REGEXP.match(s)
+  if rr:
+    s = rr.group(1).replace("$", "\\$") + rr.group(2)
+  elif s.endswith("$"):
     s = s[:-1].replace("$", "\\$") + "$"
   else:
     s = s.replace("$", "\\$")
