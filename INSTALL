@@ -4,7 +4,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-$Id: INSTALL,v 1.6 2003/11/22 21:45:42 willhelm Exp $
+$Id: INSTALL,v 1.7 2004/08/30 13:18:27 willhelm Exp $
 
 For more up-to-date documentation, check out the web-site at:
 http://lyntin.sourceforge.net/
@@ -50,7 +50,7 @@ sample config file looks like this:
 ui:        text
 datadir:   /home/willg/ltd40
 moduledir: /home/willg/ltd40
-read:      http://www.bluesock.org/~willg/3krc
+readfile:  http://www.bluesock.org/~willg/3krc
 %<------------------
 
 To start Lyntin with the config file do this:
