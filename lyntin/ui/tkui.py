@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.13 2003/08/28 01:46:48 willhelm Exp $
+# $Id: tkui.py,v 1.14 2003/09/02 01:20:54 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -534,12 +534,15 @@ class CommandEntry(Entry):
       self.delete(0, 'end')
     self.hist_index = -1
 
+    if val == exported.get_config("commandchar") + "end":
+      self._partk._topframe.quit()
+
   def deathHandler(self, tkevent):
     """
     This catches the event where the window is being closed.
     We can't stop it from closing, but we can try to shut down the app.
     """
-    self._partk.handleinput(config.commandchar + "end")
+    self._partk.handleinput(exported.get_config("commandchar") + "end")
 
   def _executeBinding(self, binding):
     """ Returns the alias for this keybinding."""
@@ -560,7 +563,7 @@ class CommandEntry(Entry):
 
     # handle all the function keys except F1
     if tkevent.keysym == "F1":
-      self._partk.handleinput(config.commandchar + "help")
+      self._partk.handleinput(exported.get_config("commandchar") + "help")
       return "break"
       
     if self._executeBinding("VK_%s" % tkevent.keysym) == 1:

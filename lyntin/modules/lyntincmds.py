@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
+# $Id: lyntincmds.py,v 1.6 2003/09/02 01:20:52 willhelm Exp $
 #######################################################################
 """
 This module holds commands that are new and unique to Lyntin.
@@ -75,9 +75,10 @@ def config_cmd(ses, args, input):
     for mem in general:
       globmap[mem._name] = mem.toString()
 
-    sesmap = {"ignoreactions": bv(ses._ignoreactions) + " (boolean)",
-              "ignoresubs": bv(ses._ignoresubs) + " (boolean)",
-              "verbatim": bv(ses._verbatim) + " (boolean)"}
+    seslisting = c.getConfigItems(ses)
+    sesmap = {}
+    for mem in seslisting:
+      sesmap[mem._name] = mem.toString()
 
     output = "Commandline:\n"
     output += _fixmap(16, config.options) + "\n"

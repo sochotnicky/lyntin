@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
+# $Id: session.py,v 1.8 2003/09/02 01:20:51 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -39,30 +39,25 @@ class Session:
     self._databuffer = []
     self._databuffersize = 10000
 
-    # allows users to toggle whether we're handling actions.
-    # 0 for handling actions, 1 if we're ignoring actions.
-    self._ignoreactions = 0
-
-    # allows users to toggle whether we're doing substitutions.
-    # 0 for substitutions, 1 if we're ignoring substitutions
-    self._ignoresubs = 0
-
-    # tells us whether we're in verbatim mode where we don't
-    # do any massaging of user data.
-    # 0 if we're massaging stuff, 1 if we're in verbatim mode
-    self._verbatim = 0
-
-    # whether or not we show text even when we're not the
-    # current session.  it's command-line configurable what
-    # the default is.
-    # 0 if we don't show text, 1 if we do
-    self._snoop = config.options['snoopdefault']
-
     # register with the shutdown hook 
     self._engine.hookRegister("shutdown_hook", self.shutdown)
 
   def __repr__(self):
     return "session.Session %s" % self._name
+
+  def setupCommonSession(self):
+    import config
+    c = self._engine.getConfigManager()
+
+    tc = config.BoolConfig("snoop", config.options['snoopdefault'], 0,
+          "Whether or not you see the data from this session when it's not "
+          "active.")
+    c.add("snoop", tc, self)
+    
+    tc = config.BoolConfig("verbatim", 0, 0,
+          "Whether we're in verbatim mode where we pass the user text "
+          "straight to the mud without massaging it.")
+    c.add("verbatim", tc, self)
 
   def getName(self):
     """
@@ -83,26 +78,6 @@ class Session:
     self._name = name
     if self._socket:
       self._socket.setSessionName(name)
-
-  def getSnoop(self):
-    """
-    Returns whether or not we show text when we're not the
-    current session.
-
-    @returns: 1 if we show text, 0 if not
-    @rtype: boolean
-    """
-    return self._snoop
-
-  def setSnoop(self, snoop):
-    """
-    Sets whether or not we show text when we're not the
-    current session.
-
-    @param snoop: 1 if we show text, 0 if not
-    @type  snoop: boolean
-    """
-    self._snoop = snoop
 
   def shutdown(self, args):
     """
@@ -141,10 +116,6 @@ class Session:
     data = []
     
     data.append("Session name: %s" % self._name)
-    if self._snoop == 1:
-      data.append("   snoop: on")
-    else:
-      data.append("   snoop: off")
     data.append("   socket: %s" % repr(self._socket))
 
     return data
@@ -292,7 +263,9 @@ class Session:
     """
     # this is the point of much recursion.  everything is registered
     # as a filter and recurses accordingly.
-    spamargs = {"session": self, "internal": internal, "verbatim": self._verbatim, "data": input, "dataadj": input}
+    spamargs = {"session": self, "internal": internal, 
+                "verbatim": exported.get_config("verbatim", self), 
+                "data": input, "dataadj": input}
     spamargs = exported.hook_spam("user_filter_hook", argmap=spamargs, 
           mappingfunc=exported.filter_mapper)
 

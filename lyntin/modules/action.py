@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.11 2003/08/31 19:49:34 glasssnake Exp $
+# $Id: action.py,v 1.12 2003/09/02 01:20:52 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -408,7 +408,7 @@ class ActionManager(manager.Manager):
     ses = args["session"]
     text = args["dataadj"]
 
-    if not ses._ignoreactions:
+    if exported.get_config("ignoreactions", ses, 0) == 0:
       self.checkActions(ses, text)
     return text
 
@@ -584,6 +584,12 @@ def load():
   exported.hook_register("write_hook", am.persist)
   exported.hook_register("variable_change_hook", am.variableChange)
 
+  from lyntin import config
+  for mem in exported.get_active_sessions():
+    # we need a separate BoolConfig for each session
+    tc = config.BoolConfig("ignoreactions", 0, 1,
+         "Allows you to turn off action handling.")
+    exported.add_config("ignoreactions", tc, mem)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
@@ -595,6 +601,9 @@ def unload():
   exported.hook_unregister("write_hook", am.persist)
   exported.hook_unregister("variable_change_hook", am.variableChange)
 
+  # remove configuration items for every session involved
+  for mem in exported.get_active_sessions():
+    exported.remove_config("ignoreactions", mem)
 
 # Local variables:
 # mode:python

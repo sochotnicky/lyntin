@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.10 2003/08/30 02:45:57 willhelm Exp $
+# $Id: tintincmds.py,v 1.11 2003/09/02 01:20:54 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -522,7 +522,7 @@ def snoop_cmd(ses, args, input):
   if mode != None:
     ses.setSnoop(mode)
 
-  if ses.getSnoop() == 1:
+  if exported.get_config("snoop", ses, 1) == 1:
     exported.write_message("snoop: snooping is enabled for %s." % snoopsession)
   else:
     exported.write_message("snoop: snooping is disabled for %s." % snoopsession)

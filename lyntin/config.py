@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: config.py,v 1.5 2003/08/30 02:45:57 willhelm Exp $
+# $Id: config.py,v 1.6 2003/09/02 01:20:51 willhelm Exp $
 #######################################################################
 """
 This module holds the configuration manager as well as a series of
@@ -94,8 +94,8 @@ class ConfigBase:
     @returns: the converted value if everything is kosher
     @rtype: varies
 
-    @raises: TypeError if it's not a valid type
-    @raises: ValueError if it's not a valid value
+    @raises TypeError: if it's not a valid type
+    @raises ValueError: if it's not a valid value
     """
     return value
 

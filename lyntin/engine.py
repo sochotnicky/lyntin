@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.11 2003/08/30 02:45:57 willhelm Exp $
+# $Id: engine.py,v 1.12 2003/09/02 01:20:51 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -109,9 +109,9 @@ class Engine:
     commonsession.setName("common")
 
     # this creates a "common" entry in all the managers that manage
-    # session scoped data
+    # session scoped data--the session base is None
     # for mem in self._managers.values():
-    #   mem.addSession(commonsession)
+    #   mem.addSession(commonsession, None)
 
     self._sessions["common"] = commonsession
     self._current_session = commonsession
@@ -145,6 +145,8 @@ class Engine:
 
     c.add("mudecho", config.BoolConfig("mudecho", 1, 0,
         "Whether (1) or not (0) we're echoing user input to the ui."))
+
+    self._sessions["common"].setupCommonSession()
 
   ### ------------------------------------------
   ### hook stuff

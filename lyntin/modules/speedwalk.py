@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.5 2003/08/28 01:46:48 willhelm Exp $
+# $Id: speedwalk.py,v 1.6 2003/09/02 01:20:52 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -496,9 +496,10 @@ def load():
   exported.hook_register("write_hook", sm.persist)
 
   from lyntin import config
-  exported.add_config("speedwalk", config.BoolConfig("speedwalk", 1, 1,
-       "Allows you to turn on and turn off speedwalk handling."),
-       exported.get_session("common"))
+  for mem in exported.get_active_sessions():
+    tc = config.BoolConfig("speedwalk", 1, 1,
+         "Allows you to turn on and turn off speedwalk handling.")
+    exported.add_config("speedwalk", tc, mem)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""

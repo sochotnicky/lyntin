@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
+# $Id: substitute.py,v 1.7 2003/09/02 01:20:53 willhelm Exp $
 #######################################################################
 """
 This module defines the SubstituteManager which handles substitutes.
@@ -267,7 +267,7 @@ class SubstituteManager(manager.Manager):
     ses = args["session"]
     text = args["dataadj"]
 
-    if not ses._ignoresubs:
+    if exported.get_config("ignoresubs", ses, 0) == 0:
       text = self.expand(ses, text)
     return text
 
@@ -366,6 +366,13 @@ def load():
   exported.hook_register("mud_filter_hook", sm.mudfilter, 50)
   exported.hook_register("write_hook", sm.persist)
 
+  from lyntin import config
+  for mem in exported.get_active_sessions():
+    tc = config.BoolConfig("ignoresubs", 0, 1,
+         "Allows you to turn on and turn off substitutions.")
+    exported.add_config("ignoresubs", tc, mem)
+
+
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
   global sm
@@ -374,6 +381,10 @@ def unload():
 
   exported.hook_unregister("mud_filter_hook", sm.mudfilter)
   exported.hook_unregister("write_hook", sm.persist)
+
+  # remove configuration items for every session involved
+  for mem in exported.get_active_sessions():
+    exported.remove_config("ignoresubs", mem)
 
 # Local variables:
 # mode:python

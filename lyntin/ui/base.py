@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: base.py,v 1.6 2003/08/08 00:15:25 willhelm Exp $
+# $Id: base.py,v 1.7 2003/09/02 01:20:54 willhelm Exp $
 #######################################################################
 """
 Holds the base ui class for Lyntin as well as the get_ui function
@@ -127,7 +127,7 @@ class BaseUI:
     a convenience method.
 
     We return a 1 if the session is None, it doesn't have a _snoop
-    attribute, it's the current session, or ses.getSnoop() == 1.
+    attribute, it's the current session, or get_config("snoop", ses) == 1.
 
     @param ses: the session we're looking at--if it's None we return a 1
     @type  ses: Session
@@ -136,7 +136,8 @@ class BaseUI:
     @rtype: boolean
     """
     if ses == None or getattr(ses, "_snoop", None) == None \
-        or exported.get_current_session() == ses or ses.getSnoop() == 1:
+        or exported.get_current_session() == ses \
+        or exported.get_config("snoop", ses, 1) == 1:
       return 1
     return 0
 
