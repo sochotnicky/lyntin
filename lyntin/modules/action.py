@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.17 2003/10/21 03:31:31 glasssnake Exp $
+# $Id: action.py,v 1.18 2003/10/25 17:24:14 glasssnake Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -428,7 +428,7 @@ class ActionManager(manager.Manager):
     ses = args["session"]
     quiet = args["quiet"]
 
-    data = self.getInfo(ses)
+    data = self.getInfo(ses) + self.getDisabledInfo(ses)
 
     if quiet == 1:
       data = [m + " quiet={true}" for m in data]
@@ -615,9 +615,9 @@ def action_tags_cmd(ses, args, input):
   """
   list = exported.get_manager("action").listTags(ses)
   if list:
-    exported.lyntin_message("\n".join(list))
+    exported.write_message("\n".join(list))
   else:
-    exported.lyntin_message("No tags defined.")
+    exported.write_message("No tags defined.")
 
 commands_dict["atags"] = (action_tags_cmd, "")  
 
