@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.25 2004/03/30 22:05:11 willhelm Exp $
+# $Id: engine.py,v 1.26 2004/04/08 23:56:30 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -21,7 +21,7 @@ diagnostics.  Use the methods in exported to handle spinning off
 threads.
 
 The Engine class is a singleton and the reference to it is stored in
-"engine.myengine".  However, you should use the exported module
+"engine.Engine.instance".  However, you should use the exported module
 to access the engine using the "get_engine()" function.
 
 
@@ -94,22 +94,21 @@ X{too_many_errors_hook}::
    Arg mapping: {}
 
 
-@var  myengine: The engine singleton.  Don't reference this though--it's
+@var  Engine.instance: The engine singleton.  Don't reference this though--it's
     better to go through the exported module.
-@type myengine: Engine
+@type Engine.instance: Engine
 """
 import Queue, thread, sys, traceback, os.path
 from threading import Thread
 
 from lyntin import config, session, utils, event, exported, helpmanager, history, commandmanager, constants
 
-# this is the singleton reference to the Engine instance.
-myengine = None
-
 class Engine:
   """
   This is the engine class.  There should be only one engine.
   """
+  instance = None
+
   def __init__(self):
     """ Initializes the engine."""
 
@@ -902,7 +901,6 @@ def main(defaultoptions={}):
       Lyntin run script.
   @type  defaultoptions: dict
   """
-  global myengine
   startuperrors = []
 
   try:
@@ -972,9 +970,9 @@ def main(defaultoptions={}):
     atexit.register(shutdown)
 
     # instantiate the engine
-    myengine = Engine()
-    exported.myengine = myengine
-    myengine._setupConfiguration()
+    Engine.instance = Engine()
+    exported.myengine = Engine.instance
+    Engine.instance._setupConfiguration()
 
     # instantiate the ui
     uiinstance = None
@@ -989,7 +987,7 @@ def main(defaultoptions={}):
       traceback.print_exc()
       sys.exit(0)
 
-    myengine.setUI(uiinstance)
+    Engine.instance.setUI(uiinstance)
     exported.write_message("UI started.")
 
     for mem in startuperrors:
@@ -1017,7 +1015,7 @@ def main(defaultoptions={}):
     # spam the startup hook 
     exported.hook_spam("startup_hook", {})
   
-    commandchar = myengine._managers["config"].get("commandchar")
+    commandchar = Engine.instance._managers["config"].get("commandchar")
 
     # handle command files
     for mem in config.options['readfile']:
@@ -1029,29 +1027,29 @@ def main(defaultoptions={}):
   
     # we're done initialization!
     exported.write_message(constants.STARTUPTEXT)
-    myengine.writePrompt()
+    Engine.instance.writePrompt()
 
     # start the timer thread
-    myengine.startthread("timer", myengine.runtimer)
+    Engine.instance.startthread("timer", Engine.instance.runtimer)
     
     # we ask the ui if they want the main thread of execution and
     # handle accordingly
-    if myengine._ui.wantMainThread() == 0:
-      myengine.startthread("ui", myengine._ui.runui)
-      myengine.runengine()
+    if Engine.instance._ui.wantMainThread() == 0:
+      Engine.instance.startthread("ui", Engine.instance._ui.runui)
+      Engine.instance.runengine()
     else:
-      myengine.startthread("engine", myengine.runengine)
-      myengine._ui.runui()
+      Engine.instance.startthread("engine", Engine.instance.runengine)
+      Engine.instance._ui.runui()
 
   except SystemExit:
     # we do this because the engine is blocking on events....
-    if myengine:
+    if Engine.instance:
       event.ShutdownEvent().enqueue()
     
   except:
     import traceback
     traceback.print_exc()
-    if myengine:
+    if Engine.instance:
       try:
         event.ShutdownEvent().enqueue()
       except:
