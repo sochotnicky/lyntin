@@ -76,10 +76,20 @@ class HistoryEntry(Entry):
     self.insert(0, text)
     return
 
+  def echo_off(self):
+    """ Turn off echoing in the entry box """
+    self.configure(show='*')
+    return
+
+  def echo_on(self):
+    """ Turn on echoing in the entry box """
+    self.configure(show='')
+    return
+
   def add_to_history(self, text):
     """Add the line to our history and crop the history buffer"""
     self._history.append(text)
-    self._history[self.maxhist:] = [] # crop the history buffer using a slice (doesn't do a copy)
+    self._history[:-self.maxhist] = [] # crop the history buffer using a slice (doesn't do a copy)
     self._history_index = None # adding to history clears our history browsing position
     return
 
@@ -112,7 +122,7 @@ class HistoryEntry(Entry):
 
     # fetch the line from history
     new_line = self._history[self._history_index]
-    self.replace_input(self._history(self._history_index))
+    self.replace_input(new_line)
     return
 
 # Local variables:

@@ -92,6 +92,9 @@ class TkColor(ansi.ANSIColor):
   def __str__(self):
     """We don't have a good string representation, so use a repr of our value"""
     return repr(self.as_tuple())
+
+  def __repr__(self):
+    return '<%s fg:%s bg:%s bold:%s underline:%s>' % tuple(map(str, (self.__class__.__name__, self.fg, self.bg, self.bold, self.underline)))
     
   def setup_tk_color_tags(tk_object):
     """ Sets up the Tk widget to understand the tags we make (fg/bg/u)."""
@@ -170,6 +173,11 @@ class ScrolledANSI(ScrolledText):
       
     self._clipText()
     self._yadjust()
+    return
+
+  def color_write(self, text, **color_opts):
+    color = TkColor(**color_opts)
+    self.insert('end', text, color.as_tuple())
     return
 
   def _yadjust(self):

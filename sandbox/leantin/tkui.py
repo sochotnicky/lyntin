@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.1 2004/04/02 02:18:42 odbrazen Exp $
+# $Id: tkui.py,v 1.2 2004/04/20 17:05:43 odbrazen Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -14,37 +14,99 @@ Lyntin, but largely re-coded in various areas.
 import Tkinter, tkFont
 import os, Queue
 import _tkui # all our enhanced Tk classes
+import sys, traceback # to print errors
+import ansi
 
 # the public interface to tkui
 
 class TkuiSession(object):
   """Handles per-session data for the UI"""
-  def __init__(self, main_ui):
-    self.master_ui = main_ui
-    self._event_queue = main_ui._event_queue # common event queue
+  def __init__(self, tkui):
+    # our run_this_soon() will hand off to the main run_this_soon
+    self.__main_run_this_soon = tkui.run_this_soon
 
+    self.hidden = 1 # new ui's always start out hidden
+    self.echoing = 1 # should we echo the entry box
+    self._entry = tkui._entry # we need this to turn echoing on/off
+    
     # create our per-session Frames that will appear in the main UI's frames when we are active
-    self.top = Tkinter.Frame(main_ui.top)
-    self.middle = Tkinter.Frame(main_ui.middle)
-    self.bottom = Tkinter.Frame(main_ui.bottom)
-    self._txt = _tkui.ScrolledANSI(main_ui._txt,
-                                   transfer_events_to=main_ui._entry,
-                                   transfer_focus_to=main_ui._entry,
+    self.top = Tkinter.Frame(tkui.top)
+    self.middle = Tkinter.Frame(tkui.middle)
+    self.bottom = Tkinter.Frame(tkui.bottom)
+    self._txt = _tkui.ScrolledANSI(tkui._txt,
+                                   transfer_events_to=tkui._entry,
+                                   transfer_focus_to=tkui._entry,
                                   )
+    self.user_opts = None # standard spot for people to store an options object
+    self.error_color = {'fg':'blue', 'bg':'white'}
+    self.local_color = {'fg':'green', 'bg':'blue'}
     return
 
-  def write(self, text):
-    self._event_queue.put(_tkui._OutputEvent(self, text))
+  def run_this_soon(self, func):
+    """ Ask for func to be executed soon in the main UI loop"""
+    # _tkuisess is added ONLY so we know where to write errors when we pop events
+    func._tkuisess = self
+    self.__main_run_this_soon(func)
     return
 
-  def write_internal(self, text):
-    self._txt.write(text)
+  def echo_change(self, echo_onoff):
+    """ update the echo state to echo_onoff """
+    print "Hidden? %d, echoing %d => %d" % (self.hidden, self.echoing, echo_onoff)
+    self.echoing = echo_onoff
+    if (not self.hidden): # doesn't matter if we're not visible
+      if (echo_onoff):
+        self._entry.echo_on()
+      else:
+        self._entry.echo_off()
+    return
+  
+  def write(self, text, **this_color):
+    """ Write some text in this_color (defaulting to self.local_color)
+        to this session's screen
+    """
+    # define a function to be called from the tk thread
+    def write_it():
+      color = this_color or self.local_color
+      self._txt.color_write(text, **color)
+    self.run_this_soon(write_it)
+    return
+
+  def write_mud_text(self, text):
+    """ Write some text from the mud to this session's screen
+        NB: This keeps track of the stream of ANSI code from the mud,
+        if you want to write colored text use write() instead
+    """
+    # define a function to be called from the tk thread
+    def write_it():
+      self._txt.write(text)
+    self.run_this_soon(write_it)
+    return
+
+  def write_prompt_text(self, text):
+    """ Write a line that isn't newline terminated.
+        This is called when we may have a prompt
+    """
+    def write_it():
+      self._txt.write(text+"\n")
+    self.run_this_soon(write_it)
+    return
+
+  def write_error(self, text):
+    """ Write an error message in self.error_color to this session's screen """
+    # define a function to be called from the tk thread
+    def write_it():
+      self._txt.color_write(text, **self.error_color)
+    self.run_this_soon(write_it)
+    return
   
   def _unhide(self):
     self.middle.pack(side='bottom')
     self.top.pack(side='top')
     self.bottom.pack(side='top')
     self._txt.pack(side='bottom', fill='both', expand=1)
+    self._txt._yadjust() # makes sure we're at the bottom of the scroll
+    self.hidden = 0
+    self.echo_change(self.echoing)
     return
 
   def _destroy(self):
@@ -52,6 +114,8 @@ class TkuiSession(object):
     self.top.destroy()
     self.bottom.destroy()
     self._txt.destroy()
+    self.echo_change(self.echoing)
+    self.hidden = 1
     return
   
   def _hide(self):
@@ -59,6 +123,8 @@ class TkuiSession(object):
     self.bottom.pack_forget()
     self.middle.pack_forget()
     self._txt.pack_forget()
+    self.echo_change(self.echoing)
+    self.hidden = 1
     return
 
 class Tkui(object):
@@ -76,16 +142,13 @@ class Tkui(object):
     self.shutdown = defaults['shutdown']
     self.active_session = None # TkuiSession instace of the current session
     self._event_queue = Queue.Queue() # internal ui queue
-    self._do_i_echo = 1
-    self._quit = 0  # true if we should cleanup ASAP
     self._debugger = None # debugging window, if any
 
     # instantiate all the widgets
     self.__tk = Tkinter.Tk()
-    self._tk = self.__tk # MAJOR DEBUG, fix the one or two guys that think this is here
     self.__tk.geometry("%dx%d" % (self.__tk.maxsize()))
 
-    self.settitle() # punt and setup the default title
+    self.title() # punt and setup the default title
 
     # figure out our default font, keep it around for things we create later
     if os.name == 'posix':
@@ -129,8 +192,8 @@ class Tkui(object):
     # set focus to the input box
     self._entry.focus_set()
 
-    # handle any pending events
-    self.dequeue()
+    # kick off our timed queue runner
+    self.__run_callback_queue()
     return
 
   def launch_debugger(self, **use_globals):
@@ -138,7 +201,7 @@ class Tkui(object):
     The options collected in <use_globals> are used to setup the environment for the debugger
     """
     self._debugger = _tkui.Debugger(self.__tk,
-                                    self._event_queue,
+                                    self.run_this_soon,
                                     use_globals,
                                     font = self.font,
                                    )
@@ -149,9 +212,9 @@ class Tkui(object):
     sess_ui = TkuiSession(self)
     return sess_ui
 
-  def queue_event(self, eventob):
-    """public interface to add an Event() based object to the event queue"""
-    self._event_queue.put(eventob)
+  def run_this_soon(self, func):
+    """ Ask for func to be executed soon in the main UI loop"""
+    self._event_queue.put(func)
     return
 
   def change_session(self, sessob):
@@ -164,48 +227,48 @@ class Tkui(object):
     return
   
   def run(self):
-    """FIXME: alias for runui()"""
-    return self.runui()
-  
-  def runui(self):
-    # run the tk mainloop here
+    """ run the tk mainloop """
     self.__tk.mainloop()
 
-  def wantMainThread(self):
-    # The tkui needs the main thread of execution so we return
-    # a 1 here.
-    return 1
-
-  def quit(self):
-    if not self._quit:
-      self._quit = 1
-      self._topframe.quit()
-
-  def dequeue(self):
-    """run some Events that have been passed to us"""
+  def __run_callback_queue(self):
+    """run some callbacks added by run_this_soon() """
     if (self.shutdown):
-      self.quit()
+      self.__tk.quit()
     
     qsize = self._event_queue.qsize()
     if qsize > 10: # DEBUG, toy with this and see what happens or maybe come up with a better metric
       qsize = 10
 
     for i in range(qsize):
-      ev = self._event_queue.get_nowait()
-      ev.execute(self)
+      try:
+        callback = self._event_queue.get_nowait()
+      except Queue.Empty:
+        break
 
-    self.__tk.after(25, self.dequeue) # reschedule ourselves to happen again very soon
+      try:
+        callback() # try and call it
+      except (Exception), e:
+        traceback_msg = ''.join(traceback.format_exception(type(e), e, sys.exc_traceback))
+        try:
+          callback._tkuisess.write_error(traceback_msg)
+        except: # likely an error created outside ANY session, use stderr because we're in trouble
+          sys.stderr.write(traceback_msg)
+    
+    self.__tk.after(25, self.__run_callback_queue) # reschedule ourselves to happen again very soon
     return
 
-  def settitle(self, title="LeanLyn"):
+  def title(self, title="LeanLyn"):
     """ Sets the title bar to the Lyntin title plus the given string. """
-    self._event_queue.put(_tkui.TitleEvent(title))
-
-  def write(self, text):
-    """ This writes text to the text buffer for viewing by the user. """
-    self._event_queue.put(_tkui._OutputEvent(self.active_session, text))
+    def title_callback():
+      self.__tk.title(title)
+    self.run_this_soon(title_callback)
     return
 
   def handle_input(self, text):
-    self.input_callback(text)
+    """ handle a line from the command entry box """
+    # call the input callback
+    try:
+      self.input_callback(text)
+    except (Exception,), e:
+      self.active_session.write_error(''.join(traceback.format_exception(type(e), e, sys.exc_traceback)))
     return

@@ -63,8 +63,8 @@ class ANSIColor(object):
     self.fg = STYLEMAP.get(d['fg'], d['fg'])
     self.bg = STYLEMAP.get(d['bg'], d['bg'])
     # be lenient, if they used a fg color name for the bg just translate it
-    if (self.bg < 40):
-      self.bg += 10
+    if (int(self.bg) < 40):
+      self.bg = str(int(self.bg) + 10)
     # the rest are just booleans
     self.underline = d['underline']
     self.bold = d['bold']

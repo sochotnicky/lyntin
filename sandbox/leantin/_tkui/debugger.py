@@ -3,33 +3,22 @@ This module defines what the deubbger looks like
 and how debug events are created
 """
 # python imports
-import sys, traceback, cStringIO
+import sys, traceback, cStringIO, code
 
 # Tk imports
 import Tkinter
 import tkFont
 
 # _tkui imports
-import events
 import scrollers
 import entry
 
-class _DebugEvent(events.Event):
-  def __init__(self, exec_string):
-    self.exec_string = exec_string
-    return
-  def execute(self, tkui):
-    if (not tkui._debugger):
-      tkui.write("FAIL: interactive DebugEvent, but the debugger isn't running\n")
-    else:
-      tkui._debugger.exec_input(self.exec_string)
-    return
-
 class Debugger(object):
   """Tk based UI for handling interactive debugging sessions"""
-  def __init__(self, root, event_queue, use_globals, **opts):
-    self.event_queue = event_queue
+  def __init__(self, root, run_this_soon, use_globals, **opts):
+    self.run_this_soon = run_this_soon # we can call this directly, since we always catch our own exceptions
     self.globals = use_globals # environment the debugger will run in
+    self.interp = code.InteractiveConsole(self.globals)
 
     self.window = Tkinter.Toplevel(root) # make our own window to run in
     self.window.geometry("%dx%d" % (self.window.maxsize()))
@@ -61,7 +50,9 @@ class Debugger(object):
     return
 
   def make_debug_event(self, text):
-    self.event_queue.put(_DebugEvent(text))
+    def debug_callback():
+      self.exec_input(text)
+    self.run_this_soon(debug_callback)
     return
     
   def exec_input(self, exec_str):
@@ -79,17 +70,7 @@ class Debugger(object):
     try:
       sys.stdin = open('/dev/null', 'r')
       sys.stdout = sys.stderr = f
-
-      # Compile and execute the expressions.  print statements
-      # and expression values will be sent to the StringIO
-      # object, as will any exception traceback
-	    
-      try:
-        c = compile(exec_str, '<string>', 'single')
-        exec c in self.globals
-      except:
-        traceback.print_exc(None, f)
-
+      self.interp.push(exec_str.rstrip())
     finally:
       # Restore the standard files
       sys.stdin = old_stdin 
