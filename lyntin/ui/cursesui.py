@@ -15,7 +15,7 @@ __version__ = "0.5"
 __license__ = "GPL"
 
 
-import sys, types, string, locale, thread, select, os
+import sys, types, string, thread, select, os
 from time import time
 from lyntin import ansi, event, utils, exported, config, modules
 from lyntin.ui import base, message
@@ -466,7 +466,6 @@ class Cursesui(base.BaseUI):
   # 
   def __init__(self):
     base.BaseUI.__init__(self)
-    locale.setlocale(locale.LC_ALL, "")
     
     exported.hook_register("startup_hook", startup_hook)
     exported.hook_register("shutdown_hook", self.shutdown)

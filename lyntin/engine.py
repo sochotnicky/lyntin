@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.31 2004/04/29 23:40:34 willhelm Exp $
+# $Id: engine.py,v 1.32 2004/05/10 13:59:02 glasssnake Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -916,6 +916,9 @@ def main(defaultoptions={}):
     import sys, os, traceback, ConfigParser
     from lyntin import config, event, utils, exported
     from lyntin.ui import base
+    import locale
+
+    locale.setlocale(locale.LC_ALL, '')
 
     config.options.update(defaultoptions)
 
