@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: utils.py,v 1.1 2003/04/29 21:42:35 willhelm Exp $
+# $Id: utils.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -265,7 +265,8 @@ def expand_text(filter, fulllist):
 def split_commands(text):
   """
   This method takens in text and parses it into separate commands
-  on the ;.
+  on the ;.  It accounts for \\; as well as ; in { } which indicate that
+  we shouldn't be splitting there.
 
   @param text: the text to split
   @type  text: string
@@ -280,10 +281,9 @@ def split_commands(text):
   matchob = SEMI_REGEXP.search(text)
   while (matchob):
     (b, e) = matchob.span()
-    # we count braces--this is a bit interesting since
-    # if the entire segment we're looking at doesn't have
-    # a full set of matched braces, we ignore this semi-colon
-    # as a split point.
+    # we count braces--this is a bit interesting since if the entire 
+    # segment we're looking at doesn't have a full set of matched 
+    # braces, we ignore this semi-colon as a split point.
     left = 0
     right = 0
     for i in range(marker, b):
@@ -687,16 +687,15 @@ def escape(s):
   """
   s = s.replace("\\", "\\\\")
 
-  if lyntin.evalmode == lyntin.EVALMODE_LYNTIN:
-    # FIXME - this is a bit of a hack and won't work if people do
-    # funky regexps that involve $ in the middle somewhere.  we
-    # should probably build a regexp to do the substitution with
-    # which handles the various situations.  or something along
-    # those lines.
-    if s.endswith("$") or s.endswith("$]"):
-      s = s[:-1].replace("$", "\\$") + "$"
-    else:
-      s = s.replace("$", "\\$")
+  # FIXME - this is a bit of a hack and won't work if people do
+  # funky regexps that involve $ in the middle somewhere.  we
+  # should probably build a regexp to do the substitution with
+  # which handles the various situations.  or something along
+  # those lines.
+  if s.endswith("$") or s.endswith("$]"):
+    s = s[:-1].replace("$", "\\$") + "$"
+  else:
+    s = s.replace("$", "\\$")
 
   return s
 
@@ -707,16 +706,12 @@ def escape(s):
 
 def expand_vars(text, varmap):
   """
-  Figures out which evalmode we're in and calls the appropriate
-  variable expansion function.
-
   Note: If you have a text string and you want the variable manager 
   to expand variables in that string according to session variables,
   use 'exported.expand_ses_vars' instead.
 
   The following functions are used in the command processing pipeline
-  at different points and are implemented differently for tintin and
-  lyntin modes:
+  at different points:
 
     1. expand_vars - This expands variables in a function arbitrarily
        according to the desired expansion policy.  It should be safe to
@@ -725,43 +720,18 @@ def expand_vars(text, varmap):
     2. denest_vars - This finishes expansion of a string and should be
        called after all expansions are done.
 
-    3. expand_arguments - This should be called by commands that want to
-       explicitly expand their arguments.  Note that in lyntin mode
-       arguments are already expanded and so nothing is done by this function.
-
 
   Note that the variablemanager's "expand" function is used for
   general expansion of text when there won't be a recursion on the
   partially expanded (but not yet denested) text.  It consists of
   chaining expand_vars and denest_vars together.
 
+  Looks at user input and expands any variables involved using the Lyntin 
+  variable expansion methodology.
 
-  @param text: the text to expand variables in
-  @type  text: string
-
-  @param varmap: the varname to expansion mapping to use
-  @type  varmap: dict
-
-  @return: the text with all variables expanded
-  @rtype: string
-  """
-  if lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-    return _tintin_expand_vars(text, varmap)
-  else:
-    return _lyntin_expand_vars(text, varmap)
-
-
-def _lyntin_expand_vars(text, varmap):
-  """ 
-  Do not call this directly.  Use 'expand_vars' instead.
-
-  Looks at user input and expands any variables involved using
-  the Lyntin variable expansion methodology.
-
-  Lyntin variable expansion works by replacing all instances
-  of $blah with the appropriate variable.  Then at a later
-  point, variables preceded by multiple $ are denested one
-  scope and lose a $.
+  Lyntin variable expansion works by replacing all instances of $blah 
+  with the appropriate variable.  Then at a later point, variables 
+  preceded by multiple $ are denested one scope and lose a $.
 
   It returns the (un)adjusted text.
 
@@ -812,67 +782,6 @@ def _lyntin_expand_vars(text, varmap):
     i += 1
 
   #exported.write_message("utils.lyntin_expand_vars output: %s" % (text,))
-
-  return text
-
-def _tintin_expand_vars(text, varmap):
-  """
-  Do not call this directly.  Use 'expand_vars' instead.
-
-  Looks at user input and expands any variables involved
-  according to Tintin variable expansion heuristics.
-
-  @param text: the text to expand variables in
-  @type  text: string
-
-  @param varmap: the varname to expansion mapping
-  @type  varmap: dict
-
-  @return: the text with all variables expanded
-  @rtype: string
-  """
-  if not (text.find("%") != -1 or text.find("$") != -1) or len(text) == 0:
-    return text
-
-  varmapkeys = varmap.keys()
-  varmapkeys.sort(lambda x,y: cmp(len(y), len(x)))
-  i = 0
-  count = 1
-
-  # we go through the text expanding things one at a time.
-  while (i < len(text)):
-    mem = text[i]
-    if i != 0:
-      memm1 = text[i-1]
-    else:
-      memm1 = None
-
-    if mem == "{" and memm1 != "\\":
-      count += 1
-
-    elif mem == "}" and memm1 != "\\":
-      count -= 1
-
-    elif (mem == "%" or mem == "$") and memm1 != "\\":
-      j = i
-      ccount = 0
-
-      # count the $/% thingies first
-      while j < len(text) and text[j] == mem:
-        ccount += 1
-        j += 1
- 
-      if ccount == count:
-        textfragment = text[j:]
-        for mem in varmapkeys:
-          if textfragment.find(mem) == 0:
-            repl = str(varmap[mem])
-            text = text[:i] + repl + text[i+len(mem)+ccount:]
-            break
-      else:
-        i += ccount
-
-    i += 1
   return text
 
 
@@ -882,8 +791,7 @@ def _tintin_expand_vars(text, varmap):
 
 def denest_vars(text, varmap):
   """
-  Figures out which evalmode we're in and calls the appropriate
-  variable denesting function.
+  Replaces all the nested variables with appropriate variables.
 
   @param text: the string to expand variables in
   @type  text: string
@@ -896,27 +804,14 @@ def denest_vars(text, varmap):
   @return: the text with all variables expanded
   @rtype: string
   """
-  if lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-    return text
-  else:
-    return lyntin_denest_vars(text)
+  return _denest_vars_worker("$", text)
 
-def lyntin_denest_vars(text):
+
+def _denest_vars_worker(varchar, text):
   """
-  Replaces all the nested variables with appropriate variables.
-
-  @param text: the text to denest nested vars in
-  @type  text: string
-
-  @return: the adjusted text with variables denested
-  @rtype: string
+  Handles the actual denesting for different variable types
+  depending on the varchar passed in.
   """
-  text = _lyntin_denest_vars_worker("$", text)
-  return text
-
-
-def _lyntin_denest_vars_worker(varchar, text):
-  """ Handles the actual denesting for lyntin_denest_vars."""
   varchar2 = "%s%s" % (varchar, varchar)
   index = text.find(varchar2)
 
@@ -930,61 +825,8 @@ def _lyntin_denest_vars_worker(varchar, text):
   return text
 
 # --------------------------------------
-# argument expansion functions
-# --------------------------------------
-
-def expand_arguments(text, varmap):
-  """
-  Figures out which evalmode we're in and calls the appropriate variable 
-  argument expansion function.
-
-  @param text: the text to expand variables in
-  @type  text: string
-
-  @param varmap: the varname to expansion mapping
-  @type  varmap: dict
-
-  @return: the text with all variables expanded
-  @rtype: string
-  """
-  if lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-    return _tintin_expand_arguments(text, varmap)
-  else:
-    return text
-
-def _tintin_expand_arguments(text, varmap):
-  """
-  Do not call this directly.  Use 'expand_arguments' instead.
-  """
-  return _tintin_expand_vars(text, varmap)
-
-
-# --------------------------------------
 # placmeent variable expansion functions
 # --------------------------------------
-
-def expand_placement_vars(input, expansion):
-  """
-  Takes an user input line and an alias expansion and hands it
-  off to the appropriate function for evaluating the placement
-  variable replacement.
-
-  Returns the finalized string.
-
-  @param input: the user's input
-  @type  input: string
-
-  @param expansion: the expansion of the alias in the input
-  @type  expansion: string
-
-  @return: the expansion with all nested_vars replaced and placement
-      vars replaced
-  @rtype: string
-  """
-  if lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-    return _tintin_expand_placement_vars(input, expansion)
-  else:
-    return _lyntin_expand_placement_vars(input, expansion)
 
 def _get_variable_value(inputsplit, var):
   """
@@ -1028,77 +870,6 @@ def _get_variable_value(inputsplit, var):
   return ' '.join(inputsplit[start:end])
 
 
-def _tintin_expand_placement_vars(input, expansion):
-  """
-  Takes an input and an expansion and expands placement variables 
-  with the components from the input using Tintin placement
-  variable evaluation.
-
-  Returns the finalized string.
-
-  @param input: the user's input
-  @type  input: string
-
-  @param expansion: the expansion of the alias in the input
-  @type  expansion: string
-
-  @return: the expansion with all nested_vars replaced and placement
-      vars replaced
-  @rtype: string
-  """
-  inputsplit = input.split(' ')
-
-  # check to see if there are any % or $ in the expansion
-  if not ("%" in expansion or "$" in expansion):
-    i = input.find(' ')
-    if i != -1:
-      expansion = expansion + ' ' + input[i+1:]
-    return expansion
-
-  i = 0
-  count = 1
-
-  # we go through the expansion expanding things one at a
-  # time.
-  while (i < len(expansion)):
-    mem = expansion[i]
-    if i != 0:
-      memm1 = expansion[i-1]
-    else:
-      memm1 = None
-
-    if mem == "{" and memm1 != "\\":
-      count += 1
-
-    elif mem == "}" and memm1 != "\\":
-      count -= 1
-
-    elif (mem == "%" or mem == "$") and memm1 != "\\":
-      if mem == "%":
-        matchob = PVAR_REGEXP.match(expansion, i)
-      elif mem == "$":
-        matchob = DVAR_REGEXP.match(expansion, i)
-
-      if matchob:
-        (b, e) = matchob.span()
-        var = expansion[b:e]
-
-        # we check to see if this is in our expansion nesting
-        if var.count(mem) == count:
-          var = var.replace(mem, "")
-          var = _get_variable_value(inputsplit, var)
-          expansion = expansion[:b] + var + expansion[e:]
-
-        else:
-          i += len(var) - 1
-
-      # FIXME - if it's not a matchob, should we gobble things up?
-
-    i += 1
-
-  return expansion
-
-
 def _strip_placement_vars(text):
   """
   Returns a list of all the variables in a string.
@@ -1122,8 +893,12 @@ def _strip_placement_vars(text):
   return ret
 
 
-def _lyntin_expand_placement_vars(input, expansion):
+def expand_placement_vars(input, expansion):
   """
+  Takes an user input line and an alias expansion and hands it
+  off to the appropriate function for evaluating the placement
+  variable replacement.
+
   Takes an input and an expansion and replaces expansion
   variables with the components from the input.
 
@@ -1135,8 +910,9 @@ def _lyntin_expand_placement_vars(input, expansion):
   @param expansion: the expansion of the alias in the input
   @type  expansion: string
 
-  @return: the expansion with all nested_vars replaced and
-      placement vars replaced.
+  @return: the expansion with all nested_vars replaced and placement
+      vars replaced
+  @rtype: string
   """
   vars = _strip_placement_vars(expansion)
 
@@ -1176,7 +952,7 @@ def _lyntin_expand_placement_vars(input, expansion):
     if input.find(' ') > -1:
       expansion = expansion + ' ' + input.split(' ', 1)[1]
 
-  expansion = _lyntin_denest_vars_worker("%", expansion)
+  expansion = _denest_vars_worker("%", expansion)
 
   return expansion
 

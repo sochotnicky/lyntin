@@ -5,7 +5,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntin.py,v 1.1 2003/04/29 21:42:35 willhelm Exp $
+# $Id: lyntin.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This module holds the Lyntin "global variables" and constants as well
@@ -39,11 +39,6 @@ OPTIONS:
        option allows you to set it manually.  You can specify 
        only one --datadir flag.  Specifying additional ones 
        will overwrite the last one.
-
-  -e or --evalmode
-       Lyntin has two user input evaluation modes: lyntin and 
-       tintin.  This allows you to set the mode at the command 
-       line.
 
   -m or --moduledir
        Lyntin dynamically loads everything in the lyntin/modules 
@@ -113,24 +108,13 @@ lyntinmodules = []
 # many which indicates a "bigger problem".
 errorcount = 0
 
-# evalmode constants
-EVALMODE_TINTIN = 0
-EVALMODE_LYNTIN = 1
-
 # holds the application options--these are adjusted by command-line 
 # arguments only
 options = {'datadir': '',
-           'evalmode': EVALMODE_LYNTIN,
            'moduledir': [],
            'readfile': [],
            'snoopdefault': 1,
            'ui': 'text'}
-
-# Lyntin has two modes for user input evaluation.  EVALMODE_TINTIN mode
-# will evaluate user input just like Tintin does.  
-# EVALMODE_LYNTIN mode evaluates user input using different semantics.  
-# We default to EVALMODE_LYNTIN mode.
-evalmode = EVALMODE_LYNTIN
 
 
 def shutdown():
@@ -175,12 +159,6 @@ if __name__ == '__main__':
           d = mem[1] + "/"
         lyntin.options['datadir'] = d
 
-      elif mem[0] == '--evalmode' or mem[0] == '-e':
-        if mem[1] == 'tintin':
-          lyntin.options['evalmode'] = EVALMODE_TINTIN
-        else:
-          lyntin.options['evalmode'] = EVALMODE_LYNTIN
-
       elif mem[0] == '--nosnoop':
         lyntin.options['snoopdefault'] = 0
 
@@ -214,9 +192,6 @@ if __name__ == '__main__':
             datadir = datadir + os.sep
 
       lyntin.options['datadir'] = datadir
-
-    # set the lyntin evalmode
-    lyntin.evalmode = lyntin.options['evalmode']
 
     import atexit
     atexit.register(lyntin.shutdown)

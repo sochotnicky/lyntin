@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.1 2003/04/29 21:42:36 willhelm Exp $
+# $Id: tintincmds.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 import string, os
 import net, utils, engine, lyntin, exported, hooks, modutils
@@ -172,9 +172,6 @@ def if_cmd(ses, args, input):
   expr = args["expr"]
   action = args["action"]
   elseaction = args["elseaction"]
-
-  # we have to do manual variable expansion here.
-  expr = exported.expand_ses_arguments(expr, ses)
 
   expr = expr.replace("&&", " and ")
   expr = expr.replace("||", " or ")

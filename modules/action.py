@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.1 2003/04/29 21:42:36 willhelm Exp $
+# $Id: action.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -63,13 +63,9 @@ class ActionData:
     @return: 1
     @rtype:  boolean
     """
-    if lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-      # first we expand variables in the action trigger then compile
-      # it into a regular expression
-      expansion = exported.expand_ses_vars(trigger, self._ses)
-    else:
+    expansion = exported.expand_ses_vars(trigger, self._ses)
+    if not expansion:
       expansion = trigger
-
     compiled = utils.compile_regexp(expansion, 1)
     self._actions[trigger] = (trigger, compiled, response, priority, onetime)
     return 1
@@ -84,6 +80,7 @@ class ActionData:
       expansion = exported.expand_ses_vars(trigger, self._ses)
       if not expansion:
         expansion = trigger
+
       compiled = utils.compile_regexp(expansion, 1)
 
       self._actions[trigger] = (trigger, compiled, response, priority, onetime)
@@ -342,30 +339,6 @@ def get_ordered_vars(text):
 
   return keylist
 
-
-def evalmodechange(args):
-  """
-  Registered with the evalmode_change hook, this handles adjusting
-  behavior when the evalmode changes.
-  """
-  old = args[0]
-  new = args[1]
-
-  if (old == lyntin.EVALMODE_LYNTIN or old == -1) and new == lyntin.EVALMODE_TINTIN:
-    # lyntin's just starting up into EVALMODE_TINTIN mode or we just switched
-    # into EVALMODE_TINTIN
-    hooks.variable_change_hook.register(am.variableChange)
-
-  elif (old == lyntin.EVALMODE_TINTIN or old == -1) and new == lyntin.EVALMODE_LYNTIN:
-    # lyntin's just starting up into EVALMODE_LYNTIN mode or we just switched
-    # into EVALMODE_LYNTIN
-    hooks.variable_change_hook.unregister(am.variableChange)
-
-  elif old == lyntin.EVALMODE_TINTIN and new == -1:
-    # this module is being unloaded
-    hooks.variable_change_hook.unregister(am.variableChange)
-
-
 commands_dict = {}
 
 def action_cmd(ses, args, input):
@@ -468,9 +441,8 @@ def load():
 
   hooks.mud_filter_hook.register(am.mudfilter, 75)
   hooks.write_hook.register(am.persist)
+  hooks.variable_change_hook.register(am.variableChange)
 
-  hooks.evalmode_change_hook.register(evalmodechange)
-  evalmodechange((-1, lyntin.evalmode))
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
@@ -479,9 +451,8 @@ def unload():
   exported.remove_manager("alias")
   hooks.mud_filter_hook.unregister(am.mudfilter)
   hooks.write_hook.unregister(am.persist)
+  hooks.variable_change_hook.unregister(am.variableChange)
 
-  hooks.evalmode_change_hook.unregister(evalmodechange)
-  evalmodechange((lyntin.evalmode, -1))
 
 # Local variables:
 # mode:python

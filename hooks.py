@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.1 2003/04/29 21:42:35 willhelm Exp $
+# $Id: hooks.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -45,10 +45,6 @@ should be done through the exported module.
     a prompt or they send a string (needs to be set via the 
     buildPromptRegex method of the SocketCommunicator), we spam this hook.
     Arg tuple: (session:Session, text:string)
-
-@var evalmode_change_hook: When the user changes the evalmode, we spam
-    this hook with the old evalmode and the new one.  Arg tuple: 
-    (oldevalmode:int, newevalmode:int)
 
 @var variable_change_hook: When the user changes the value of a variable
     (or it gets changed through some other means), we spam this hook.
@@ -454,18 +450,6 @@ bell_hook = get_hook_manager().getHook("bell_hook")
 #  - the session the prompt came from
 #  - the prompt text
 prompt_hook = get_hook_manager().getHook("prompt_hook")
-
-# Whenever we switch evalmodes, we call everything on this hook.
-# 
-# arg tuple will contain the old value and the new value.  Values will be
-# the constants in the lyntin module (lyntin.EVALMODE_TINTIN and 
-# lyntin.EVALMODE_LYNTIN).
-# When Lyntin first starts up, it passes a -1 as the old value.
-#
-# arg tuple: (int, int)
-#  - old evalmode (or -1 if we just started up)
-#  - new evalmode
-evalmode_change_hook = get_hook_manager().getHook("evalmode_change_hook")
 
 # This hook will get called every time a variable is changed.
 #

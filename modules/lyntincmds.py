@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: lyntincmds.py,v 1.1 2003/04/29 21:42:36 willhelm Exp $
+# $Id: lyntincmds.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 import types, re
 import net, utils, engine, lyntin, exported, hooks, modutils
@@ -56,14 +56,6 @@ def config_cmd(ses, args, input):
                "speedwalk": bv(lyntin.speedwalk) + " (boolean)",
                "debugmode": bv(lyntin.debugmode) + " (boolean)",
                "promptdetection": bv(lyntin.promptdetection) + " (boolean)"}
-
-    if lyntin.evalmode == lyntin.EVALMODE_LYNTIN:
-      globmap["evalmode"] = "lyntin  (\"lyntin\" or \"tintin\")"
-    elif lyntin.evalmode == lyntin.EVALMODE_TINTIN:
-      globmap["evalmode"] = "tintin  (\"lyntin\" or \"tintin\")"
-    else:
-      globmap["evalmode"] = "unknown (\"lyntin\" or \"tintin\")"
-
 
     sesmap = {"ignoreactions": bv(ses._ignoreactions) + " (boolean)",
               "ignoresubs": bv(ses._ignoresubs) + " (boolean)",
@@ -140,27 +132,6 @@ def config_cmd(ses, args, input):
 
     if not quiet:
       exported.write_message("config: %s set to %s." % (name, bv(value)), ses)
-    return
-
-  if name == "evalmode":
-    if not value:
-      value = lyntin.evalmode
-      exported.write_message("config: %s set to %s." % (name, value), ses)
-      return
-
-    old = lyntin.evalmode
-    if value == "tintin":
-      lyntin.evalmode = lyntin.EVALMODE_TINTIN
-      hooks.evalmode_change_hook.spamhook((old, lyntin.EVALMODE_TINTIN))
-      if not quiet:
-        exported.write_message("config: %s set to %s." % (name, value), ses)
-    elif value == "lyntin":
-      lyntin.evalmode = lyntin.EVALMODE_LYNTIN
-      hooks.evalmode_change_hook.spamhook((old, lyntin.EVALMODE_LYNTIN))
-      if not quiet:
-        exported.write_message("config: %s set to %s." % (name, value), ses)
-    else:
-      exported.write_error("config: '%s' is not a valid value." % (value), ses)
     return
 
   exported.write_error("config: did not recognize '%s' as an attribute." % name, ses)

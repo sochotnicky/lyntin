@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.1 2003/04/29 21:42:36 willhelm Exp $
+# $Id: variable.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -82,7 +82,7 @@ class VariableData:
   def expand_command(self, text):
     """
     Expands variables in the text, does not denest yet since the command
-    could get recursed on and over-expand variables in some modes.
+    could get recursed on and over-expand variables.
 
     @param text: the text to expand variables in
     @type  text: string
@@ -91,20 +91,6 @@ class VariableData:
     @rtype: string
     """
     return utils.expand_vars(text, self._variables)
-
-  def expand_arguments(self, text):
-    """
-    Expands the arguments of a command.  Presumable in lyntin mode these 
-    have alread been expanded and nothing needs doing.
-
-    @param text: the text to expand variables in
-    @type  text: string
-
-    @returns: the text with variables expanded
-    @rtype: string
-    """
-    return utils.expand_arguments(text, self._variables)
-    
 
   def getVariables(self):
     """
@@ -278,12 +264,6 @@ class VariableManager(manager.Manager):
       return self._variables[ses].expand_command(text)
     return text
 
-  def expand_arguments(self, ses, text):
-    text = self._global.expand_arguments(text)
-    if self._variables.has_key(ses):
-      return self._variables[ses].expand_arguments(text)
-    return text
-
   def getInfo(self, ses, text=""):
     if self._variables.has_key(ses):
       return self._variables[ses].getInfo(text)
@@ -405,11 +385,6 @@ def variable_cmd(ses, args, input):
 
     exported.write_message("variables:\n" + data, ses)
     return 
-
-  # need to expand the var
-  varexpansion = vm.expand_arguments(ses, var)
-  if varexpansion:
-    var = varexpansion
 
   try:
     vm.addVariable(ses, var, expansion)

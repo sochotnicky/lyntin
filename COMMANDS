@@ -6,7 +6,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-Tue, 29 Apr 2003 02:05:04 +0000
+Wed, 30 Apr 2003 15:00:43 +0000
 
 For more up-to-date information and documentation, please check the 
 web-site: http://Lyntin.sourceforge.net/
@@ -51,6 +51,28 @@ specify arguments that have multiple words in them.
 
 COMMAND REFERENCE
 =================
+
+   @                load             tickwarnsize
+   action           log              unaction
+   alias            loop             unalias
+   antisubstitute   math             unantisubstitute
+   bell             nop              ungag
+   clear            raw              unhighlight
+   config           read             unload
+   cr               schedule         unschedule
+   deed             session          unsubstitute
+   diagnostics      showme           unswdir
+   end              snoop            unswexclude
+   gag              substitute       unvariable
+   grep             swdir            variable
+   help             swexclude        version
+   highlight        textin           wizlist
+   history          tick             write
+   if               tickoff          zap
+   info             tickon
+   killall          ticksize
+
+
 
 COMMANDS.@
 

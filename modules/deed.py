@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: deed.py,v 1.1 2003/04/29 21:42:36 willhelm Exp $
+# $Id: deed.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This module defines the DeedManager which handles deeds (user events).
@@ -159,10 +159,6 @@ def deed_cmd(ses, args, input):
 
   deedtext = args["text"]
   quiet = args["quiet"]
-
-  varexpansion = exported.expand_ses_arguments(deedtext, ses)
-  if varexpansion:
-    deedtext = varexpansion
 
   if not deedtext:
     data = exported.get_manager("deed").getInfo(ses)

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.1 2003/04/29 21:42:35 willhelm Exp $
+# $Id: engine.py,v 1.2 2003/05/02 01:32:52 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -31,7 +31,7 @@ to access the engine using the "get_engine()" function.
 import Queue, thread, sys
 from threading import Thread
 
-import session, lyntin, utils, event, argparser
+import session, lyntin, utils, event
 import exported, hooks, helpmanager, history, commandmanager
 
 # this is the singleton reference to the Engine instance.
@@ -81,7 +81,7 @@ class Engine:
     self._ui = None
 
     # current tick count
-    self._tick = 0
+    self._current_tick = 0
 
     # list of registered threads
     self._threads = []
@@ -98,9 +98,6 @@ class Engine:
     # we register ourselves with the shutdown hook
     self.getManager("hook").register("shutdown_hook", self.shutdown)
 
-    # we register ourselves with the evalmode_change hook
-    self.getManager("hook").register("evalmode_change_hook", _evalmodechange)
-
 
   def initialize(self):
     """ Handles initialization that requires an engine object."""
@@ -115,7 +112,8 @@ class Engine:
     self._sessions["common"] = commonsession
     self._current_session = commonsession
 
-    _evalmodechange((-1, lyntin.evalmode))
+    cm = exported.get_manager("command")
+    exported.hook_register("user_filter_hook", cm.filter, 100)
 
 
   ### ------------------------------------------
@@ -185,12 +183,12 @@ class Engine:
     """
     import time, event
 
-    self._tick = 0
+    self._current_tick = 0
     while not self._shutdownflag:
       try:
         time.sleep(1)
-        event.SpamEvent(exported.get_hook("timer_hook"), (self._tick,)).enqueue()
-        self._tick += 1
+        event.SpamEvent(exported.get_hook("timer_hook"), (self._current_tick,)).enqueue()
+        self._current_tick += 1
       except KeyboardInterrupt:
         return
       except SystemExit:
@@ -198,17 +196,7 @@ class Engine:
       except:
         exported.write_traceback("ticker: ticker hiccupped.")
 
-  def getCurrentTick(self):
-    """
-    Returns the current tick.  It also happens to be the total
-    number of seconds since this instance of Lyntin was started.
 
-    @return: the current tick
-    @rtype: int
-    """
-    return self._tick
-
- 
   ### ------------------------------------------
   ### input/output stuff
   ### ------------------------------------------
@@ -504,15 +492,6 @@ class Engine:
   ### event-handling/engine stuff
   ### ------------------------------------------
 
-  def _dequeue(self):
-    """
-    Pulls an event off the queue--will block!!!
-
-    @return: the latest event in the queue
-    @rtype: event.Event
-    """
-    return self._event_queue.get()
-         
   def _enqueue(self, event):
     """
     Adds an event to the queue.
@@ -529,7 +508,8 @@ class Engine:
     """
     while not self._shutdownflag:
       try:
-        e = self._dequeue()
+        # blocks on the event queue
+        e = self._event_queue.get()
         e.execute()
       except KeyboardInterrupt:
         return
@@ -575,7 +555,7 @@ class Engine:
     data.append("   thread manager: %s" % repr(self.getManager("thread")))
     data.append("   speedwalking: %d" % lyntin.speedwalk)
     data.append("   ansicolor: %d" % lyntin.ansicolor)
-    data.append("   ticks: %d" % self._tick)
+    data.append("   ticks: %d" % self._current_tick)
     data.append("   errors: %d" % lyntin.errorcount)
 
     # print info from each session
@@ -715,35 +695,6 @@ class Engine:
     # return the list of elements
     return data
 
-
-def _evalmodechange(args):
-  """
-  Handles when we change from one evalmode to another.
-  """
-  old = args[0]
-  new = args[1]
-
-  cm = exported.get_manager("command")
-  if not cm:
-    print "no command manager"
-    return
-
-  if (old == -1):
-    # just started up
-    if new == lyntin.EVALMODE_TINTIN:
-      exported.hook_register("user_filter_hook", cm.filter, 1)
-    else:
-      exported.hook_register("user_filter_hook", cm.filter, 100)
-
-  elif old == lyntin.EVALMODE_LYNTIN and new == lyntin.EVALMODE_TINTIN:
-    # just switched into EVALMODE_TINTIN mode
-    exported.hook_unregister("user_filter_hook", cm.filter)
-    exported.hook_register("user_filter_hook", cm.filter, 1)
-
-  elif old == lyntin.EVALMODE_TINTIN and new == lyntin.EVALMODE_LYNTIN:
-    # just switched into EVALMODE_LYNTIN mode
-    exported.hook_unregister("user_filter_hook", cm.filter)
-    exported.hook_register("user_filter_hook", cm.filter, 100)
 
 # Local variables:
 # mode:python
