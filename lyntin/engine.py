@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.10 2003/08/28 01:46:47 willhelm Exp $
+# $Id: engine.py,v 1.11 2003/08/30 02:45:57 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -145,9 +145,6 @@ class Engine:
 
     c.add("mudecho", config.BoolConfig("mudecho", 1, 0,
         "Whether (1) or not (0) we're echoing user input to the ui."))
-
-    c.add("datadir", config.StringConfig("datadir", "", 1,
-        "Allows you to set the default directory for your Lyntin data."))
 
   ### ------------------------------------------
   ### hook stuff
@@ -878,13 +875,14 @@ def main(defaultui="text"):
       if os.environ.has_key("HOME"):
         datadir = utils.fixdir(os.environ["HOME"])
 
+    config.options["datadir"] = datadir
+
     import atexit
     atexit.register(shutdown)
 
     # instantiate the engine
     myengine = Engine()
     myengine._setupConfiguration()
-    myengine.getConfigManager().change("datadir", datadir)
 
     # instantiate the ui
     uiinstance = None

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.7 2003/08/28 01:46:48 willhelm Exp $
+# $Id: variable.py,v 1.8 2003/08/30 02:45:57 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -19,7 +19,7 @@ class DatadirBuiltin:
   Allows us to do dynamic DATADIRs as a global variable.
   """
   def __init__(self): pass
-  def __str__(self): return exported.get_config("datadir")
+  def __str__(self): return config.options["datadir"]
 
 class TimeStampBuiltin:
   """

@@ -4,15 +4,27 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: config.py,v 1.4 2003/08/28 01:46:47 willhelm Exp $
+# $Id: config.py,v 1.5 2003/08/30 02:45:57 willhelm Exp $
 #######################################################################
 """
 This module holds the configuration manager as well as a series of
-configuration type classes.
+configuration type classes.  It also holds some global variables
+that get computed at boot.
 """
 import types, copy
 from lyntin import exported, utils, manager, constants
 
+# this holds a list of all the modules Lyntin has dynamically imported
+# or have been imported via the #import command.
+lyntinmodules = []
+
+# holds the application options--these are adjusted by command-line 
+# arguments only
+options = {'datadir': '',
+           'moduledir': [],
+           'readfile': [],
+           'snoopdefault': 1,
+           'ui': 'text'}
 
 class ConfigBase:
   """
@@ -348,14 +360,3 @@ class ConfigManager(manager.Manager):
     if self._config.has_key(ses):
       del self._config[ses]
 
-# this holds a list of all the modules Lyntin has dynamically imported
-# or have been imported via the #import command.
-lyntinmodules = []
-
-# holds the application options--these are adjusted by command-line 
-# arguments only
-options = {'datadir': '',
-           'moduledir': [],
-           'readfile': [],
-           'snoopdefault': 1,
-           'ui': 'text'}

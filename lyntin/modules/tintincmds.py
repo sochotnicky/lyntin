@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.9 2003/08/28 01:46:48 willhelm Exp $
+# $Id: tintincmds.py,v 1.10 2003/08/30 02:45:57 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -344,7 +344,7 @@ def read_cmd(ses, args, input):
   filename = args["filename"]
 
   if os.sep not in filename and not filename.startswith("http://"):
-    filename = exported.get_config("datadir") + filename
+    filename = config.options["datadir"] + filename
 
   try:
     # http reading contributed by Sebastian John
@@ -547,7 +547,7 @@ def textin_cmd(ses, args, input):
   filename = args["file"]
 
   if os.sep not in filename:
-    filename = exported.get_config("datadir") + filename
+    filename = config.options["datadir"] + filename
    
   try:
     f = open(filename, "r")
@@ -603,7 +603,7 @@ def write_cmd(ses, args, input):
   c = exported.get_engine().getConfigManager().get("commandchar")
 
   if os.sep not in filename:
-    filename = exported.get_config("datadir") + filename
+    filename = config.options["datadir"] + filename
 
   data = []
   def write_mapper(x, y):
