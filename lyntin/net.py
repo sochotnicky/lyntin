@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: net.py,v 1.16 2003/10/26 16:07:54 willhelm Exp $
+# $Id: net.py,v 1.17 2004/04/29 21:37:08 willhelm Exp $
 #######################################################################
 """
 This holds the SocketCommunicator class which handles socket
@@ -208,18 +208,18 @@ class SocketCommunicator:
   The SocketCommunicator handles all incoming and outgoing data from 
   and to the mud, telnet control codes, and some data transformations.
   """
-  def __init__(self, e):
+  def __init__(self, e, ses, host, port):
     self._engine = e
     self._config = e.getConfigManager()
 
     self._sessionname = ''
-    self._host = ''
-    self._port = 0
+    self._host = host
+    self._port = port
     self._sock = None
     self._ansimode = 1
     self._nego_buffer = ''
     self._shutdownflag = 0
-    self._session = None
+    self._session = ses
 
     self._debug = 0
 
@@ -284,20 +284,6 @@ class SocketCommunicator:
     @type  name: string
     """
     self._sessionname = name
-
-  def setSession(self, ses):
-    """
-    Sets the local session.  Each SocketCommunicator is matched
-    up with a Session object.  This sets the Session object for
-    this SocketCommunicator so we know who to pass information from
-    the mud off to.
-
-    @param ses: the session to set
-    @type  ses: Session
-    """
-    # FIXME - maybe we should do dynamic lookup of the session every
-    # time like we do with the ui?
-    self._session = ses
 
   def shutdown(self):
     """
