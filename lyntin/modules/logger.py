@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: logger.py,v 1.6 2003/08/30 02:45:57 willhelm Exp $
+# $Id: logger.py,v 1.7 2004/01/02 06:40:30 glasssnake Exp $
 #######################################################################
 """
 This module defines the LoggerManager which handles logging.
@@ -236,6 +236,17 @@ class LoggerManager(manager.Manager):
 
     return text
 
+  def promptfilter(self, args):
+    """
+    prompt_filter_hook function for filtering incoming prompt from the mud.
+    """
+    logger = self._loggers.get(args["session"])
+    text = args["prompt"]
+    if logger:
+      logger.log_mud(text)
+
+    return text
+
   def tomudfilter(self, args):
     """
     from_user_hook function for logging user input.
@@ -328,7 +339,7 @@ def load():
 
   exported.hook_register("to_mud_hook", lm.tomudfilter, constants.LAST+1)
   exported.hook_register("mud_filter_hook", lm.mudfilter, 30)
-  exported.hook_register("prompt_hook", lm.mudfilter, 30)
+  exported.hook_register("prompt_hook", lm.promptfilter, 30)
 
 def unload():
   """ Unloads the module by calling any unload/unbind functions."""
@@ -338,7 +349,7 @@ def unload():
 
   exported.hook_unregister("to_mud_hook", lm.tomudfilter)
   exported.hook_unregister("mud_filter_hook", lm.mudfilter)
-  exported.hook_unregister("prompt_hook", lm.mudfilter)
+  exported.hook_unregister("prompt_hook", lm.promptfilter)
 
 # Local variables:
 # mode:python
