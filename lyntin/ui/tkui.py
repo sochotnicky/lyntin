@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.6 2003/08/01 00:14:52 willhelm Exp $
+# $Id: tkui.py,v 1.7 2003/08/01 00:44:08 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -14,7 +14,7 @@ Lyntin, but largely re-coded in various areas.
 from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
-from lyntin import ansi, event, engine, exported, utils
+from lyntin import ansi, event, engine, exported, utils, constants
 from lyntin.ui import base, message
 import lyntin.__init__
 
@@ -216,9 +216,9 @@ class Tkui(base.BaseUI):
     @type  title: string
     """
     if title:
-      title = lyntin.__init__.LYNTINTITLE + title
+      title = constants.LYNTINTITLE + title
     else:
-      title = lyntin.__init__.LYNTINTITLE
+      title = constants.LYNTINTITLE
     self._event_queue.put(_TitleEvent(self._tk, title))
 
   def removeWindow(self, windowname):
@@ -358,9 +358,9 @@ class Tkui(base.BaseUI):
     self._event_queue.put(_OutputEvent(args))
 
   def write_internal(self, args):
-    mess = args[0]
+    mess = args["message"]
     if type(mess) == types.StringType:
-      mess = base.BaseUI(mess, message.LTDATA)
+      mess = base.Message(mess, message.LTDATA)
 
     line = mess.data
     ses = mess.session
