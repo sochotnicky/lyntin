@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: hooks.py,v 1.4 2003/08/21 02:55:47 willhelm Exp $
+# $Id: hooks.py,v 1.5 2003/08/27 03:19:58 willhelm Exp $
 ##################################################################
 """
 The engine is augmented by a series of X{hooks} which allow modules to
@@ -79,7 +79,7 @@ should be done through the exported module.
     to know when to wake up and deal with things.  Arg tuple: (ticknumber:int)
 
 @var write_hook: This hook runs whenever someone types "#write <filename>".
-    Arg tuple: (session:Session, file:File, quiet:boolean)
+    Arg tuple: (session:Session, data:list of strings, quiet:boolean)
 
 @var error_occurred_hook: When an error is kicked up via the event loop.
     The arg tuple is empty--you should check sys.exc_traceback if you're
@@ -541,7 +541,7 @@ timer_hook = get_hook_manager().getHook("timer_hook")
 # 
 # arg tuple: (session, file object, boolean)
 #  - session - the session instance
-#  - file - the file object we're writing to
+#  - data - list of strings of the data to write to the file
 #  - quiet - whether (1) or not (0) we should be persisting things quietly
 write_hook = get_hook_manager().getHook("write_hook")
 

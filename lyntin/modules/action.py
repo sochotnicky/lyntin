@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: action.py,v 1.8 2003/08/14 20:24:31 glasssnake Exp $
+# $Id: action.py,v 1.9 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the ActionManager which handles managing actions 
@@ -30,7 +30,7 @@ changes--this allows us to handle Lyntin variables in the action trigger
 statements.
 """
 import re, string, copy
-from lyntin import manager, utils, event, config, exported, ansi
+from lyntin import manager, utils, event, exported, ansi
 from lyntin.modules import modutils
 
 
@@ -219,29 +219,39 @@ class ActionData:
     @param tag: the tag which to find actions for.
     @type  tag: string
 
-    @return: a string containing all the action information
-    @rtype: string
+    @return: a list of strings where each string represents an action
+    @rtype: list of strings
     """
-
-    if text=='':
-      listing = self._actions.keys()
-    else:
-      listing = utils.expand_text(text, self._actions.keys())
+    listing = self._actions.keys()
+    if text:
+      listing = utils.expand_text(text, listing)
 
     data = []
     for mem in listing:
       actup = self._actions[mem]
       
       if not tag or actup[5] == tag:
-        data.append("%saction {%s} {%s} priority={%d} onetime={%s} tag={%s}" % 
-                (config.commandchar, utils.escape(mem), 
-                 utils.escape(actup[2]), actup[3], actup[4], actup[5]))
+        data.append("action {%s} {%s} priority={%d} onetime={%s} tag={%s}" % 
+                (utils.escape(mem), utils.escape(actup[2]), actup[3], actup[4], actup[5]))
 
+    return data
+
+  def getDisabledInfo(self, tag=None):
+    """
+    Returns information about disabled tags.
+
+    @param tag: the tag which to find actions for.
+    @type  tag: string
+
+    @return: a list of strings where each string represents an action
+    @rtype: list of strings
+    """
+    data = []
     for mem in self._disabled.keys():
       if not tag or mem == tag:
-        data.append("%sdisable tag={%s}" % (config.commandchar, mem))
+        data.append("disable tag={%s}" % mem)
 
-    return string.join(data, "\n")
+    return data
 
   def getCount(self):
     """
@@ -313,8 +323,13 @@ class ActionManager(manager.Manager):
 
   def getInfo(self, ses, text="", tag=None):
     if self._actions.has_key(ses):
-      return self._actions[ses].getInfo(text, tag=tag)
-    return ""
+      return self._actions[ses].getInfo(text, tag)
+    return []
+
+  def getDisabledInfo(self, ses, tag=None):
+    if self._actions.has_key(ses):
+      return self._actions[ses].getDisabledInfo(tag)
+    return []
 
   def listTags(self, ses):
     actions = self._actions.get(ses)
@@ -356,18 +371,14 @@ class ActionManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
 
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet == 1:
+      data = [m + " quiet={true}" for m in data]
+
+    return data
 
   def variableChange(self, args):
     """
@@ -465,23 +476,15 @@ def action_cmd(ses, args, input):
 
   # they typed '#action'--print out all the current actions
   if not trigger and not action:
-    data = am.getInfo(ses, tag=tag)
-    if data == '':
-      data = "action: no actions defined."
+    data = am.getInfo(ses, trigger, tag)
+    if not data:
+      data = ["action: no actions defined."]
 
     message = "actions"
     if tag:
       message += " with tag={%s}" % tag
-    exported.write_message(message + "\n" + data, ses)
-    return
-
-  # they typed '#action dd*' and are looking for matching actions
-  if not action:
-    data = am.getInfo(ses, trigger)
-    if data == '':
-      data = "action: no actions defined."
-
-    exported.write_message("actions:\n" + data, ses)
+      data += am.getDisabledInfo(ses, tag)
+    exported.write_message(message + "\n" + "\n".join(data), ses)
     return
 
   try:

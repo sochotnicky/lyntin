@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
+# $Id: variable.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -182,21 +182,16 @@ class VariableData:
     @param text: variables matching this string will be returned
     @type  text: string
 
-    @returns: one big string with all the information in it
-    @rtype: string
+    @returns: list of string where each string represents a variable
+    @rtype: list of strings
     """
-    if len(self._variables.keys()) == 0:
-      return ''
+    data = self._variables.keys()
+    if text:
+      data = utils.expand_text(text, data)
 
-    if text=='':
-      listing = self._variables.keys()
-    else:
-      listing = utils.expand_text(text, self._variables.keys())
+    data = ["variable {%s} {%s}" % (m, self._variables[m]) for m in data]
 
-    listing = ["%svariable {%s} {%s}" % (config.commandchar, mem, self._variables[mem]) for mem in listing]
-
-    return string.join(listing, "\n")
-
+    return data
 
 class VariableManager(manager.Manager):
   def __init__(self):
@@ -282,7 +277,7 @@ class VariableManager(manager.Manager):
   def getInfo(self, ses, text=""):
     if self._variables.has_key(ses):
       return self._variables[ses].getInfo(text)
-    return ""
+    return []
 
   def getStatus(self, ses):
     if self._variables.has_key(ses):
@@ -305,17 +300,13 @@ class VariableManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet == 1:
+      data = [m + " quiet={true}" for m in data]
+
+    return data
 
   def denestVars(self, args):
     """
@@ -385,20 +376,12 @@ def variable_cmd(ses, args, input):
 
   vm = exported.get_manager("variable")
 
-  if not var and not expansion:
-    data = vm.getInfo(ses)
-    if data == '':
-      data = "variable: no variables defined."
-
-    exported.write_message("variables:\n" + data, ses)
-    return
-
   if not expansion:
     data = vm.getInfo(ses, var)
-    if data == '':
-      data = "variable: no variables defined."
+    if not data:
+      data = ["variable: no variables defined."]
 
-    exported.write_message("variables:\n" + data, ses)
+    exported.write_message("variables:\n" + "\n".join(data), ses)
     return 
 
   try:

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: alias.py,v 1.3 2003/08/08 00:15:24 willhelm Exp $
+# $Id: alias.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the AliasManager which manages aliases, creating new
@@ -29,7 +29,7 @@ expressions.  At some point in the future, this will be changed to
 regular expressions to better handle a wider variety of aliases.
 """
 import string
-from lyntin import manager, utils, config, exported
+from lyntin import manager, utils, exported
 from lyntin.modules import modutils
 
 class AliasData:
@@ -151,23 +151,21 @@ class AliasData:
         wants information about.
     @type  text: string
 
-    @return: a string containing all the alias information
-    @rtype: string
+    @return: a list of strings where each string represents an alias
+    @rtype: list of strings
     """
     if len(self._aliases) == 0:
-      return ''
+      return []
 
     listing = self._aliases.keys()
-
     if text:
       listing = utils.expand_text(text, listing)
 
     data = []
     for mem in listing:
-      data.append("%salias {%s} {%s}" %
-          (config.commandchar, mem, utils.escape(self._aliases[mem])))
+      data.append("alias {%s} {%s}" % (mem, utils.escape(self._aliases[mem])))
 
-    return string.join(data, "\n")
+    return data
 
   def getCount(self):
     """
@@ -221,7 +219,7 @@ class AliasManager(manager.Manager):
 
   def getInfo(self, ses, text=""):
     if not self._aliasdata.has_key(ses):
-      return ""
+      return []
     return self._aliasdata[ses].getInfo(text)
 
   def persist(self, args):
@@ -229,17 +227,13 @@ class AliasManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet == 1:
+      data = [m + " quiet={true}" for m in data]
+        
+    return data
 
   def userfilter(self, args):
     """ 
@@ -308,24 +302,16 @@ def alias_cmd(ses, args, input):
 
   am = exported.get_manager("alias")
 
-  # they typed '#alias'--print out all current aliases
-  if not name and not command:
-    data = am.getInfo(ses)
-    if data == '':
-      data = "alias: no aliases defined."
-
-    exported.write_message("aliases:\n" + data, ses)
-    return
-
-  # they typed '#alias dd*' and are looking for matching aliases
+  # they typed '#alias' or '#alias x' so we print the relevant aliases
   if not command:
     data = am.getInfo(ses, name)
-    if data == '':
-      data = "alias: no aliases defined."
+    if not data:
+      data = ["alias: no aliases defined."]
 
-    exported.write_message("aliases:\n" + data, ses)
+    exported.write_message("aliases:\n" + "\n".join(data), ses)
     return
 
+  # they're creating an alias
   try:
     am.addAlias(ses, name, command)
   except ValueError, e:

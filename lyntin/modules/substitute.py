@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: substitute.py,v 1.5 2003/08/08 00:15:24 willhelm Exp $
+# $Id: substitute.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the SubstituteManager which handles substitutes.
 """
 import string
-from lyntin import ansi, manager, utils, config, exported
+from lyntin import ansi, manager, utils, exported
 from lyntin.modules import modutils
 
 class SubstituteData:
@@ -136,20 +136,16 @@ class SubstituteData:
         information on
     @type  text: string
 
-    @return: the string of the substitute information
-    @rtype: string
+    @return: list of strings where each string represents a substitute
+    @rtype: list of strings
     """
-    if len(self._substitutes.keys()) == 0:
-      return ''
+    listing = self._substitutes.keys()
+    if text:
+      listing = utils.expand_text(text, listing)
 
-    if text=='':
-      listing = self._substitutes.keys()
-    else:
-      listing = utils.expand_text(text, self._substitutes.keys())
+    listing = ["substitute {%s} {%s}" % (mem, utils.escape(self._substitutes[mem])) for mem in listing]
 
-    listing = ["%ssubstitute {%s} {%s}" % (config.commandchar, mem, utils.escape(self._substitutes[mem])) for mem in listing]
-
-    return string.join(listing, "\n")
+    return listing
 
   def getAntiSubstitutesInfo(self, text):
     """
@@ -162,21 +158,16 @@ class SubstituteData:
         information on
     @type  text: string
 
-    @return: the string of the antisubstitute information
-    @rtype: string
+    @return: list of strings where each string represents an antisubstitute
+    @rtype: list of strings
     """
-    if len(self._antisubs) == 0:
-      return ''
+    listing = self._antisubs
+    if text:
+      listing = utils.expand_text(text, listing)
 
-    if text=='':
-      listing = self._antisubs
-    else:
-      listing = utils.expand_text(text, self._antisubs)
+    listing = ["antisubstitute {%s}" % mem for mem in listing]
 
-    listing = ["%santisubstitute {%s}" % (config.commandchar, mem) for mem in listing]
-
-    return string.join(listing, "\n")
-
+    return listing
 
   def getStatus(self):
     """
@@ -227,12 +218,12 @@ class SubstituteManager(manager.Manager):
   def getInfo(self, ses, text=''):
     if self._subs.has_key(ses):
       return self._subs[ses].getInfo(text)
-    return ""
+    return []
 
   def getAntiSubstitutesInfo(self, ses, text=''):
     if self._subs.has_key(ses):
       return self._subs[ses].getAntiSubstitutesInfo(text)
-    return ""
+    return []
 
   def getStatus(self, ses):
     if self._subs.has_key(ses):
@@ -260,26 +251,13 @@ class SubstituteManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
-    data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    data = self.getInfo(ses) + self.getAntiSubstitutesInfo(ses)
+    if not quiet:
+      data = [m + " quiet={true}" for m in data]
 
-    data = self.getAntiSubstitutesInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    return data
 
   def mudfilter(self, args):
     """
@@ -312,20 +290,12 @@ def substitute_cmd(ses, args, input):
 
   sm = exported.get_manager("substitute")
 
-  if not item and not substitution:
-    data = sm.getInfo(ses)
-    if data == '':
-      data = "substitute: no substitutes defined."
-
-    exported.write_message(data, ses)
-    return
-
   if not substitution:
     data = sm.getInfo(ses, item)
-    if data == '':
-      data = "substitute: no substitutes defined."
+    if not data:
+      data = ["substitute: no substitutes defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("substitutes:\n" + "\n".join(data), ses)
     return 
 
   sm.addSubstitute(ses, item, substitution)
@@ -361,10 +331,10 @@ def antisubstitute_cmd(ses, args, input):
 
   if not item:
     data = sm.getAntiSubstitutesInfo(ses)
-    if data == '':
-      data = "antisubstitute: no antisubstitutes defined."
+    if not data:
+      data = ["antisubstitute: no antisubstitutes defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("antisubstitutes:\n" + "\n".join(data), ses)
     return
 
   sm.addAntiSubstitute(ses, item)

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: exported.py,v 1.7 2003/08/21 02:56:27 willhelm Exp $
+# $Id: exported.py,v 1.8 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This is the X{API} for lyntin internals and is guaranteed to change 
@@ -126,6 +126,24 @@ def get_manager(name):
   @rtype: manager.Manager
   """
   return get_engine().getManager(name)
+
+def get_config(name, ses=None, defaultvalue=constants.NODEFAULTVALUE):
+  """
+  Gets a value for a config item.  If the default value is
+  not specified, then it will raise a ValueError.
+
+  @param name: the name of the item to retrieve the value of
+  @type  name: string
+
+  @param ses: the session (or None if this is not session-scoped)
+  @type  ses: Session
+   
+  @param defaultvalue: the value to return if there is no config
+      item of that name.  if you don't specify this, then we'll
+      raise a ValueError.
+  @type  defaultvalue: varies
+  """
+  return get_engine().getConfigManager().get(name, ses, defaultvalue)
 
 def add_help(fqn, helptext):
   """

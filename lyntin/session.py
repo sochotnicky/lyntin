@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.5 2003/08/06 22:59:44 willhelm Exp $
+# $Id: session.py,v 1.6 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -163,7 +163,6 @@ class Session:
     if not ses == self:
       return
 
-    file = args["file"]
     quiet = args["quiet"]
     if quiet == 1:
       quiet = " quiet={true}"
@@ -174,17 +173,17 @@ class Session:
 
     # saves speedwalking state
     if config.speedwalk == 1:
-      data.append(config.commandchar + "config speedwalk on" + quiet)
+      data.append("config speedwalk on" + quiet)
     else: 
-      data.append(config.commandchar + "config speedwalk off" + quiet)
+      data.append("config speedwalk off" + quiet)
 
     # saves ansi state
     if config.ansicolor == 1:
-      data.append(config.commandchar + "config ansicolor on" + quiet)
+      data.append("config ansicolor on" + quiet)
     else: 
-      data.append(config.commandchar + "config ansicolor off" + quiet)
+      data.append("config ansicolor off" + quiet)
 
-    file.write(string.join(data, "\n") + "\n")
+    return data
 
   def clear(self):
     """

@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: constants.py,v 1.1 2003/06/05 14:09:24 willhelm Exp $
+# $Id: constants.py,v 1.2 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 Holds constants which will get used through the code-base as well as in
@@ -77,3 +77,5 @@ Welcome to Lyntin.
 For help, type "#help general".
 --------------------------------------
 """
+
+NODEFAULTVALUE = "No default value"

@@ -4,13 +4,13 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: gag.py,v 1.2 2003/08/08 00:15:24 willhelm Exp $
+# $Id: gag.py,v 1.3 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines gag functionality.
 """
 import string
-from lyntin import ansi, manager, utils, config, exported
+from lyntin import ansi, manager, utils, exported
 from lyntin.modules import modutils
 
 class GagData:
@@ -141,20 +141,16 @@ class GagData:
         information on
     @type  text: string
 
-    @return: the string of the gag information
-    @rtype: string
+    @return: list of strings where each string represents a gag
+    @rtype: list of strings
     """
-    if len(self._gags.keys()) == 0:
-      return ''
+    data = self._gags.keys()
+    if text:
+      data = utils.expand_text(text, data)
 
-    if text=='':
-      listing = self._gags.keys()
-    else:
-      listing = utils.expand_text(text, self._gags.keys())
+    data = ["gag {%s} {%s}" % (mem, utils.escape(self._gags[mem])) for mem in data]
 
-    listing = ["%sgag {%s} {%s}" % (config.commandchar, mem, utils.escape(self._gags[mem])) for mem in listing]
-
-    return string.join(listing, "\n")
+    return data
 
   def getAntiGagsInfo(self, text):
     """
@@ -167,20 +163,16 @@ class GagData:
         information on
     @type  text: string
 
-    @return: the string of the antigag information
-    @rtype: string
+    @return: list of strings where each string represents a gag
+    @rtype: list of strings
     """
-    if len(self._antigags) == 0:
-      return ''
+    data = self._antigags
+    if text:
+      data = utils.expand_text(text, data)
 
-    if text=='':
-      listing = self._antigags
-    else:
-      listing = utils.expand_text(text, self._antigags)
+    data = ["antigag {%s}" % (mem) for mem in data]
 
-    listing = ["%santigag {%s}" % (config.commandchar, mem) for mem in listing]
-
-    return string.join(listing, "\n")
+    return data
 
 
   def getStatus(self):
@@ -232,12 +224,12 @@ class GagManager(manager.Manager):
   def getInfo(self, ses, text=''):
     if self._gags.has_key(ses):
       return self._gags[ses].getInfo(text)
-    return ""
+    return []
 
   def getAntiGagsInfo(self, ses, text=''):
     if self._gags.has_key(ses):
       return self._gags[ses].getAntiGagsInfo(text)
-    return ""
+    return []
 
   def getStatus(self, ses):
     if self._gags.has_key(ses):
@@ -265,26 +257,14 @@ class GagManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
-    data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    data = self.getInfo(ses) + self.getAntiGagsInfo(ses)
 
-    data = self.getAntiGagsInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet == 1:
+      data = [m + " quiet={true}" for m in data]
+
+    return data
 
   def mudfilter(self, args):
     """
@@ -316,10 +296,10 @@ def antigag_cmd(ses, args, input):
 
   if not item:
     data = gm.getAntiGagsInfo(ses)
-    if data == '':
-      data = "antigag: no antigags defined."
+    if not data:
+      data = ["antigag: no antigags defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("\n".join(data), ses)
     return
 
   gm.addAntiGag(ses, item)
@@ -370,10 +350,10 @@ def gag_cmd(ses, args, input):
 
   if not gaggedtext:
     data = gm.getInfo(ses)
-    if data == '':
-      data = "gag: no gags defined."
+    if not data:
+      data = ["gag: no gags defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("\n".join(data), ses)
     return
 
   for togag in gaggedtext:

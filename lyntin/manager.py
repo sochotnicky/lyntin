@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: manager.py,v 1.1 2003/05/05 05:54:19 willhelm Exp $
+# $Id: manager.py,v 1.2 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 Managers manage things.  Most X{manager}s subclass the "manager.Manager"
@@ -108,24 +108,6 @@ class Manager:
     """
     pass
 
-  def getState(self, ses):
-    """
-    Returns the state of something as a list of command strings
-    without the command char (which is added by #write).
-
-    For example, getState on the AliasManager might return::
-
-      ["alias {t3k} {#ses a localhost 3000}", "alias {toch} {nwnnen;vortex}"]
-      
-    @param ses: the session to persist
-    @type  ses: Session
-
-    @return: the command strings representing all the data for this session
-        being held by this manager
-    @rtype: list of strings
-    """
-    pass
-    
   def getStatus(self, ses):
     """
     Returns a one-liner status of the state of this manager for

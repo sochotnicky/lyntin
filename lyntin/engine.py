@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.8 2003/08/21 02:55:47 willhelm Exp $
+# $Id: engine.py,v 1.9 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -56,7 +56,9 @@ class Engine:
     # handling.
     self._shutdownflag = 0
 
-    # this is the error count
+    # Lyntin counts the total number of errors it's encountered.
+    # This enables us to shut ourselves down if we encounter too
+    # many which indicates a "bigger problem".
     self._errorcount = 0
 
     # listeners exist at an engine level.  if you sign up for
@@ -68,13 +70,16 @@ class Engine:
 
     # the help manager manages all the help content in a hierarchical
     # structure.
-    self._managers["help"] = helpmanager.HelpManager()
+    self._managers["help"] = helpmanager.HelpManager(self)
 
     # our history manager
     self._managers["history"] = history.HistoryManager()
 
     # our command manager
-    self._managers["command"] = commandmanager.CommandManager()
+    self._managers["command"] = commandmanager.CommandManager(self)
+
+    # our config manager
+    self._managers["config"] = config.ConfigManager()
 
     # there is only one ui in the system.
     self._ui = None
@@ -113,6 +118,14 @@ class Engine:
 
     self.hookRegister("user_filter_hook", self._managers["command"].filter, 100)
 
+  def _setupConfiguration(self):
+    """
+    Goes through and sets up all the engine-specific configuration
+    pieces.
+    """
+    c = self._managers["config"]
+
+    c.add("commandchar", config.CharConfig("commandchar", "#", 0, "command character"))
 
   ### ------------------------------------------
   ### hook stuff
@@ -280,11 +293,12 @@ class Engine:
       session = self._current_session
 
     historyitems = []
+    commandchar = self._managers["config"].get("commandchar")
     for mem in inputlist:
       mem = mem.strip()
 
       if len(mem) == 0:
-        mem = config.commandchar + "cr"
+        mem = commandchar + "cr"
 
       # if it's not internal we spam the hook with the raw input
       if internal == 0:
@@ -298,7 +312,7 @@ class Engine:
           continue
 
       # if it starts with a # it's a loop, session or command
-      if len(mem) > 0 and mem.startswith(config.commandchar):
+      if len(mem) > 0 and mem.startswith(commandchar):
 
         # pull off the first token without the commandchar
         ses = mem.split(" ", 1)[0][1:]
@@ -312,7 +326,7 @@ class Engine:
             if num > 0:
               for i in range(num):
                 loopcommand = self.handleUserData(command, 1, session)
-              historyitems.append(config.commandchar + ses + " {" + loopcommand + "}")
+              historyitems.append(commandchar + ses + " {" + loopcommand + "}")
           continue
 
         # is it a session?
@@ -332,7 +346,7 @@ class Engine:
           if len(newinput) > 1:
             newinput = newinput[1]
           else:
-            newinput = config.commandchar + "cr"
+            newinput = commandchar + "cr"
 
           for sessionname in self._sessions.keys():
             if sessionname != "common":
@@ -574,7 +588,8 @@ class Engine:
     exported.write_error("WARNING: Unhandled error encountered (%d out of %d)." 
                          % (self._errorcount, 20))
     exported.hook_spam("error_occurred_hook", {"count": self._errorcount})
-    if self._errorcount > 20:
+    # FIXME - change this back to 20
+    if self._errorcount > 5:
       exported.hook_spam("too_many_errors_hook", {})
       exported.write_error("Error count exceeded--shutting down.")
       sys.exit("Error count exceeded--shutting down.")
@@ -667,6 +682,15 @@ class Engine:
     self._ui.flush()
 
   
+  ### ------------------------------------------------
+  ### config functions
+  ### ------------------------------------------------
+  def getConfigManager(self):
+    """
+    Returns the config manager.
+    """
+    return self._managers["config"]
+
   ### ------------------------------------------------
   ### Manager functions
   ### ------------------------------------------------
@@ -839,6 +863,7 @@ def main(defaultui="text"):
 
     # instantiate the engine
     myengine = Engine()
+    myengine._setupConfiguration()
 
     # instantiate the ui
     uiinstance = None
@@ -881,13 +906,15 @@ def main(defaultui="text"):
     # spam the startup hook 
     exported.hook_spam("startup_hook", {})
   
+    commandchar = myengine._managers["config"].get("commandchar")
+
     # handle command files
     for mem in config.options['readfile']:
       exported.write_message("Reading in file " + mem)
       # we have to escape windows os separators because \ has a specific
       # meaning in the argparser
       mem = mem.replace("\\", "\\\\")
-      exported.lyntin_command("%sread %s" % (config.commandchar, mem), internal=1)
+      exported.lyntin_command("%sread %s" % (commandchar, mem), internal=1)
   
     # we're done initialization!
     exported.write_message(constants.STARTUPTEXT)

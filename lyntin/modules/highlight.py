@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: highlight.py,v 1.3 2003/08/06 22:59:44 willhelm Exp $
+# $Id: highlight.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the HighlightManager which handles highlights.
@@ -212,12 +212,9 @@ class HighlightData:
         text in the style
     @type  colorize: int
 
-    @return: one big string of all the information
-    @rtype: string
+    @return: list of strings where each string represents a highlight
+    @rtype: list of strings
     """
-    if len(self._highlights.keys()) == 0:
-      return ''
-
     listing = self._highlights.keys()
 
     if text:
@@ -226,18 +223,16 @@ class HighlightData:
     data = []
     for mem in listing:
       if colorize == 1:
-        data.append("%shighlight {%s%s%s} {%s}" % 
-                    (config.commandchar, 
-                     ansi.get_color(self._highlights[mem][0]),
+        data.append("highlight {%s%s%s} {%s}" % 
+                    (ansi.get_color(self._highlights[mem][0]),
                      self._highlights[mem][0], 
                      ansi.get_color("default"),
                      utils.escape(mem)))
       else:
-        data.append("%shighlight {%s} {%s}" % 
-                    (config.commandchar, self._highlights[mem][0], 
-                     utils.escape(mem)))
+        data.append("highlight {%s} {%s}" % 
+                    (self._highlights[mem][0], utils.escape(mem)))
 
-    return string.join(data, "\n")
+    return data
 
   def getStatus(self):
     """
@@ -275,7 +270,7 @@ class HighlightManager(manager.Manager):
   def getInfo(self, ses, text="", colorize=0):
     if self._highlights.has_key(ses):
       return self._highlights[ses].getInfo(text, colorize)
-    return ""
+    return []
 
   def getStatus(self, ses):
     if self._highlights.has_key(ses):
@@ -298,17 +293,13 @@ class HighlightManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet:
+      data = [m + " quiet={true}" for m in data]
+
+    return data
 
   def mudfilter(self, args):
     """
@@ -368,20 +359,12 @@ def highlight_cmd(ses, args, input):
   text = args["text"]
   quiet = args["quiet"]
 
-  if not text and not style:
-    data = exported.get_manager("highlight").getInfo(ses, "", 1)
-    if not data:
-      data = "highlight: no highlights defined."
-
-    exported.write_message("highlights:\n" + data, ses)
-    return
-
   if not text:
     data = exported.get_manager("highlight").getInfo(ses, style, 1)
     if not data:
       data = "highlight: no highlights defined."
 
-    exported.write_message("highlights:\n" + data, ses)
+    exported.write_message("highlights:\n" + "\n".join(data), ses)
     return
     
   style = style.lower()

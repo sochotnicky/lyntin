@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.7 2003/08/06 22:59:44 willhelm Exp $
+# $Id: tintincmds.py,v 1.8 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 import string, os
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -367,8 +367,9 @@ def read_cmd(ses, args, input):
     exported.write_message("read: %s had no data." % filename, ses)
     return
 
-  if not contents[0].startswith(config.commandchar):
-    exported.lyntin_command("%sconfig commandchar %s" % (config.commandchar, contents[0][0]), internal=1, session=ses)
+  c = exported.get_config("commandchar")
+  if not contents[0].startswith(c):
+    exported.lyntin_command("%sconfig commandchar %s" % (c, contents[0][0]), internal=1, session=ses)
 
   for mem in contents:
     mem = mem.strip()
@@ -598,21 +599,43 @@ def write_cmd(ses, args, input):
 
   f = None
 
+  c = exported.get_engine().getConfigManager().get("commandchar")
+
   if os.sep not in filename:
     filename = config.options['datadir'] + filename
 
-  try:
-    f = open(filename, "w")
-    exported.hook_spam("write_hook", {"session": ses, "file": f, "quiet": quiet})
-    f.close()
-    exported.write_message("write: file %s has been written for session %s." % 
-                           (filename, ses.getName()), ses)
-  except Exception, e:
-    exported.write_error("write: error writing to file %s. %s" % (filename, e), ses)
+  data = []
+  def write_mapper(x, y):
+    """
+    Takes the data from x and sticks it into y so that we continue
+    it all the way through.
+    """
+    data.append(y)
+    return x
+
+  exported.hook_spam("write_hook", {"session": ses, "quiet": quiet}, mappingfunc=write_mapper)
+
+  if data:
+    listing = []
+    for mem in data:
+      listing = listing + mem
+
     try:
+      f = open(filename, "w")
+      f.write(c + ("\n" + c).join(listing))
       f.close()
-    except:
-      pass
+      exported.write_message("write: file %s has been written for session %s." % 
+                             (filename, ses.getName()), ses)
+    except Exception:
+      exported.write_traceback("write: error writing to file %s." % filename, ses)
+      try:
+        f.close()
+      except:
+        pass
+    return
+
+  exported.write_message("write: no data to write.")
+    
 
 commands_dict["write"] = (write_cmd, "file quiet:boolean=false")
 

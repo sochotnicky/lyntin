@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: commandmanager.py,v 1.4 2003/08/06 22:59:44 willhelm Exp $
+# $Id: commandmanager.py,v 1.5 2003/08/27 03:19:57 willhelm Exp $
 #######################################################################
 """
 Lyntin comes with a series of X{command}s for manipulating aliases, 
@@ -31,7 +31,7 @@ command examples.  Additionally, check out the Lyntin module repository
 on http://lyntin.sourceforge.net/ for more examples.
 """
 import inspect, re
-from lyntin import manager, config, exported, argparser, utils
+from lyntin import manager, exported, argparser, utils
 
 class _CommandData:
   """
@@ -67,8 +67,9 @@ class CommandManager(manager.Manager):
   the engine should have it.  All CommandManager interaction
   should be done through the exported module.
   """
-  def __init__(self):
+  def __init__(self, e):
     self._commands = {}
+    self._engine = e
 
   def getCommands(self):
     """
@@ -139,8 +140,9 @@ class CommandManager(manager.Manager):
       cd.setNameAdjusted(name)
 
     if syntaxline:
+      commandchar = self._engine.getConfigManager().get("commandchar")
       helptext = ("syntax: %s%s %s\n" % 
-             (config.commandchar, cd.getNameAdjusted(), syntaxline) + helptext)
+             (commandchar, cd.getNameAdjusted(), syntaxline) + helptext)
 
     fqn = exported.add_help(cd.getNameAdjusted(), helptext)
     cd.setFQN(fqn)
@@ -222,7 +224,8 @@ class CommandManager(manager.Manager):
     internal = args["internal"]
     input = args["dataadj"]
 
-    if len(input) > 1 and input.startswith(config.commandchar):
+    commandchar = self._engine.getConfigManager().get("commandchar")
+    if len(input) > 1 and input.startswith(commandchar):
       input = input[1:]
 
       # splits out the command name from the rest of the command line
@@ -272,11 +275,11 @@ class CommandManager(manager.Manager):
               command(ses, dict, input)
             except ValueError, e:
               exported.write_error("%s: %s\nsyntax: %s%s %s" % 
-                                   (fixedmem, e, config.commandchar, fixedmem,
+                                   (fixedmem, e, commandchar, fixedmem,
                                     argumentparser.syntaxline))
             except argparser.ParserException, e:
               exported.write_error("%s: %s\nsyntax: %s%s %s" % 
-                                   (fixedmem, e, config.commandchar, fixedmem,
+                                   (fixedmem, e, commandchar, fixedmem,
                                     argumentparser.syntaxline))
           if internal == 0:
             ses.prompt()

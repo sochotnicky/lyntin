@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.3 2003/08/21 02:56:59 willhelm Exp $
+# $Id: helpmanager.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
@@ -55,8 +55,9 @@ class HelpManager(manager.Manager):
 
   FIXME - needs more info here
   """
-  def __init__(self):
+  def __init__(self, e):
     self._help_tree = {}
+    self._engine = e
 
   def addHelp(self, fqn, helptext):
     """
@@ -75,7 +76,7 @@ class HelpManager(manager.Manager):
 
     @raises ValueError: if the help name or help text are not valid
     """
-    categorylist, helpname = _split_name(fqn)
+    categorylist, helpname = self._split_name(fqn)
 
     if not helptext or not helpname:
       raise ValueError("Help name and text are required.")
@@ -123,7 +124,7 @@ class HelpManager(manager.Manager):
 
     @raises ValueError: if no topic by that fqn exists
     """
-    categories, name = _split_name(fqn)
+    categories, name = self._split_name(fqn)
 
     place = self._help_tree
     breadcrumbs = []
@@ -178,7 +179,7 @@ class HelpManager(manager.Manager):
 
     @raises ValueError: if the fqn doesn't exist
     """
-    categorylist, name = _split_name(fqn)
+    categorylist, name = self._split_name(fqn)
     categorylist.append(name)
 
     tree = self._help_tree
@@ -223,7 +224,7 @@ class HelpManager(manager.Manager):
         exist at that level.
     @rtype: tuple of (string, string, string)
     """
-    categorylist, name = _split_name(fqn)
+    categorylist, name = self._split_name(fqn)
 
     categorylist.append(name)
 
@@ -331,37 +332,37 @@ class HelpManager(manager.Manager):
         print "%s  node: %s" % (tab, mem)
 
 
-def _split_name(fqn):
-  """
-  Takes an fqn and splits it into a series of categories and a help
-  topic name.  fqn's are delimited by a '.' (period).
+  def _split_name(self, fqn):
+    """
+    Takes an fqn and splits it into a series of categories and a help
+    topic name.  fqn's are delimited by a '.' (period).
 
-  It tries to fix up the fqn as well--doing things like removing
-  lyntin command characters from the name (some users type "#help #alias"
-  to view the help on the alias command) and also removing instances
-  of "root" from the beginning of the fqn because it's not needed.
+    It tries to fix up the fqn as well--doing things like removing
+    lyntin command characters from the name (some users type "#help #alias"
+    to view the help on the alias command) and also removing instances
+    of "root" from the beginning of the fqn because it's not needed.
 
-  @param fqn: the fully qualified name to split
-  @type  fqn: string
+    @param fqn: the fully qualified name to split
+    @type  fqn: string
 
-  @return: the category list and the help topic name
-  @rtype: tuple of (list of strings, string)
-  """
-  if not fqn:
-    fqn = ""
+    @return: the category list and the help topic name
+    @rtype: tuple of (list of strings, string)
+    """
+    if not fqn:
+      fqn = ""
 
-  keys = fqn.split(".")
-  if len(keys) > 1 and keys[0] == "root":
-    keys = keys[1:]
+    keys = fqn.split(".")
+    if len(keys) > 1 and keys[0] == "root":
+      keys = keys[1:]
 
-  if len(keys) > 0:
-    categories = keys[:-1]
-    name = keys[-1]
-    if len(name) > 0 and name[0] == config.commandchar:
-      name = name[1:]
-    return (categories, name)
-  else:
-    return ([], "")
+    if len(keys) > 0:
+      categories = keys[:-1]
+      name = keys[-1]
+      if len(name) > 0 and name[0] == self._engine.getConfigManager().get("commandchar"):
+        name = name[1:]
+      return (categories, name)
+    else:
+      return ([], "")
 
 
 _directives = ["category"]

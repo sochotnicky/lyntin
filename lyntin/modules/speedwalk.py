@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: speedwalk.py,v 1.3 2003/08/06 22:59:44 willhelm Exp $
+# $Id: speedwalk.py,v 1.4 2003/08/27 03:19:58 willhelm Exp $
 #######################################################################
 """
 This module defines the speedwalking code.  Speedwalking is highly
@@ -122,22 +122,16 @@ class SpeedwalkHash:
         interested in
     @type  text: string
     
-    @returns: a string of all the speedwalking alias information
-    @rtype: string
+    @returns: list of strings where each string represents a speedwalk alias
+    @rtype: list of strings
     """
-    if len(self._dirs) == 0:
-      return ""
+    listing = self._dirs.keys()
+    if text:
+      listing = utils.expand_text(text, listing)
     
-    if text == "":
-      listing = self._dirs.keys()
-    else:
-      listing = utils.expand_text(text, self._dirs.keys())
+    listing = ["swdir {%s} {%s}" % (mem, self._dirs[mem]) for mem in listing]
     
-    cmdchar = config.commandchar
-    
-    listing = ["%sswdir {%s} {%s}" % (cmdchar, mem, self._dirs[mem]) for mem in listing]
-    
-    return string.join(listing, "\n")
+    return listing
   
   def getDirStatus(self):
     """
@@ -220,22 +214,16 @@ class SpeedwalkHash:
         is interested in
     @type  text: string
 
-    @returns: a string of all the speedwalking excludes
-    @rtype: string
+    @returns: list of strings where each string represents an exclude
+    @rtype: list of strings
     """
-    if len(self._excludes) == 0:
-      return ""
+    listing = self._excludes
+    if text:
+      listing = utils.expand_text(text, listing)
     
-    if text == "":
-      listing = self._excludes
-    else:
-      listing = utils.expand_text(text, self._excludes)
+    listing = ["swexclude {%s}" % mem for mem in listing]
     
-    cmdchar = config.commandchar
-    
-    listing = ["%sswexclude {%s}" % (cmdchar, mem) for mem in listing]
-    
-    return string.join(listing, "\n")
+    return listing
   
   def getExcludeStatus(self):
     """
@@ -280,7 +268,7 @@ class SpeedwalkManager(manager.Manager):
   def getDirsInfo(self, ses, text=""):
     if self._hashes.has_key(ses):
       return self._hashes[ses].getDirsInfo(text)
-    return ""
+    return []
 
   def getStatus(self, ses):
     if self._hashes.has_key(ses):
@@ -301,13 +289,13 @@ class SpeedwalkManager(manager.Manager):
   def getExcludesInfo(self, ses):
     if self._hashes.has_key(ses):
       return self._hashes[ses].getExcludesInfo()
-    return ""
+    return []
 
   def getInfo(self, ses):
     if self._hashes.has_key(ses):
       myhash = self._hashes[ses]
-      return myhash.getDirsInfo() + "\n" + myhash.getExcludesInfo() 
-    return ""
+      return myhash.getDirsInfo() + myhash.getExcludesInfo() 
+    return []
 
   def clear(self, ses):
     if self._hashes.has_key(ses):
@@ -332,17 +320,13 @@ class SpeedwalkManager(manager.Manager):
     write_hook function for persisting the state of our session.
     """
     ses = args["session"]
-    file = args["file"]
     quiet = args["quiet"]
 
     data = self.getInfo(ses)
-    if data:
-      if quiet == 1:
-        data = data.replace("\n", " quiet={true}\n")
-        file.write(data + " quiet={true}\n")
-      else:
-        file.write(data + "\n")
-      file.flush()
+    if quiet:
+      data = [m + " quiet={true}" for m in data]
+
+    return data
 
   def userfilter(self, args):
     """
@@ -418,22 +402,13 @@ def swdir_cmd(ses, args, input):
   dir = args["dir"]
   quiet = args["quiet"]
 
-  # they typed '#swdir'--print out all the current speedwalking dirs
-  if not alias and not dir:
-    data = exported.get_manager("speedwalk").getDirsInfo(ses)
-    if data == '':
-      data = "swdir: no speedwalking dirs defined."
-
-    exported.write_message(data, ses)
-    return
-
   # they typed '#swdir dd*' and are looking for matching speedwalking dirs
   if not dir:
     data = exported.get_manager("speedwalk").getDirsInfo(ses, alias)
-    if data == '':
-      data = "swdir: no speedwalking dirs defined."
+    if not data:
+      data = ["swdir: no speedwalking dirs defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("swdirs:\n" + "\n".join(data), ses)
     return
 
   try:
@@ -470,10 +445,10 @@ def swexclude_cmd(ses, args, input):
   # they typed '#swexclude'--print out all current speedwalking excludes
   if len(excludes) == 0:
     data = exported.get_manager("speedwalk").getExcludesInfo(ses)
-    if data == '':
-      data = "swexcl: no speedwalking excludes defined."
+    if not data:
+      data = ["swexcl: no speedwalking excludes defined."]
 
-    exported.write_message(data, ses)
+    exported.write_message("swexcludes:\n" + "\n".join(data), ses)
     return
 
   for exclude in excludes:
