@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.11 2004/03/30 22:05:11 willhelm Exp $
+# $Id: session.py,v 1.12 2004/04/08 23:59:12 willhelm Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -105,6 +105,8 @@ class Session:
   All input and output goes through the Session object.
   Almost everything happens through the Session.
   """
+  global_vars = {}
+
   def __init__(self, engine_instance):
     """
     Initialize.
@@ -121,6 +123,9 @@ class Session:
 
     # register with the shutdown hook 
     self._engine.hookRegister("shutdown_hook", self.shutdown)
+
+    # session variables
+    self._vars = {}
 
   def __repr__(self):
     return "session.Session %s" % self._name
@@ -322,9 +327,67 @@ class Session:
 
 
   ### ------------------------------------------------
+  ### Variable managing stuff
+  ### ------------------------------------------------
+  def _varChangeHook(self, var, old, new):
+    """
+    This calls the variable_change_hook.  It allows other modules to
+    know when variable values are changed so that they can handle
+    those changes accordingly.
+    """
+    exported.hook_spam("variable_change_hook", 
+          {"session": self, "variable": var, "oldvalue": old, "newvalue": new})
+
+  def setVariable(self, var, expansion):
+    """
+    Sets a variable value.  This also calls the variable_change_hook.
+
+    @param var: the variable name to set
+    @type  var: string
+
+    @param expansion: the new value of the variable.  this can be a string
+        or a class with a __str__ method.
+    @type  expansion: string
+    """
+    if var.startswith("_"):
+      d = Session.global_vars
+    else:
+      d = self._vars
+
+    oldvalue = d.get(var, None)
+    d[var] = expansion
+
+    self._varChangeHook(var, oldvalue, expansion)
+
+  def removeVariable(self, var):
+    """
+    Removes a variable from the local _vars dict.  This also spams the
+    variable_change_hook.
+
+    @param var: the name of the variable to remove
+    @type  var: string
+    """
+    if var.startswith("_"):
+      d = Session.global_vars
+    else:
+      d = self._vars
+
+    if d.has_key(var):
+      oldvalue = d[var]
+      del d[var]
+      self._varChangeHook(var, oldvalue, None)
+
+  def getVariable(self, var, default=None):
+    if var.startswith("_"):
+      d = Session.global_vars
+    else:
+      d = self._vars
+
+    return d.get(var, default)
+
+  ### ------------------------------------------------
   ### User input functions
   ### ------------------------------------------------
-
   def prompt(self):
     """
     Deals with printing a prompt if this is the common session.

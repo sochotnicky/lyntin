@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: variable.py,v 1.12 2003/10/25 22:07:42 willhelm Exp $
+# $Id: variable.py,v 1.13 2004/04/08 23:59:13 willhelm Exp $
 #######################################################################
 """
 This module defines the VariableManager which handles variables.
@@ -28,8 +28,8 @@ X{variable_change_hook}::
 
    newvalue - the new value of the variable
 """
-import string, time
-from lyntin import manager, utils, config, engine, exported
+import time
+from lyntin import manager, utils, config, engine, exported, session
 from lyntin.modules import modutils
 
 class DatadirBuiltin:
@@ -54,110 +54,34 @@ class LogTimeStampBuiltin:
   def __init__(self): pass
   def __str__(self): return time.strftime('%Y%m%d%H%M%S')
 
-class VariableData:
+class VariableManager(manager.Manager):
   def __init__(self):
-    self._variables = {}
+    session.Session.global_vars["TIMESTAMP"] = TimeStampBuiltin()
+    session.Session.global_vars["LOGTIMESTAMP"] = LogTimeStampBuiltin()
+    session.Session.global_vars["DATADIR"] = DatadirBuiltin()
 
-  def addVariable(self, var, expansion):
-    """
-    Adds a variable to the dict.
+    import os
+    if os.environ.has_key("HOME"):
+      session.Session.global_vars["HOME"] = os.environ["HOME"]
 
-    @param var: the variable name
-    @type  var: string
+  def clear(self, ses):
+    ses._vars = {}
 
-    @param expansion: the variable value which can be anything that
-        has __str__ implemented
-    @type  expansion: string
-    """
-    self._variables[var] = expansion
+  def addVariable(self, ses, var, expansion):
+    ses.setVariable(var, expansion)
 
-  def clear(self):
-    """
-    Removes all the variables.
-    """
-    listing = self._variables.keys()
-    for mem in listing:
-      del self._variables[mem]
-
-  def removeVariables(self, text):
-    """
-    Removes variables from the list.
-
-    Returns a list of tuples of variable var/expansion that
-    were removed.
-
-    @param text: variables will be removed that match the text
-    @type  text: string
-
-    @returns: list of (name, value) tuples of removed variables
-    @rtype: list of (string, string)
-    """
-    badvariables = utils.expand_text(text, self._variables.keys())
-
+  def removeVariables(self, ses, text):
+    d = dict(ses._vars)
+    d.update(session.Session.global_vars)
+    badvariables = utils.expand_text(text, d.keys())
     ret = []
     for mem in badvariables:
-      ret.append((mem, self._variables[mem]))
-      del self._variables[mem]
+      ret.append( (mem, d[mem]) )
+      ses.removeVariable(mem)
 
     return ret
 
-  def expand(self, text):
-    """
-    Expands variables in the text.
-
-    @param text: the text to expand variables in
-    @type  text:
-
-    @returns: the text with variables expanded
-    @rtype: string
-    """
-    return utils.denest_vars(utils.expand_vars(text, self._variables), self._variables)
-
-  def expand_command(self, text):
-    """
-    Expands variables in the text, does not denest yet since the command
-    could get recursed on and over-expand variables.
-
-    @param text: the text to expand variables in
-    @type  text: string
-
-    @returns: the text with variables expanded
-    @rtype: string
-    """
-    return utils.expand_vars(text, self._variables)
-
-  def getVariables(self):
-    """
-    Returns the keys of the variables dict.
-
-    @returns: a list of all the variable names being managed
-    @rtype: list of strings
-    """
-    listing = self._variables.keys()
-    listing.sort()
-    return listing
-
-  def getVariable(self, name, default=None):
-    """
-    Returns the value for a given variable.
-
-    @param name: the name of the variable to retrieve
-    @type  name: string
-
-    @param default: the default value to return if the variable doesn't
-        exist
-    @type  default: any
-
-    @returns: the variable value or the default if the variable doesn't
-        exist
-    @rtype: string (or default)
-    """
-    if self._variables.has_key(name):
-      return self._variables[name]
-    else:
-      return default
-
-  def defaultResolver(self, command):
+  def defaultResolver(self, args):
     """
     Returns a defaultresolver that will look up potential default values in 
     this session's variables.
@@ -173,146 +97,34 @@ class VariableData:
     to allow for overriding all arguments of a given name, or only arguments 
     for specific commands.
 
-    @param command: the command to look up arguments for
-    @type  command: string
-
     @returns: a function object that will do the desired lookup
     @rtype: function object
     """
-    def resolver(argument, vdata=self, command=command):
-      output = vdata.getVariable( "default.%s.%s" % (command, argument,))
-      if output == None:
-        output = vdata.getVariable( "default.%s" % (argument,))
-      return output
-
-    return resolver
-
-  def getStatus(self):
-    """
-    Returns a one-liner as to the status of this data class.
-
-    @returns: the one-liner status as to what this manager is managing
-    @rtype: string
-    """
-    return "%d variable(s)." % len(self._variables)
-
-  def getInfo(self, text=""):
-    """
-    Returns information about the variables in here.
-
-    This is used by #variable to tell all the variables involved
-    as well as #write which takes this information and dumps
-    it to the file.
-
-    @param text: variables matching this string will be returned
-    @type  text: string
-
-    @returns: list of string where each string represents a variable
-    @rtype: list of strings
-    """
-    data = self._variables.keys()
-    if text:
-      data = utils.expand_text(text, data)
-
-    data = ["variable {%s} {%s}" % (m, self._variables[m]) for m in data]
-
-    return data
-
-  def getInfoMappings(self):
-    l = []
-    for mem in self._variables.keys():
-      l.append({"var": mem, "expansion": self._variables[mem]})
-
-class VariableManager(manager.Manager):
-  def __init__(self):
-    self._variables = {}
-
-    # this handles builtins even when we don't have a VariableData
-    # instance for that session
-    self._global = VariableData()
-
-    # add built-in variables
-    self._global.addVariable("TIMESTAMP", TimeStampBuiltin())
-    self._global.addVariable("LOGTIMESTAMP", LogTimeStampBuiltin())
-    self._global.addVariable("DATADIR", DatadirBuiltin())
-
-    import os
-    if os.environ.has_key("HOME"):
-      self._global.addVariable("HOME", os.environ["HOME"])
-
-  def addVariable(self, ses, var, expansion):
-    if not self._variables.has_key(ses):
-      self._variables[ses] = VariableData()
-
-    # check to see if it's a global variable
-    if var.startswith("_"):
-      vdata = self._global
-    else:
-      vdata = self._variables[ses]
-
-    # save the old value (if any)
-    oldvalue = vdata.getVariable(var)
-
-    # set the variable
-    vdata.addVariable(var, expansion)
-
-    # spam the hook
-    self._varChangeHook(ses, var, oldvalue, expansion)
-
-  def clear(self, ses):
-    if self._variables.has_key(ses):
-      self._variables[ses].clear()
-
-  def _varChangeHook(self, ses, var, old, new):
-    """
-    This calls the variable_change_hook.  It allows other modules to
-    know when variable values are changed so that they can handle
-    those changes accordingly.
-    """
-    exported.hook_spam("variable_change_hook", 
-          {"session": ses, "variable": var, "oldvalue": old, "newvalue": new})
-
-  def removeVariables(self, ses, text):
-    vars = []
-    if self._variables.has_key(ses):
-      vars = self._variables[ses].removeVariables(text)
-      for mem in vars:
-        self._varChangeHook(ses, mem[0], mem[1], None)
-    return vars
-
-  def getVariables(self, ses):
-    if self._variables.has_key(ses):
-      return self._variables[ses].getVariables()
-    return []
-
-  def getVariable(self, ses, name, default=None):
-    if self._variables.has_key(ses):
-      return self._variables[ses].getVariable(name, default)
-    return default
-
-  def defaultResolver(self, args):
     ses = args["session"]
     command = args["commandname"]
-    if self._variables.has_key(ses):
-      return self._variables[ses].defaultResolver(command)
-    return None
+
+    def resolver(argument, ses=ses, command=command):
+      output = ses.getVariable( "default.%s.%s" % (command, argument,))
+      if output == None:
+        output = ses.getVariable( "default.%s" % (argument,))
+      return output
+    return resolver
 
   def expand(self, ses, text):
-    text = self._global.expand(text)
-    if self._variables.has_key(ses):
-      return self._variables[ses].expand(text)
-    return text
+    t = utils.expand_vars(text, session.Session.global_vars)
+    t = utils.expand_vars(t, ses._vars)
+    return utils.denest_vars(t, {})
 
   def expand_command(self, ses, text):
-    text = self._global.expand_command(text)
-    if self._variables.has_key(ses):
-      return self._variables[ses].expand_command(text)
-    return text
+    t = utils.expand_vars(text, session.Session.global_vars)
+    return utils.expand_vars(t, ses._vars)
 
   def getInfo(self, ses, text=""):
-    if self._variables.has_key(ses):
-      return self._variables[ses].getInfo(text)
-    return []
+    data = ses._vars.keys()
+    if text:
+      data = utils.expand_text(text, data)
+    data = ["variable {%s} {%s}" % (m, ses._vars[m]) for m in data]
+    return data
 
   def getItems(self):
     return [ "variable" ]
@@ -326,25 +138,21 @@ class VariableManager(manager.Manager):
   def getInfoMappings(self, item, ses):
     if item != "variable":
       raise ValueError("%s is not a valid item for this manager." % item)
-    if not self._variables.has_key(ses):
-      return []
-    return self._variables[ses].getInfoMappings()
+    l = []
+    for mem in self._vars.keys():
+      l.append( {"var": mem, "expansion": ses._vars[mem]} )
+
+    return l
       
   def getStatus(self, ses):
-    if self._variables.has_key(ses):
-      return self._variables[ses].getStatus()
-    return "0 variable(s)."
+    return "%d variable(s)." % len(ses._vars)
 
   def addSession(self, newsession, basesession=None):
-    if basesession:
-      if self._variables.has_key(basesession):
-        varhash = self._variables[basesession]._variables
-        for mem in varhash.keys():
-          self.addVariable(newsession, mem, varhash[mem])
+    self.clear(newsession)
 
-  def removeSession(self, ses):
-    if self._variables.has_key(ses):
-      del self._variables[ses]
+    if basesession:
+      for mem in basesession._vars.keys():
+        newsession._vars[mem] = basesession._vars[mem]
 
   def persist(self, args):
     """
@@ -371,7 +179,7 @@ class VariableManager(manager.Manager):
     if verbatim == 1:
       return text
 
-    return utils.denest_vars(text, self._variables)
+    return utils.denest_vars(text, ses._vars)
 
   def userfilter(self, args):
     """
@@ -446,7 +254,7 @@ def variable_cmd(ses, args, input):
       exported.write_message("variable: {%s}={%s} added." % (var, expansion), ses)
 
   except Exception, e:
-    exported.write_error("variable: cannot be set. %s", e, ses)
+    exported.write_error("variable: cannot be set. %s" % e, ses)
 
 commands_dict["variable"] = (variable_cmd, "var= expansion= quiet:boolean=false")
 
