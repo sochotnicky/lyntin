@@ -623,6 +623,8 @@ class Cursesui(base.BaseUI):
     if line == '' or self.showTextForSession(ses) == 0:
       return
 
+    line = line.replace("\t", "    ")
+
     pretext = []
     if ses != None and ses != exported.get_current_session():
       attr = self.attr_session_
