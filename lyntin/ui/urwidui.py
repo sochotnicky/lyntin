@@ -12,13 +12,14 @@ Features:
   + simple color support (normal and bold colors, black background only)
   + per-session command histories
   + VI-like keybindings
+  + non-session windows (windows created by the user & not tied to a session)
 
 To be implemented:
-  + non-session windows (windows created by the user & not tied to a session)
   + underline attribute support
   + granular snoop (one can pick which sessions one wants to snoop on)
   + configurable coloring for lyntin messages
   + configurable scrollback buffer size
+  + user defined keybindings
   + per-session keybindings
 
 Credits:
@@ -27,6 +28,9 @@ Credits:
   respectively. Everything else was written by davidc (me).
 
 Notes: 
+
+  Urwid toolkit issue:
+  
   Due to an issue with urwid 0.8.7 or lower, you have to wait approx.
   one second after you hit <Esc> before urwid decides that you really
   do want to just hit <Esc> and are not entering a control sequence.
@@ -35,14 +39,29 @@ Notes:
   In the mean time, he's released a patch with a rework of urwid's
   input handling that addresses this issue. 
 
-  the patch:
+    the patch:
 
-     http://excess.org/urwid/patch-0.8.7.2.diff
+       http://excess.org/urwid/patch-0.8.7.2.diff
 
-  You may see an error when you #end lyntin. This is because I'm not
-  ending the urwid main loop like I'm supposed to (i can't really), and 
-  I've commented out the catch-all except statement in the main loop so 
-  that bugs are easier to locate. Uncomment that if it annoys you.
+  UI windows:
+  
+  There's no good way to tie the closing of a session associated window,
+  to the zapping of one (without modifying/replacing zap), so for now, 
+  when you zap a session, the window remains, and you have to close it 
+  separately.
+
+  Currently, the only way one can use use windows in any way other than
+  the classical "session window" sense, is to write to it using the
+  #window command. I would like to eventually allow text to be redirected
+  or copied to windows, but I dont know if I can do that without modifying
+  lyntin itself...we'll see (I haven't really looked at it much).
+
+  Other:
+  
+  There seems to be some UI lockup bug that I haven't been able to track
+  down. It happens sporadically for me...hopefully it wont for you. If 
+  it does, and you've got some ideas as to what it might be, please let
+  me know.
 
 Legal stuff:
 
@@ -60,7 +79,7 @@ included in all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHline THE AUTHORS OR COPYRIGHT HOLDERS
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
 BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
 ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -70,10 +89,10 @@ Copyright 2005 Free Software Foundation (http://www.fsf.org)
 """
 
 __author__ = "David Clymer <david@zettazebra.com>"
-__version__ = "0.5.6 (01 May, 2005)"
+__version__ = "0.6 (21 May, 2005)"
 __description__ = "User interface for Lyntin based on the urwid UI toolkit"
 __license__ = "GPL"
-__url__ = "http://www.zettazebra.com/mudding/clients/lyntin/urwidui.py"
+__url__ = "http://www.zettazebra.com/files/urwidui.py"
 
 HELP = """
 The urwidui is a simple UI for the text terminal. 
@@ -124,7 +143,7 @@ from lyntin import exported, utils, ansi, event, history
 from lyntin.ui import message
 
 
-debugging_enabled = True
+debugging_enabled = False
 debug_level = 99
 debug_log = file("urwid_debug.log",'w+')
 
@@ -138,16 +157,15 @@ def debug(message, level=1):
 
   if not debug_level: debug_level = 1
     
-  if debugging_enabled:
-    if level <= debug_level:
-      if debug_log.closed:
-        exported.write_message(log_message)
-      else:
-        if not debug_log:
-          debug_log = file("urwid_debug.log",'w+')
+  if debugging_enabled and level <= debug_level:
+    if debug_log.closed:
+      exported.write_message(log_message)
+    else:
+      if not debug_log:
+        debug_log = file("urwid_debug.log",'w+')
 
-        debug_log.write(log_message)
-        debug_log.flush()
+      debug_log.write(log_message)
+      debug_log.flush()
 
 #debug
 debug('starting log...')
@@ -1016,6 +1034,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     try:
 
       self.run_wrapper(self.main)
+      debug('run_wrapper terminated.')
+      event.ShutdownEvent().enqueue()
 
     except SystemExit:
       print 'Thanks for using UrwidUI!'
@@ -1035,14 +1055,22 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     """
     
     while not self.shutdownflag:
-      ses = exported.get_current_session()
-      
-      self.focus_window(self.focus)
+      try:
+        ses = exported.get_current_session()
+        
+        self.focus_window(self.focus)
 
-      if not self.windows[self.focus].handleInput():
-        #debug
-        debug('end of main loop\n')
-        break
+        if not self.windows[self.focus].handleInput():
+          #debug
+          debug('end of main loop')
+          self.shutdown(args=None)
+
+      except Exception, e:
+        exported.write_traceback()
+        print e
+        event.ShutdownEvent().enqueue()
+
+
 
 
   def write(self, args):
@@ -1062,6 +1090,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
     if type(msg) == types.StringType:
       msg = message.Message(msg, message.LTDATA)
+      debug("ui message: message is a plain string")
 
     line = msg.data
     ses = msg.session
@@ -1072,6 +1101,15 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         pretext = "error: " + pretext
       else:
         pretext = "lyntin: " + pretext
+        if msg.type == message.LTDATA:
+          debug("ui message: message is LTDATA")
+        elif msg.type == message.USERDATA:
+          debug("ui message: message is USERDATA")
+    elif msg.type == message.MUDDATA:
+      debug("ui message: message is MUDDATA")
+    else:
+      debug("ui message: message is an unanticipated type: %s" % msg.type)
+      
 
 
     # perhaps we'll let the user turn colors off, if they like
@@ -1083,8 +1121,10 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     # ------------------------------------- #
 
     if ses == None:
+      debug("session: Session object is Null.")
       if exported.get_current_session() == None:
         ses = exported.get_session('common')
+        debug("session: Current session is Null. Session set to common.")
       else:
         ses = exported.get_current_session()
 
@@ -1103,7 +1143,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     debug('shutting down...')
     self.shutdownflag = True
     # disabled for debugging purposes
-    #curses.endwin()
+    curses.endwin()
 
 
   def showTextForSession(self, ses):
@@ -1137,8 +1177,82 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     """
     from lyntin import event
     input = utils.chomp(input)
+    debug('Recieving input: "%s"' % input)
     event.InputEvent(input).enqueue()
 
+
+# -=-=-=-=-=-=-=-=-=-=-=-[ user commands ]-=-=-=-=-=-=-=-=-=-=-=-=- #
+
+commands_dict = {}
+
+def window_cmd(ses, args, input):
+  """
+  Manages windows
+
+    #window open      - open a new window
+    #window close     - close a window 
+    #window focus     - bring a window to the forefront 
+    #window unfocus   - switch to the current session 
+    #window write     - send text to a window
+
+  category: urwidui
+  """
+  #ui = exported.get_engine().getUI()
+  ui = get_ui_instance()
+  action = args['action']
+  windowname = args['windowname']
+  text = args['text']
+
+  if action == 'list':
+    exported.write_message('Urwid Windows:')
+    for w in ui.windows.keys():
+      if exported.get_session(w) != None:
+        exported.write_message('  %s (session)' % w)
+      else:
+        exported.write_message('  %s' % w)
+  elif action == 'open':
+    if windowname != '':
+      ui.open_window(windowname)
+  elif action == 'close':
+    if windowname != '':
+      ui.close_window(windowname)
+  elif action == 'focus':
+    if windowname != '':
+      ui.focus_window(windowname)
+  elif action == 'unfocus':
+    ui.focus_window(ses.getName())
+  elif action == 'write':
+    if windowname != '':
+      ui.write_to_window(windowname,text,focus=False)
+  else:
+    exported.write_message('Invalid window action:  %s' % action)
+
+commands_dict["window"] = (window_cmd, 'action windowname= text=')
+
+
+def debug_cmd(ses, args, input):
+  """
+  Toggles debug log
+
+  category: urwidui
+  """
+  global debugging_enabled
+
+  if debugging_enabled:
+    debugging_enabled = False
+    exported.write_message('Debugging disabled.')
+  else:
+    debugging_enabled = True
+    exported.write_message('Debugging enabled.')
+    
+commands_dict["debug"] = (debug_cmd, '')
+  
+
+def load_commands(args):
+  from lyntin.modules import modutils
+  modutils.load_commands(commands_dict)
+
+exported.hook_register("startup_hook", load_commands)
 
 # Local variables:
 # mode:python
