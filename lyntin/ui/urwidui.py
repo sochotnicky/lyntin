@@ -821,6 +821,11 @@ class UIWindow:
       
     self.items[len(self.items)-2] = urwid.Text(text_out)
     self.items[len(self.items)-1] = self.blank
+    
+    # debug
+    scroll_len = len(self.items)
+    if scroll_len % 10 == 0:
+      debug('Scrollback buffer length: %i' % scroll_len)
 
     #widget, pos = self.listbox.get_focus()
     #self.listbox.set_focus( pos+2, coming_from='above' )
@@ -1229,6 +1234,30 @@ def window_cmd(ses, args, input):
 
 commands_dict["window"] = (window_cmd, 'action windowname= text=')
 
+def zap_cmd(ses, args, input):
+  """
+  This disconnects from the mud, closes the session, and any
+  associated windw.  If no session is specified, it will 
+  close the current session.
+
+  category: commands
+  """
+  sesname = args["session"]
+  ui = exported.get_engine().getUI()
+  if sesname:
+    ses = exported.myengine.getSession(sesname)
+    if ses == None:
+      exported.write_error("zap: session %s does not exist." % sesname)
+      return
+
+  if exported.myengine.closeSession(ses):
+    # close the session window
+    ui.close_window(sesname) 
+    exported.write_message("zap: session %s zapped!" % ses.getName())
+  else:
+    exported.write_message("zap: session %s cannot be zapped!" % ses.getName())
+
+commands_dict["zap"] = (zap_cmd, "session=")
 
 def debug_cmd(ses, args, input):
   """
