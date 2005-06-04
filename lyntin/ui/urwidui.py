@@ -145,7 +145,8 @@ from lyntin.ui import message
 
 debugging_enabled = False
 debug_level = 99
-debug_log = file("urwid_debug.log",'w+')
+debug_log = None
+
 
 def debug(message, level=1):
   global debugging_enabled
@@ -158,17 +159,14 @@ def debug(message, level=1):
   if not debug_level: debug_level = 1
     
   if debugging_enabled and level <= debug_level:
-    if debug_log.closed:
-      exported.write_message(log_message)
-    else:
-      if not debug_log:
-        debug_log = file("urwid_debug.log",'w+')
+    if not debug_log or debug_log.closed:
+      debug_log = file("urwid_debug.log",'w+')
+      debug('starting log...')
 
-      debug_log.write(log_message)
-      debug_log.flush()
 
-#debug
-debug('starting log...')
+    debug_log.write(log_message)
+    debug_log.flush()
+
 
 myui = None
 
@@ -264,7 +262,6 @@ class Color:
 
     self.unfinished = (current_color, leftover_color)
           
-    #return urwid.Text(text_out)
     return text_out
 
 
@@ -282,7 +279,8 @@ class Color:
       fg += (len(self.colors) -1)/2
     # report specified but unsupported attributes to the user
     elif len(a) > 1:
-      exported.write_message(exported.get_current_session(), ' %s %s' % (str(a), text))
+      # debug
+      debug(' %s %s' % (str(a), text))
 
     return (fg, text)
 
@@ -350,8 +348,9 @@ class VIkeyModeSet:
      'h': 'move left',
      '$': 'move to end of line',
      '^': 'move to beginning of line',
-     'w': 'move to next word',
-     'b': 'move to previous word',
+     'w': 'move to next beginning of word',
+     'b': 'move to previous beginning of word',
+     'e': 'move to next end of word',
      'y': 'mode copy',
      'p': 'paste',
      'd': 'mode delete',
@@ -386,8 +385,9 @@ class VIkeyModeSet:
      'y': 'copy line',
      '$': 'copy to end of line',
      '^': 'copy to beginning of line',
-     'w': 'copy to next word',
-     'b': 'copy to previous word',
+     'w': 'copy to next beginning of word',
+     'b': 'copy to previous beginning of word',
+     'e': 'copy to next end of word',
     }
     
     self.modes['delete'] = KeyMode()
@@ -395,8 +395,9 @@ class VIkeyModeSet:
      'd': 'delete line',
      '$': 'delete to end of line',
      '^': 'delete to beginning of line',
-     'w': 'delete to next word',
-     'b': 'delete to previous word',
+     'w': 'delete to next beginning of word',
+     'b': 'delete to previous beginning of word',
+     'e': 'delete to next end of word',
     }
 
 class CommandModeManager:
@@ -471,133 +472,141 @@ class CommandEdit(urwid.Edit, History):
       'move left': self.move_left,
       'move to end of line': self.move_to_eol,
       'move to beginning of line': self.move_to_bol,
-      'move to next word': self.move_next_word,
-      'move to previous word': self.move_prev_word,
+      'move to next beginning of word': self.move_next_bow,
+      'move to previous beginning of word': self.move_prev_bow,
+      'move to next end of word': self.move_next_eow,
+      'move to previous end of word': self.move_prev_eow,
       'copy line': self.copy_line,
       'copy character': self.copy_right,
       'copy to end of line': self.copy_to_eol,
       'copy to beginning of line': self.copy_to_bol,
-      'copy to next word': self.copy_next_word,
-      'copy to previous word': self.copy_prev_word,
+      'copy to next beginning of word': self.copy_next_bow,
+      'copy to previous beginning of word': self.copy_prev_bow,
+      'copy to next end of word': self.copy_next_eow,
+      'copy to previous end of word': self.copy_prev_eow,
       'delete line': self.delete_line,
       'delete right': self.delete_right,
       'delete left': self.delete_left,
       'delete to end of line': self.delete_to_eol,
       'delete to beginning of line': self.delete_to_bol,
-      'delete to next word': self.delete_next_word,
-      'delete to previous word': self.delete_prev_word,
+      'delete to next beginning of word': self.delete_next_bow,
+      'delete to previous beginning of word': self.delete_prev_bow,
+      'delete to next end of word': self.delete_next_eow,
+      'delete to previous end of word': self.delete_prev_eow,
       'paste': self.paste,
       'history next': self.history_next,
       'history previous': self.history_previous,
       'execute command': self.execute_command
     }
 
-  def _bounds_check(self, index):
-    if index < 0: return 0
-    elif index > self.end: return self.end
-    else: return index
+  # -- [ utilities ] -- #
 
-  def _fwspace(self, text, pos=None, direction='right'):
-    assert direction.lower() == 'left' or direction.lower() == 'right', "Direction must be 'left' or 'right'"
+  def _find_whitespaces(self, text):
+    spaces = []
+    n = 0
 
-    if pos == None:
-      pos = self.edit_pos
+    for c in text:
+      if c.isspace(): spaces.append(n)
+      n += 1
+       
+    return spaces
 
-    # find the next space
-    if direction == 'right':
-      left_index = text.find(' ', pos)
-      # no more spaces  
-      if left_index < 0: left_index = len(text) 
+  def _find_word_boundaries(self, text):
+    word_boundaries = []
+    whitespace = self._find_whitespaces(text)
+    end = len(text)-1
 
-    else:
-      left_index = text.rfind(' ', 0, pos)
-      # no more spaces  
-      if left_index < 0: left_index = 0
+    # dont bother working on an empty string
+    if end > 0:
+      # add the first index, if it's not a space
+      if not text[0].isspace():
+        word_boundaries.append(0)
 
-    # find the boundries of the whitespace
-    if direction == 'right':
-      leftover = text[left_index:]
-      whitespace_length = len(leftover) - len(leftover.strip())
-      right_index = left_index + whitespace_length
-      if right_index > self.end : right_index = self.end 
-    else:
-      leftover = text[:left_index]
-      whitespace_length = len(leftover) - len(leftover.rstrip())
-      right_index = left_index - whitespace_length
-      if right_index < 0: right_index = 0
+      # find all the characters on the edges of the whitespace
+      for i in whitespace:
+        # if an index is both the start and end of a word, 
+        # it will be added twice. this is important.
+        if i != 0 and not text[i-1].isspace():
+          word_boundaries.append(i-1)
+        if i != end and not text[i+1].isspace():
+          word_boundaries.append(i+1)
 
-    return (left_index, right_index)
+      # add the last index, if it's not a space
+      if not text[end].isspace():
+        word_boundaries.append(end)
 
-  def move(self, direction='right', increment=1, unit='char'):
-    assert direction.lower() == 'left' or direction.lower() == 'right', "Direction must be 'left' or 'right'"
-    assert unit.lower() == 'char' or unit.lower() == 'word' or unit.lower() == 'line', "Unit must be 'char', 'word', or 'line'"
-    right = False
-    left = False
-    start = self.edit_pos
+      # debug
+      debug('word boundaries: %s' % str(word_boundaries))
 
-    if direction == 'right':
-      right = True
-    if direction == 'left':
-      left = True
-      
+    return word_boundaries
+
+  def _find_split_word_boundaries(self, text):
+    word_boundaries = self._find_word_boundaries(text)
+    word_endings = []
+    word_beginnings = []
+    end = len(word_boundaries)
+
+    # every other boundary has to be a word end
+    for x in range(0, end):
+      if x % 2 == 0:
+        word_beginnings.append(word_boundaries[x])
+      else:
+        word_endings.append(word_boundaries[x])
+
     # debug
-    #exported.write_message('moving...')
+    debug('word beginnnings: %s' % str(word_beginnings))
+    debug('word ends: %s' % str(word_endings))
 
-    if unit == 'char':
-      if right: self.set_edit_pos(self.edit_pos + increment)
-      elif left: self.set_edit_pos(self.edit_pos - increment)
-    elif unit == 'word':
-      for x in range(1, increment):
-        if right: self.word('right')
-        elif left: self.word('left')
-    elif unit == 'line':
-      if right: self.set_edit_pos(self.end)
-      elif left: self.set_edit_pos(self.beginning)
+    return (word_beginnings, word_endings)
+
+
+  def _find_nearest_boundary(self, pos,  boundaries, lessthan = False):
+    #if pos in boundaries: 
+    #  return boundaries.index(pos)
+
+    end = len(boundaries)
+    lower = 0
+    upper = 0 
+    for x in range(0, end):
+      if pos > boundaries[x]:
+        lower = boundaries[x] 
+      elif pos == boundaries[x]:
+        upper = boundaries[x] 
+      elif pos < boundaries[x]:
+        upper = boundaries[x] 
+        break
     
-    return (start, self.edit_pos) 
+    # start position is greater than the highest boundary 
+    if upper < lower:
+      lessthan = True
 
-  def whitespace(self, direction='right'):
-    assert direction.lower() == 'left' or direction.lower() == 'right', "Direction must be 'left' or 'right'"
+    # debug
+    debug('lower bound: %i, upper bound: %i' % (lower, upper))
 
-    right = False
-    left = False
-
-    if direction == 'right':
-      right = True
-    if direction == 'left':
-      left = True
-
-    if right: return self._fwspace(text)
-    if left: return self._fwspace(text, direction='left')
+    # return either the nearest upper boundary or the nearest lower boundary
+    if lessthan: 
+      return lower
+    else:
+      return upper
     
-  def word(self, direction='right'):
-    assert direction.lower() == 'left' or direction.lower() == 'right', "Direction must be 'left' or 'right'"
-    start = self.edit_pos
+  def _bounds_check(self, index):
+    # debug
+    debug('bounds checking index: %i' % index)
 
-    if direction == 'right':
-      l_index, r_index = self.whitespace('right') 
+    if index < 0:
+      # debug
+      debug('index < 0, new index: 0')
+      return 0
+    elif index > self.end: 
+      # debug
+      debug('index > %i (length of edit text), new index: %i' % (self.end, self.end))
+      return self.end
+    else: 
+      # debug
+      debug('index within bounds')
+      return index
 
-      new_index = self._bounds_check(r_index)
-
-    if direction == 'left':
-      if self.edit_pos >= self.end:
-        junk, new_index = self.whitespace('left')
-      else:
-        l_index, r_index = self.whitespace('left') 
-        self.set_edit_pos(l_index)
-        junk, new_index = self.whitespace('left')
-
-      if new_index <= 0 : 
-        new_index = 0
-      else:
-        new_index += 1
-
-    word_end, junk = self.whitespace('left') -1
-    word_end = self._bounds_check(word_end)
-
-    # index of previous word
-    return (new_index, word_end)
-
+        
   def keypress(self, size, key):
     function = self.keymode.keyAction(key)
 
@@ -628,120 +637,192 @@ class CommandEdit(urwid.Edit, History):
     self.setCursor()
     self.set_edit_text('')
 
+  # -- [ movement ] -- #
+
+  def _move_char(self, increment=1):
+    start_pos = self.edit_pos 
+    end_pos = self.edit_pos + increment
+    self.set_edit_pos(end_pos)
+
+    return (start_pos, end_pos)
+
+  def _move_word_boundary(self, increment=1, boundary_type='all'):
+    btypes = ['all', 'beginning', 'ending']
+    assert boundary_type in btypes, "Boundary type must be one of: %s" % str(btypes)
+    
+    start_pos = self.edit_pos
+    end_pos = start_pos
+    nearest = start_pos
+    lessthan = False
+
+    if increment < 0:
+      lessthan = True
+
+    if boundary_type == 'all':
+      word_boundaries = self._find_word_boundaries(self.edit_text)
+    else:
+      (word_beginnings, word_endings) = self._find_split_word_boundaries(self.edit_text)
+
+      if boundary_type == 'beginning':
+        word_boundaries = word_beginnings
+      elif boundary_type == 'ending':
+        word_boundaries = word_endings
+
+    # debug
+    debug('start pos: %i, boundaries: %s' % (start_pos, str(word_boundaries)))
+     
+    nearest = self._find_nearest_boundary(start_pos, word_boundaries, lessthan)
+
+    # don't allow wrapping
+    if increment > 0 and nearest < start_pos:
+      nearest = start_pos
+
+    self.set_edit_pos(nearest)
+
+    return (start_pos, nearest)
+
+  def _move_line_boundary(self, increment=1):
+    start_pos = self.edit_pos
+    end_pos = self.end
+    
+    if increment < 0:
+      end_pos = self.beginning
+
+    self.set_edit_pos(end_pos)
+
+    return (start_pos, end_pos)
+
   def move_to_eol(self):
-    self.move(unit='line')
+    self._move_line_boundary(1)
     
   def move_to_bol(self):
-    self.move(direction='left',unit='line')
+    self._move_line_boundary(-1)
 
   def move_left(self):
-    self.move(direction='left')
+    self._move_char(-1)
 
   def move_right(self):
-    self.move()
+    self._move_char(1)
 
-  def move_next_word(self):
-    self.move(unit='word')
+  def move_next_bow(self):
+    self._move_word_boundary(1, boundary_type='beginning')
 
-  def move_prev_word(self):
-    self.move(direction='left', unit='word')
+  def move_prev_bow(self):
+    self._move_word_boundary(-1, boundary_type='beginning')
+
+  def move_next_eow(self):
+    self._move_word_boundary(1, boundary_type='ending')
+
+  def move_prev_eow(self):
+    self._move_word_boundary(-1, boundary_type='ending')
 
   def copy_line(self):
     self.copy_buffer = self.edit_text
 
   def copy_to_eol(self):
     temp = self.edit_pos
-    start, end = self.move(unit='line')
+    start, end = self._move_line_boundary(1)
     self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(temp)
 
   def copy_to_bol(self):
     temp = self.edit_pos
-    start, end = self.move(direction='left',unit='line')
+    start, end = self._move_line_boundary(-1)
     self.copy_buffer = self.edit_text[end:start]
     self.set_edit_pos(temp)
 
   def copy_left(self):
     temp = self.edit_pos
-    start, end = self.move(direction='left')
+    start, end = self._move_char(-1)
     self.copy_buffer = self.edit_text[end:start]
     self.set_edit_pos(temp)
 
   def copy_right(self):
     temp = self.edit_pos
-    start, end = self.move()
+    start, end = self._move_char(1)
     self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(temp)
 
-  def copy_next_word(self):
+  def copy_next_bow(self):
     temp = self.edit_pos
-    start, end = self.move(unit='word')
+    start, end = self._move_word_boundary(1, boundary_type='beginning')
     self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(temp)
 
-  def copy_prev_word(self):
+  def copy_prev_bow(self):
     temp = self.edit_pos
-    start, end = self.move(direction='left', unit='word')
+    start, end = self._move_word_boundary(-1, boundary_type='beginning')
+    self.copy_buffer = self.edit_text[end:start]
+    self.set_edit_pos(temp)
+
+  def copy_next_eow(self):
+    temp = self.edit_pos
+    start, end = self._move_word_boundary(1, boundary_type='ending')
+    self.copy_buffer = self.edit_text[start:end]
+    self.set_edit_pos(temp)
+
+  def copy_prev_eow(self):
+    temp = self.edit_pos
+    start, end = self._move_word_boundary(-1, boundary_type='ending')
     self.copy_buffer = self.edit_text[end:start]
     self.set_edit_pos(temp)
 
   def delete_to_eol(self):
-    start, end = self.move(unit='line')
+    start, end = self._move_line_boundary(1)
     self.copy_buffer = self.edit_text[start:]
     self.set_edit_pos(start)
     self.set_edit_text(self.edit_text[:start])
     
   def delete_to_bol(self):
-    start, end = self.move(direction='left',unit='line')
+    start, end = self._move_line_boundary(-1)
     self.copy_buffer = self.edit_text[:start]
-    self.set_edit_pos(start)
-    self.set_edit_text(self.edit_text[start:])
+    self.set_edit_pos(end)
+    self.set_edit_text(self.edit_text[:end])
 
   def delete_left(self):
-    start, end = self.move(direction='left')
+    start, end = self._move_char(-1)
     self.copy_buffer = self.edit_text[end:start]
-    self.set_edit_pos(start-1)
+    self.set_edit_pos(end)
     self.set_edit_text(self.edit_text[:end] + self.edit_text[start:])
 
   def delete_right(self):
-    start, end = self.move()
+    start, end = self._move_char(1)
     self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(start)
     self.set_edit_text(self.edit_text[:start] + self.edit_text[end:])
 
-  def delete_next_word(self):
-    start, end = self.move(unit='word')
+  def delete_next_bow(self):
+    start, end = self._move_word_boundary(1, boundary_type='ending')
+    junk, end = self._move_word_boundary(1, boundary_type='beginning')
+    if end == self.end-1:
+      end = self.end
     self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(start)
     self.set_edit_text(self.edit_text[:start] + self.edit_text[end:])
 
-  def delete_prev_word(self):
-    self.move(direction='left', unit='word')
+  def delete_prev_bow(self):
+    start, end = self._move_word_boundary(-1, boundary_type='beginning')
     self.copy_buffer = self.edit_text[end:start]
+    self.set_edit_pos(end)
+    self.set_edit_text(self.edit_text[:end] + self.edit_text[start:])
+
+  def delete_next_eow(self):
+    start, end = self._move_word_boundary(1, boundary_type='ending')
+    end = self._bounds_check(end+1)
+    self.copy_buffer = self.edit_text[start:end]
     self.set_edit_pos(start)
+    self.set_edit_text(self.edit_text[:start] + self.edit_text[end:])
+
+  def delete_prev_eow(self):
+    start, end = self._move_word_boundary(-1, boundary_type='ending')
+    self.copy_buffer = self.edit_text[end:start]
+    self.set_edit_pos(end)
     self.set_edit_text(self.edit_text[:end] + self.edit_text[start:])
 
   def delete_line(self):
     self.copy_buffer = self.edit_text
     self.set_edit_pos(0)
     self.set_edit_text('')
-
-  def copy(self, text=None, copyrange=[-1,-1]):
-    if text == None:
-      text = self.edit_text
-
-    if copyrange[0] == -1 and copyrange[1] == -1:  
-      self.copy_buffer = text
-    else:
-      for x in copyrange:
-        temp = len(text)
-        if copyrange[x] > temp: copyrange[x] = temp
-        if copyrange[x] < 0: copyrange[x] = 0 
-
-      if pos1 > pos2:
-        self.copybuffer = text[pos2:pos1]
-      else:
-        self.copybuffer = text[pos1:pos2]
 
   def insert(self, text):
     start = self.edit_pos
@@ -763,7 +844,7 @@ class CommandEdit(urwid.Edit, History):
 
   def set_edit_pos(self, pos):
     # debug
-    #exported.write_message('old pos: %s, new pos: %s' % (self.edit_pos, pos))
+    debug('text: %s, old pos: %s, new pos: %s' % (self.edit_text,self.edit_pos, pos))
     self.end = len(self.edit_text)
     self.edit_pos = self._bounds_check(pos)
 
@@ -1044,6 +1125,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
     except SystemExit:
       print 'Thanks for using UrwidUI!'
+      exported.write_traceback()
+      print e
       event.ShutdownEvent().enqueue()
 
     except Exception, e:
@@ -1148,7 +1231,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     debug('shutting down...')
     self.shutdownflag = True
     # disabled for debugging purposes
-    curses.endwin()
+    #curses.endwin()
 
 
   def showTextForSession(self, ses):
