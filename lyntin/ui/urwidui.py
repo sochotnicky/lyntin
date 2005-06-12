@@ -371,7 +371,7 @@ class VIkeyModeSet:
       'up': 'history previous',
       'down': 'history_next',
       'ctrl p': 'history previous',
-      'ctrl n': 'history_next',
+      'ctrl n': 'history next',
       'esc': 'mode command',
       'backspace': 'delete left',
       'delete': 'delete right',
