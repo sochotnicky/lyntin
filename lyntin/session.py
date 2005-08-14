@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: session.py,v 1.12 2004/04/08 23:59:12 willhelm Exp $
+# $Id: session.py,v 1.13 2005/08/14 08:27:50 glasssnake Exp $
 #######################################################################
 """
 Holds the functionality involved in X{session}s.  Sessions are copied 
@@ -214,7 +214,7 @@ class Session:
     the list of managers registered with the engine and calls
     the clear method with itself.
     """
-    for mem in self._engine_instance._managers.values():
+    for mem in self._engine._managers.values():
       mem.clear(self)
 
     self._databuffer = []
