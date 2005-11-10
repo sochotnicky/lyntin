@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tintincmds.py,v 1.24 2004/12/14 04:35:09 willhelm Exp $
+# $Id: tintincmds.py,v 1.25 2005/11/10 01:24:15 willhelm Exp $
 #######################################################################
 import os, os.path
 from lyntin import net, utils, engine, constants, config, exported, event
@@ -236,6 +236,18 @@ def loop_cmd(ses, args, input):
     reclaim 3.corpse
     reclaim 4.corpse
 
+  Additionally, it can iterate over a comma-separated string of items:
+
+  example:
+    #loop {joe,harry,fred,pete} {say hi, %0.} range=no
+
+  will execute:
+
+    say hi, joe.
+    say hi, harry.
+    say hi, fred.
+    say hi, pete.
+
   A better way to execute a command a number of times without regard
   to an index, would be:
 
@@ -247,36 +259,45 @@ def loop_cmd(ses, args, input):
   """
   loop = args["fromto"]
   command = args["comm"]
+  r = args["range"]
 
   # split it into parts
-  looprange = loop.split(',')
+  loopitems = loop.split(',')
 
-  if len(looprange) != 2:    
-    exported.write_error("syntax: #loop <from,to> <command>", ses)
-    return
+  if r:
+    if len(loopitems) != 2:
+      exported.write_error("syntax: #loop <from,to> <command>", ses)
+      return
 
-  # remove trailing and leading whitespace and convert to ints
-  # so we can use them in a range function
-  ifrom = int(looprange[0].strip())
-  ito = int(looprange[1].strip())
+    # remove trailing and leading whitespace and convert to ints
+    # so we can use them in a range function
+    ifrom = int(loopitems[0].strip())
+    ito = int(loopitems[1].strip())
 
-  # we need to handle backwards and forwards using the step
-  # and need to adjust ito so the range is correctly bounded.
-  if ifrom > ito:
-    step = -1
-  else:
-    step = 1
+    # we need to handle backwards and forwards using the step
+    # and need to adjust ito so the range is correctly bounded.
+    if ifrom > ito:
+      step = -1
+    else:
+      step = 1
 
-  if ito > 0:
-    ito = ito + step
-  else:
-    ito = ito - step
+    if ito > 0:
+      ito = ito + step
+    else:
+      ito = ito - step
 
-  for i in range(ifrom, ito, step):
-    loopcommand = command.replace("%0", repr(i))
+    loopitems = range(ifrom, ito, step)
+    loopitems = [repr(m) for m in loopitems]
+    # for i in range(ifrom, ito, step):
+    #   loopcommand = command.replace("%0", repr(i))
+    #   exported.lyntin_command(loopcommand, internal=1, session=ses)
+
+  for mem in loopitems:
+    mem = mem.strip()
+    loopcommand = command.replace("%0", mem)
     exported.lyntin_command(loopcommand, internal=1, session=ses)
 
-commands_dict["loop"] = (loop_cmd, "fromto comm")
+commands_dict["loop"] = (loop_cmd, "fromto comm range:boolean=true")
 
 
 def math_cmd(ses, args, input):
