@@ -143,30 +143,35 @@ from lyntin import exported, utils, ansi, event, history
 from lyntin.ui import message
 
 
+logs = {'debug': {'filename':'urwid_debug.log','log':None, 'level':0},
+        'error': {'filename':'urwid_error.log','log':None},
+        'info': {'filename':'urwid_info.log','log':None} }
+
 debugging_enabled = False
-debug_level = 99
-debug_log = None
 
+def get_log(name='debug'):
+  global logs
+  if name in logs:
+    if not logs[name]['log'] or logs[name]['log'].closed:
+      l = file(logs[name]['filename'],'w+')
+      l.write('starting log...')
+      logs[name]['log'] = l
 
-def debug(message, level=1):
-  global debugging_enabled
-  global debug_log
-  global debug_level
+    return logs[name]
+  else:
+    raise Exception("Invalid logname.")
+
+def debug(message, loglevel=1):
+  filename, log, level = get_log('debug').values()
 
   timestamp = time.strftime('%H:%m:%S %d-%m-%Y',time.localtime())
   log_message = '[%s] %s\n' % (timestamp, message)
 
-  if not debug_level: debug_level = 1
+  if not level: level = 1
     
-  if debugging_enabled and level <= debug_level:
-    if not debug_log or debug_log.closed:
-      debug_log = file("urwid_debug.log",'w+')
-      debug('starting log...')
-
-
-    debug_log.write(log_message)
-    debug_log.flush()
-
+  if level > 0 and loglevel > 0 and loglevel <= level:
+    log.write(log_message)
+    log.flush()
 
 myui = None
 
@@ -1157,8 +1162,6 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         exported.write_traceback()
         print e
         event.ShutdownEvent().enqueue()
-
-
 
 
   def write(self, args):
