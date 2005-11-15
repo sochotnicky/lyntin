@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: engine.py,v 1.33 2004/07/23 18:26:26 glasssnake Exp $
+# $Id: engine.py,v 1.34 2005/11/15 20:45:25 glasssnake Exp $
 #######################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -114,6 +114,7 @@ import Queue, thread, sys, traceback, os.path
 from threading import Thread
 
 from lyntin import config, session, utils, event, exported, helpmanager, history, commandmanager, constants
+
 
 class Engine:
   """
@@ -319,6 +320,9 @@ class Engine:
 
     @param func: the function to run in the thread
     @type  func: function
+
+    @return:     Thread instance
+    @rtype:      threading.Thread
     """
     # clean up the list of threads that we maintain first
     self._threadCleanup()
@@ -329,6 +333,7 @@ class Engine:
     t.setName(name)
     t.start()
     self._threads.append(t)
+    return t
 
   def checkthreads(self):
     """
@@ -368,28 +373,38 @@ class Engine:
     """
     This timer thread sleeps for a second, then calls everything
     in the queue with the current tick.
-
-    Note: This will almost always be slightly behind and will
-    get worse as there are more things that get executed each
-    tick.
     """
-    import time, event
-
+    from time import time
+    
     self._current_tick = 0
-    while not self._shutdownflag:
+    wakeup_time = current_time = time()
+
+    import threading
+    ev = threading.Event()
+    exported.hook_register("shutdown_hook", lambda *_: ev.set())
+
+    while not ev.isSet():
       try:
-        time.sleep(1)
+        tout = wakeup_time - current_time
+        if tout > 0:
+          ev.wait(timeout = tout)
+          current_time = time()
+        elif tout < -10:
+          # we are late too much; drop 10 ticks
+          wakeup_time += 10
+          continue
         event.SpamEvent(hookname="timer_hook", 
                         argmap={"tick": self._current_tick}
                        ).enqueue()
         self._current_tick += 1
+        wakeup_time += 1
       except KeyboardInterrupt:
         return
       except SystemExit:
         return
       except:
         exported.write_traceback("ticker: ticker hiccupped.")
-
+    
 
   ### ------------------------------------------
   ### input/output stuff
@@ -715,7 +730,7 @@ class Engine:
         self.tallyError()
         exported.write_traceback("engine: unhandled error in engine.")
       self._num_events_processed += 1
-    sys.exit(0)
+
         
   def tallyError(self):
     """
@@ -901,24 +916,6 @@ class Engine:
     return data
 
 
-def shutdown():
-  """
-  This gets called by the Python interpreter atexit.  The reason
-  we do shutdown stuff here is we're more likely to catch things
-  here than we are to let everything cycle through the 
-  ShutdownEvent.  This should probably get fixed up at some point
-  in the future.
-
-  Do not call this elsewhere.
-  """
-  import exported
-  try:
-    exported.write_message("shutting down...  goodbye.")
-  except:
-    print "shutting down...  goodbye."
-  exported.hook_spam("shutdown_hook", {})
-
-
 def main(defaultoptions={}):
   """
   This parses the command line arguments and makes sure they're all valid,
@@ -931,8 +928,6 @@ def main(defaultoptions={}):
       Lyntin run script.
   @type  defaultoptions: dict
   """
-  startuperrors = []
-
   try:
     import sys, os, traceback, ConfigParser
     from lyntin import config, event, utils, exported
@@ -999,8 +994,18 @@ def main(defaultoptions={}):
         config.options["datadir"] = os.environ["HOME"]
     config.options["datadir"] = utils.fixdir(config.options["datadir"])
 
+    def on_shutdown():
+      """
+      This gets called by the Python interpreter atexit.  The reason
+      we do shutdown stuff here is we're more likely to catch things
+      here than we are to let everything cycle through the 
+      ShutdownEvent.  This should probably get fixed up at some point
+      in the future.
+      """
+      sys.stderr.write("goodbye.\n")
+      #exported.hook_spam("shutdown_hook", {})
     import atexit
-    atexit.register(shutdown)
+    atexit.register(on_shutdown)
 
     # instantiate the engine
     Engine.instance = Engine()
@@ -1021,10 +1026,6 @@ def main(defaultoptions={}):
       sys.exit(0)
 
     Engine.instance.setUI(uiinstance)
-    exported.write_message("UI started.")
-
-    for mem in startuperrors:
-      exported.write_error(mem)
 
     # do some more silly initialization stuff
     # adds the .lyntinrc file to the readfile list if it exists.
@@ -1062,32 +1063,21 @@ def main(defaultoptions={}):
     exported.write_message(constants.STARTUPTEXT)
     Engine.instance.writePrompt()
 
-    # start the timer thread
-    Engine.instance.startthread("timer", Engine.instance.runtimer)
-    
-    # we ask the ui if they want the main thread of execution and
-    # handle accordingly
-    if Engine.instance._ui.wantMainThread() == 0:
-      Engine.instance.startthread("ui", Engine.instance._ui.runui)
-      Engine.instance.runengine()
-    else:
-      Engine.instance.startthread("engine", Engine.instance.runengine)
+    engine_thread = Engine.instance.startthread("engine", Engine.instance.runengine)
+    timer_thread = Engine.instance.startthread("timer", Engine.instance.runtimer)
+    try:
       Engine.instance._ui.runui()
-
-  except SystemExit:
-    # we do this because the engine is blocking on events....
-    if Engine.instance:
+    finally:
+      sys.stderr.write("Shutting down...")
       event.ShutdownEvent().enqueue()
-    
+      engine_thread.join(10)
+      timer_thread.join(10)
+      
   except:
     import traceback
     traceback.print_exc()
-    if Engine.instance:
-      try:
-        event.ShutdownEvent().enqueue()
-      except:
-        pass
     sys.exit(1)
+
 
 # Local variables:
 # mode:python

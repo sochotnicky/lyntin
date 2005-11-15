@@ -468,7 +468,6 @@ class Cursesui(base.BaseUI):
     base.BaseUI.__init__(self)
     
     exported.hook_register("startup_hook", startup_hook)
-    exported.hook_register("shutdown_hook", self.shutdown)
     exported.hook_register("to_user_hook", self.write)
     exported.hook_register("config_change_hook", self.config_changed)
     exported.hook_register("bell_hook", lambda x: sys.stdout.write('\07'))
@@ -508,7 +507,6 @@ class Cursesui(base.BaseUI):
 
   def shutdown(self, args):
     self.running_ = 0
-    endcurses()
       
 
   def config_changed(self, args):
@@ -657,9 +655,9 @@ class Cursesui(base.BaseUI):
     
     exported.add_help("cursesui", HELP_TEXT)
 
+    stdscr = curses.initscr()
     try:
     
-      stdscr = curses.initscr()
       if curses.has_colors():
         curses.start_color()
         for i in xrange(1,64):
@@ -812,7 +810,10 @@ class Cursesui(base.BaseUI):
         ch = edit.do_command(ch)    
 
         if ch in (curses.ascii.CR, curses.ascii.LF):
-          self.handleinput( edit.get_string() )
+          edit_string = edit.get_string()
+          if edit_string.strip() == "#end":
+            break
+          self.handleinput( edit_string )
           edit.set("")
 
         elif ch in (curses.KEY_RESIZE, curses.ascii.FF): # force screen redraw
@@ -822,20 +823,9 @@ class Cursesui(base.BaseUI):
         elif ch == curses.ascii.ETX:    # Ctrl-C
           break
 
-    except SystemExit:
-      event.ShutdownEvent().enqueue()
+    finally:
       endcurses()
 
-    except:
-      import traceback
-      endcurses()
-      traceback.print_exc(file=sys.stdout)
-      raw_input("Press enter to exit...")
-      event.ShutdownEvent().enqueue()
-
-    else:  
-      endcurses()
-        
 
 
 # vim:ts=2:sw=2:et:ft=python
