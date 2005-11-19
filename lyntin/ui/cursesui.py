@@ -728,7 +728,11 @@ class Cursesui(base.BaseUI):
             hotkey_buffer = ''
 
             # enter idle mode:
-            (i, o, x) = select.select(select_input_list, [], [], select_timeout)
+            try:
+                (i, o, x) = select.select(select_input_list, [], [], select_timeout)
+            except:
+                # It's probably stray EINTR - further investigation is needed
+                (i, o, x) = (None, None, None)
 
             if not i:
               # timeout was hit:
