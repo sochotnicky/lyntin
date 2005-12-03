@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.24 2004/09/19 07:17:18 glasssnake Exp $
+# $Id: tkui.py,v 1.25 2005/12/03 09:16:57 glasssnake Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -15,6 +15,7 @@ from Tkinter import *
 from ScrolledText import ScrolledText
 import os, tkFont, types, Queue
 import locale
+import sys
 from lyntin import ansi, event, engine, exported, utils, constants, config
 from lyntin.ui import base, message
 
@@ -32,6 +33,34 @@ except:
     ''.decode(UNICODE_ENCODING).encode(UNICODE_ENCODING)
   except:  
     UNICODE_ENCODING = 'latin-1'
+
+
+def _decode(text):
+    """
+    Decodes the text to the unicode representation.
+    Tries its best to replace illegal characters.
+
+    @param text: text to convert to unicode
+    @type  text: string
+
+    @returns: unicode text
+    @rtype: unicode string
+    """
+    while True:
+        try:
+            return text.decode(UNICODE_ENCODING)
+        except:
+            ex_class, ex_info, tb = sys.exc_info()
+            if str(ex_class) == 'exceptions.UnicodeDecodeError': # python2.3
+                text = text.replace(text[ex_info.start:ex_info.end], '?')
+            else: # python2.2
+                letters = []
+                for char in text:
+                    try:
+                        letters.append(char.decode(UNICODE_ENCODING))
+                    except:
+                        letters.append('?'.decode(UNICODE_ENCODING))
+                return ''.join(letters)
   
 
 HELP_TEXT = """The tkui uses the Tk widget set and provides a graphical interface 
@@ -749,7 +778,7 @@ class CommandEntry(Entry):
     if self.hist_index < len(hist) - 1:
       self.hist_index = self.hist_index + 1
       self.delete(0, 'end')
-      self.insert(0, hist[self.hist_index].decode(UNICODE_ENCODING))
+      self.insert(0, _decode(hist[self.hist_index]))
 
   def insertNextCommand(self, tkevent):
     """ Handles the <KeyPress-Down> event."""
@@ -759,11 +788,11 @@ class CommandEntry(Entry):
     self.hist_index = self.hist_index - 1
     if self.hist_index == -1:
       self.delete(0, 'end')
-      self.insert(0, self.current_input.decode(UNICODE_ENCODING))
+      self.insert(0, _decode(self.current_input))
             
     else:
       self.delete(0, 'end')
-      self.insert(0, hist[self.hist_index].decode(UNICODE_ENCODING))
+      self.insert(0, _decode(hist[self.hist_index]))
 
 class NamedWindow:
   """
@@ -1100,7 +1129,7 @@ def buffer_write(msg, txtbuffer, currentcolor, unfinishedcolor):
         format.append(bg)
 
       # insert the text using the formatting tuple we just generated
-      txtbuffer.insert('end', mem.decode(UNICODE_ENCODING), tuple(format))
+      txtbuffer.insert('end', _decode(mem), tuple(format))
 
   return color, leftover
 
