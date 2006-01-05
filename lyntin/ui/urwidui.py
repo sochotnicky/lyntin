@@ -1232,9 +1232,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     """
     #debug
     debug('shutting down...')
+    curses.endwin()
     self.shutdownflag = True
-    # disabled for debugging purposes
-    #curses.endwin()
 
 
   def showTextForSession(self, ses):
