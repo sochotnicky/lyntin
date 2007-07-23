@@ -12,7 +12,7 @@ This is curses based ui module for Lyntin.
 
 __author__ = "glasssnake <glassnake@ok.ru>"
 __version__ = "0.5"
-__license__ = "GPL"
+__license__ = "GPLv3"
 
 
 import sys, types, string, thread, select, os
