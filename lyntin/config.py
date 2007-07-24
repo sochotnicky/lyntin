@@ -1,11 +1,23 @@
-#######################################################################
-# This file is part of Lyntin
-# copyright (c) Free Software Foundation 2001, 2002
+#########################################################################
+# This file is part of Lyntin.
 #
-# Lyntin is distributed under the GNU General Public License license.  See the
-# file LICENSE for distribution details.
-# $Id: config.py,v 1.7 2003/09/09 22:44:07 willhelm Exp $
-#######################################################################
+# Lyntin is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# Lyntin is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# copyright (c) Free Software Foundation 2001-2007
+#
+# $Id: config.py,v 1.8 2007/07/24 00:39:03 willhelm Exp $
+#########################################################################
 """
 This module holds the configuration manager as well as a series of
 configuration type classes.  It also holds some global variables

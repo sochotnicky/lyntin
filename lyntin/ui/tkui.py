@@ -1,10 +1,10 @@
 #######################################################################
 # This file is part of Lyntin.
-# copyright (c) Free Software Foundation 1999 - 2002
+# copyright (c) Free Software Foundation 1999-2002
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.26 2007/07/23 23:44:03 willhelm Exp $
+# $Id: tkui.py,v 1.27 2007/07/24 00:39:03 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on

@@ -1,11 +1,23 @@
-#######################################################################
+#########################################################################
 # This file is part of Lyntin.
-# copyright (c) Free Software Foundation 2002
 #
-# Lyntin is distributed under the GNU General Public License license.  See the
-# file LICENSE for distribution details.
-# $Id: helpmanager.py,v 1.6 2004/04/12 14:03:29 willhelm Exp $
-#######################################################################
+# Lyntin is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# Lyntin is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# copyright (c) Free Software Foundation 2001-2007
+#
+# $Id: helpmanager.py,v 1.7 2007/07/24 00:39:03 willhelm Exp $
+#########################################################################
 """
 Lyntin has a comprehensive X{help} system that can be accessed in-game
 through the "#help" command.  The help material is all organized

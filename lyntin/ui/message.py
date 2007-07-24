@@ -1,10 +1,10 @@
 #######################################################################
 # This file is part of Lyntin.
-# copyright (c) Free Software Foundation 2001, 2002
+# copyright (c) Free Software Foundation 2001-2007
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: message.py,v 1.2 2004/09/19 07:17:18 glasssnake Exp $
+# $Id: message.py,v 1.3 2007/07/24 00:39:03 willhelm Exp $
 #######################################################################
 """
 Holds the ui's Message class.  This gets passed around Lyntin and
