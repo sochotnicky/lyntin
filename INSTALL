@@ -1,31 +1,32 @@
-Title:  Lyntin Installation Document
-Author: Will Guaraldi
-
-VERSION
+=======
+INSTALL
 =======
 
-$Id: INSTALL,v 1.7 2004/08/30 13:18:27 willhelm Exp $
+:Author: Will Guaraldi
+:Version: $Id: INSTALL,v 1.8 2007/07/24 00:21:40 willhelm Exp $
+
 
 For more up-to-date documentation, check out the web-site at:
 http://lyntin.sourceforge.net/
 
 
 
-SUMMARY
+Summary
 =======
 
 This document holds installation instructions for various operating
 systems as well as a series of general setup instructions for getting
 started with Lyntin.
 
-There are separate instructions for UNIX/LINUX and for WINDOWS.  Read
+There are separate instructions for Unix/Linux and for Windows.  Read
 the appropriate one for your system.
 
 
-UNIX/LINUX
+Unix/Linux
 ==========
 
-Requirements:
+Requirements
+------------
 
 1. Python 2.2 (with Tkinter if you want to use the tkui) 
    http://www.python.org/
@@ -33,45 +34,47 @@ Requirements:
 3. gzip
 
 
-Steps:
+Steps
+-----
 
-Untar and unzip the client.  Then run:
+Untar and unzip the client.  Then run::
 
    python setup.py install
 
-That'll install the "runlyntin" script into /usr/bin or /usr/local/bin 
-depending on how you have Python installed.  
+That'll install the ``runlyntin`` script into ``/usr/bin`` or 
+``/usr/local/bin`` depending on how you have Python installed.  
 
 Lyntin takes both command-line options as well as a config file.  A 
-sample config file looks like this:
+sample config file looks like this::
 
-%<------------------
-[Lyntin]
-ui:        text
-datadir:   /home/willg/ltd40
-moduledir: /home/willg/ltd40
-readfile:  http://www.bluesock.org/~willg/3krc
-%<------------------
+   [Lyntin]
+   ui:        text
+   datadir:   /home/willg/ltd40
+   moduledir: /home/willg/ltd40
+   readfile:  http://www.bluesock.org/~willg/3krc
 
-To start Lyntin with the config file do this:
+
+To start Lyntin with the config file do this::
 
    runlyntin -c /path/to/config.ini
 
 Lyntin takes a series of command-line options.  For a list of basic 
-options and explanations, run:
+options and explanations, run::
 
    runlyntin --help
 
 
-WINDOWS
+Windows
 =======
 
-Requirements:
+Requirements
+------------
 
 1. Python 2.2 http://www.python.org/
 
 
-Steps:
+Steps
+-----
 
 1. Make sure you have at least Python 2.2.
 2. Run the installer which will install the Lyntin libraries and
@@ -82,6 +85,8 @@ Steps:
    needs.
 
 
+Conclusion
+==========
 
 If you have problems with installation, see the website on how to 
 contact us and ask questions.
