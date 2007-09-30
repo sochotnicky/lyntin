@@ -3,7 +3,7 @@ INSTALL
 =======
 
 :Author: Will Guaraldi
-:Version: $Id: INSTALL,v 1.8 2007/07/24 00:21:40 willhelm Exp $
+:Version: $Id: INSTALL,v 1.9 2007/09/30 02:02:50 willhelm Exp $
 
 
 For more up-to-date documentation, check out the web-site at:
@@ -20,6 +20,44 @@ started with Lyntin.
 
 There are separate instructions for Unix/Linux and for Windows.  Read
 the appropriate one for your system.
+
+
+Easy-install
+============
+
+Requirements
+------------
+
+1. Python 2.3
+2. setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
+
+Steps
+-----
+
+Run::
+
+   easy_install lyntin
+
+
+Lyntin takes both command-line options as well as a config file.  A 
+sample config file looks like this::
+
+   [Lyntin]
+   ui:        text
+   datadir:   /home/willg/ltd40
+   moduledir: /home/willg/ltd40
+   readfile:  http://www.bluesock.org/~willg/3krc
+
+
+To start Lyntin with the config file do this::
+
+   runlyntin -c /path/to/config.ini
+
+Lyntin takes a series of command-line options.  For a list of basic 
+options and explanations, run::
+
+   runlyntin --help
+
 
 
 Unix/Linux

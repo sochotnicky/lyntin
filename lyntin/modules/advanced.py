@@ -16,7 +16,7 @@
 #
 # copyright (c) Free Software Foundation 2001-2007
 #
-# $Id: advanced.py,v 1.8 2007/07/24 00:39:03 willhelm Exp $
+# $Id: advanced.py,v 1.9 2007/09/30 02:02:50 willhelm Exp $
 #########################################################################
 """
 This module holds the magical python_cmd code.  It takes in code,
@@ -83,6 +83,7 @@ def python_cmd(ses, words, input):
       execdictlocals = {}
       
     execdictlocals["session"] = ses
+    execdictlocals["exported"] = exported
 
     my_usermodule = _get_user_module() 
     if my_usermodule:
