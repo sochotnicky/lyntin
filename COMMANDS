@@ -6,7 +6,7 @@ Author: Will Guaraldi
 VERSION
 =======
 
-Sat, 25 Oct 2003 16:42:36 +0000
+Tue, 02 Oct 2007 22:21:37 +0000
 
 For more up-to-date information and documentation, please check the 
 web-site: http://Lyntin.sourceforge.net/
@@ -71,26 +71,26 @@ specify arguments that have multiple words in them.  exaples:
 COMMAND REFERENCE
 =================
 
-   @                history          tickoff
-   action           if               tickon
-   alias            info             ticksize
-   antigag          killall          tickwarnsize
-   antisubstitute   load             unaction
-   atags            log              unalias
-   bell             loop             unantigag
-   chr              math             unantisubstitute
-   clear            nop              ungag
-   config           raw              unhighlight
-   cr               read             unload
-   deed             schedule         unschedule
-   diagnostics      session          unsubstitute
-   disable          showme           unswdir
-   enable           snoop            unswexclude
-   end              substitute       unvariable
-   gag              swdir            variable
-   grep             swexclude        version
-   help             textin           write
-   highlight        tick             zap
+   @                history          tickon
+   action           if               ticksize
+   alias            info             tickwarnsize
+   antigag          killall          unaction
+   antisubstitute   load             unalias
+   atags            log              unantigag
+   bell             loop             unantisubstitute
+   chr              math             ungag
+   clear            nop              unhighlight
+   config           raw              unload
+   cr               read             unschedule
+   deed             schedule         unsubstitute
+   diagnostics      session          unswdir
+   disable          showme           unswexclude
+   enable           substitute       unvariable
+   end              swdir            variable
+   gag              swexclude        version
+   grep             textin           write
+   help             tick             zap
+   highlight        tickoff
 
 
 
@@ -114,7 +114,6 @@ COMMANDS.ACTION
    syntax: #action [<TRIGGER>] [<ACTION>] [<TAG>] [<COLOR:BOOLEAN=false>] 
          [<PRIORITY:INT=5>] [<ONETIME:BOOLEAN=false>] 
          [<QUIET:BOOLEAN=false>] 
-   
    With no trigger, no action and no tag, prints all actions.
    With no trigger and no action, prints all actions with given tag.
    With a trigger and no action, prints actions that match the
@@ -155,7 +154,6 @@ COMMANDS.ACTION
 COMMANDS.ALIAS
 
    syntax: #alias [<ALIAS>] [<EXPANSION>] [<QUIET:BOOLEAN=false>] 
-   
    With no arguments, prints all aliases.
    With one argument, prints all aliases which match the arg.
    With multiple arguments, creates an alias.
@@ -181,7 +179,6 @@ COMMANDS.ALIAS
 COMMANDS.ANTIGAG
 
    syntax: #antigag [<ITEM>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to create antigags.
    
    For any line that contains an antigag, we won't do gags on it.
@@ -191,7 +188,6 @@ COMMANDS.ANTIGAG
 COMMANDS.ANTISUBSTITUTE
 
    syntax: #antisubstitute [<ITEM>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to create antisubstitutes.
    
    For any line that contains an antisubstitute, we won't do substitutions
@@ -217,7 +213,6 @@ COMMANDS.BELL
 COMMANDS.CHR
 
    syntax: #chr [VAR] [ASCII:INT] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to assign arbitrary characters to variables.  For example,
    if you wanted to assign ASCII char 7 to variable ctrlG you could
    do:
@@ -241,7 +236,6 @@ COMMANDS.CLEAR
 COMMANDS.CONFIG
 
    syntax: #config [<NAME>] [<VALUE>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to view and change configuration options that affect
    how Lyntin functions.  Configuration options can be session
    oriented or global to all of Lyntin.
@@ -273,7 +267,6 @@ COMMANDS.CR
 COMMANDS.DEED
 
    syntax: #deed [<TEXT>] [<QUIET:BOOLEAN=false>] 
-   
    Deeds serve as a kind of notebook - whatever you don't want
    to forget, store it in a deed.
    
@@ -281,6 +274,7 @@ COMMANDS.DEED
      #deed                             -- prints all the deeds for 
                                           that session
      #deed {$TIMESTAMP Joe healed me}  -- adds a new deed to the list
+     #deed 10                          -- prints the last 10 deeds
    
    Before a deed is stored, variables are expanded--this allows you
    to use system, global, and session variables in your deeds like
@@ -291,7 +285,6 @@ COMMANDS.DEED
 COMMANDS.DIAGNOSTICS
 
    syntax: #diagnostics [<LOGFILE>] 
-   
    This is very useful for finding out all the information about Lyntin
    while it's running.  This will print out operating system information,
    Python version, what threads are running (assuming they're registered
@@ -312,7 +305,6 @@ COMMANDS.DIAGNOSTICS
 COMMANDS.DISABLE
 
    syntax: #disable [<TAG>] [<QUIET:BOOLEAN=false>] 
-   
    Temporarily disables all the actions with given tag, so their triggers
    won't trigger any actions (well, this desciption is a bit obscure,
    but I've tried my best :)
@@ -324,7 +316,6 @@ COMMANDS.DISABLE
 COMMANDS.ENABLE
 
    syntax: #enable [<TAG>] [<QUIET:BOOLEAN=false>] 
-   
    Enables actions with given tag.
    By default, all the tags are enabled.
    
@@ -346,7 +337,6 @@ COMMANDS.END
 COMMANDS.GAG
 
    syntax: #gag [<TEXT>] [<QUIET:BOOLEAN=false>] 
-   
    With no arguments, prints out all gags.
    With arguments, creates a gag.
    
@@ -372,7 +362,6 @@ COMMANDS.GAG
 COMMANDS.GREP
 
    syntax: #grep [PATTERN] [<SIZE:INT=300>] [<CONTEXT:INT=0>] 
-   
    Similar to the unix grep command, this allows you to extract 
    information from the session's data buffer using regular expressions.
    
@@ -389,7 +378,6 @@ COMMANDS.GREP
 COMMANDS.HELP
 
    syntax: #help [<ITEM>] 
-   
    With no arguments, shows all the help files available.
    With an argument, shows that specific help file or lists the contents
    of that category of help files.
@@ -418,7 +406,6 @@ COMMANDS.HELP
 COMMANDS.HIGHLIGHT
 
    syntax: #highlight [<STYLE>] [<TEXT>] [<QUIET:BOOLEAN=false>] 
-   
    With no arguments, prints all highlights.
    With one argument, prints all highlights which match the arg.
    With multiple arguments, creates a highlight.
@@ -457,7 +444,6 @@ COMMANDS.HIGHLIGHT
 COMMANDS.HISTORY
 
    syntax: #history [<COUNT:INT=30>] 
-   
    #history prints the current history buffer.
    
    ! will call an item in the history indexed by the number after
@@ -479,7 +465,6 @@ COMMANDS.HISTORY
 COMMANDS.IF
 
    syntax: #if [EXPR] [ACTION] [<ELSEACTION>] 
-   
    Allows you to do some boolean logic based on Lyntin variables
    or any Python expression.  If this expression returns a non-false
    value, then the action will be performed otherwise the elseaction
@@ -487,7 +472,7 @@ COMMANDS.IF
    
    examples:
      #if {$myhpvar < 100} {#showme PANIC!}
-     #if {$myhpvar < 100 && $myspvar < 100} {#showme PANIC!}
+     #if {$myhpvar < 100 and $myspvar < 100} {#showme PANIC!}
      #if {'$name' == 'Joe'} {#showme That joe is a jerk.}
    
    When you're comparing variable values with other strings, make sure 
@@ -518,7 +503,6 @@ COMMANDS.KILLALL
 COMMANDS.LOAD
 
    syntax: #load [MODULENAME] [<RELOAD:BOOLEAN=true>] 
-   
    Loads/reloads a module.
    
    When reloading, it looks for an "unload" function and executes 
@@ -548,7 +532,6 @@ COMMANDS.LOG
 
    syntax: #log [<LOGFILE>] [<DATABUFFER:BOOLEAN=false>] 
          [<STRIPANSI:BOOLEAN=true>] [<USERPREFIX>] 
-   
    Will start or stop logging to a given filename for that session.
    Each session can have its own logfile.
    
@@ -561,8 +544,7 @@ COMMANDS.LOG
 
 COMMANDS.LOOP
 
-   syntax: #loop [FROMTO] [COMM] 
-   
+   syntax: #loop [FROMTO] [COMM] [<RANGE:BOOLEAN=true>] 
    Executes a given command replacing %0 in the command with
    the range of numbers specified in <from> and <to>.
    
@@ -574,6 +556,18 @@ COMMANDS.LOOP
      reclaim 2.corpse
      reclaim 3.corpse
      reclaim 4.corpse
+   
+   Additionally, it can iterate over a comma-separated string of items:
+   
+   example:
+     #loop {joe,harry,fred,pete} {say hi, %0.} range=no
+   
+   will execute:
+   
+     say hi, joe.
+     say hi, harry.
+     say hi, fred.
+     say hi, pete.
    
    A better way to execute a command a number of times without regard
    to an index, would be:
@@ -587,7 +581,6 @@ COMMANDS.LOOP
 COMMANDS.MATH
 
    syntax: #math [VAR] [OPERATION] [<QUIET:BOOLEAN=false>] 
-   
    Implements the #math command which allows you to manipulate
    variables above and beyond setting them.
    
@@ -599,7 +592,6 @@ COMMANDS.MATH
 COMMANDS.NOP
 
    syntax: #nop [<INPUT>] 
-   
    nop stands for "no operation".  So anything after a #nop
    and before a ; (unless it's escaped) will be ignored.
    
@@ -610,7 +602,6 @@ COMMANDS.NOP
 COMMANDS.RAW
 
    syntax: #raw [<INPUT>] 
-   
    Sends input straight to the mud.
 
 
@@ -618,7 +609,6 @@ COMMANDS.RAW
 COMMANDS.READ
 
    syntax: #read [FILENAME] 
-   
    Reads in a file running each line as a Lyntin command.  This is the
    opposite of #write which allows you to save session settings and
    restore them using #read.
@@ -636,6 +626,7 @@ COMMANDS.READ
    Note: the first non-whitespace char is used to set the Lyntin
    command character.  If you use non Lyntin commands in your file,
    make sure the first one is a command char.  If not, use #nop .
+   It will skip blank lines.
    
    If you don't specify a directory, Lyntin will look for the file
    in your datadir.
@@ -646,7 +637,6 @@ COMMANDS.SCHEDULE
 
    syntax: #schedule [<TICK>] [<EVENT>] [<REPEAT:BOOLEAN=false>] 
          [<QUIET:BOOLEAN=false>] 
-   
    With no arguments lets you view the scheduled events.
    
      lyntin: Scheduled events:
@@ -680,14 +670,18 @@ COMMANDS.SCHEDULE
 
 COMMANDS.SESSION
 
-   syntax: #session [<SESSIONNAME>] [<HOST>] [<PORT:INT=-1>] 
-   
+   syntax: #session [<SESSIONNAME>] [<HOST>] [<PORT:INT=-1>] [<FILENAME>] 
    This command creates a connection to a specific mud.  When you create
    a session, that session becomes the active Lyntin session.
    
    To create a session to 3k.org named "3k":
    
      #session 3k www.3k.org 5000
+   
+   To create a session and initialize it with commands from a specific
+   file:
+   
+     #session 3k www.3k.org 5000 /home/david/3k/3k.lyntin
    
    Then to create another session to another mud:
    
@@ -705,7 +699,6 @@ COMMANDS.SESSION
 COMMANDS.SHOWME
 
    syntax: #showme [<INPUT>] 
-   
    Will display {text} on your screen.  Doesn't get sent to the mud--
    just your screen.
    
@@ -714,24 +707,9 @@ COMMANDS.SHOWME
 
 
 
-COMMANDS.SNOOP
-
-   syntax: #snoop [SESSION] [<MODE:BOOLEANORNONE>] 
-   
-   Sets the session specified into or out of snooping mode.  When
-   a session is in snoop mode, you will see mud data from that session
-   regardless of what session is the current session.
-   
-   examples:
-     #snoop a          -- tells you whether a is in snoop mode
-     #snoop a on       -- sets snoop mode for a
-
-
-
 COMMANDS.SUBSTITUTE
 
    syntax: #substitute [<ITEM>] [<SUBSTITUTION>] [<QUIET:BOOLEAN=false>] 
-   
    With no arguments, prints all substitutes.
    With one argument, prints all substitutes which match the argument.
    Otherwise creates a substitution.
@@ -743,7 +721,6 @@ COMMANDS.SUBSTITUTE
 COMMANDS.SWDIR
 
    syntax: #swdir [<ALIAS>] [<DIR>] [<QUIET:BOOLEAN=false>] 
-   
    This adds speedwalking aliases and tells you the current speedwalking dirs
    already registered.
    
@@ -771,7 +748,6 @@ COMMANDS.SWDIR
 COMMANDS.SWEXCLUDE
 
    syntax: #swexclude [EXCLUDE...] [<QUIET:BOOLEAN=false>] 
-   
    Adds words that should be excluded from speedwalk expansion as well
    as tells you which words are currently being excluded.
    
@@ -790,7 +766,6 @@ COMMANDS.SWEXCLUDE
 COMMANDS.TEXTIN
 
    syntax: #textin [FILE] 
-   
    Takes the contents of the file and outputs it directly to the mud
    without processing it (like #read does).
    
@@ -836,7 +811,6 @@ COMMANDS.TICKON
 COMMANDS.TICKSIZE
 
    syntax: #ticksize [<SIZE:TIMESPAN=0>] 
-   
    Sets and displays the number of seconds between ticks for this
    session.
    
@@ -852,7 +826,6 @@ COMMANDS.TICKSIZE
 COMMANDS.TICKWARNSIZE
 
    syntax: #tickwarnsize [<SIZE:TIMESPAN=0>] 
-   
    Sets and displays the number of seconds you get warned before a
    Tick actually happens.
    
@@ -868,7 +841,6 @@ COMMANDS.TICKWARNSIZE
 COMMANDS.UNACTION
 
    syntax: #unaction [<STR>] [<TAG>] [<QUIET:BOOLEAN=false>] 
-   
    Removes action(s) from the manager.
    
    examples:
@@ -883,7 +855,6 @@ COMMANDS.UNACTION
 COMMANDS.UNALIAS
 
    syntax: #unalias [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove aliases.
 
 
@@ -891,7 +862,6 @@ COMMANDS.UNALIAS
 COMMANDS.UNANTIGAG
 
    syntax: #unantigag [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove antigags.
 
 
@@ -899,7 +869,6 @@ COMMANDS.UNANTIGAG
 COMMANDS.UNANTISUBSTITUTE
 
    syntax: #unantisubstitute [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove antisubstitutes.
 
 
@@ -907,7 +876,6 @@ COMMANDS.UNANTISUBSTITUTE
 COMMANDS.UNGAG
 
    syntax: #ungag [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove gags.
 
 
@@ -915,7 +883,6 @@ COMMANDS.UNGAG
 COMMANDS.UNHIGHLIGHT
 
    syntax: #unhighlight [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove highlights.
    
    examples:
@@ -927,7 +894,6 @@ COMMANDS.UNHIGHLIGHT
 COMMANDS.UNLOAD
 
    syntax: #unload [MODULENAME] 
-   
    Unloads a module from Lyntin by calling the module's "unload" function
    and then removing references to it in the Python environment.
    
@@ -940,7 +906,6 @@ COMMANDS.UNLOAD
 COMMANDS.UNSCHEDULE
 
    syntax: #unschedule [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove a scheduled event by id.  To remove all events
    scheduled use *.  To see a list of the events and ids for the current 
    session use the #sched command.
@@ -954,7 +919,6 @@ COMMANDS.UNSCHEDULE
 COMMANDS.UNSUBSTITUTE
 
    syntax: #unsubstitute [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove substitutes.
 
 
@@ -962,7 +926,6 @@ COMMANDS.UNSUBSTITUTE
 COMMANDS.UNSWDIR
 
    syntax: #unswdir [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove swdirs.
 
 
@@ -970,7 +933,6 @@ COMMANDS.UNSWDIR
 COMMANDS.UNSWEXCLUDE
 
    syntax: #unswexclude [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove swexcludes.
 
 
@@ -978,7 +940,6 @@ COMMANDS.UNSWEXCLUDE
 COMMANDS.UNVARIABLE
 
    syntax: #unvariable [<STR>] [<QUIET:BOOLEAN=false>] 
-   
    Allows you to remove variables.
 
 
@@ -986,7 +947,6 @@ COMMANDS.UNVARIABLE
 COMMANDS.VARIABLE
 
    syntax: #variable [<VAR>] [<EXPANSION>] [<QUIET:BOOLEAN=false>] 
-   
    Creates a variable for that session of said name with said value.
    Variables can then pretty much be used anywhere.
    
@@ -1025,7 +985,6 @@ COMMANDS.VERSION
 COMMANDS.WRITE
 
    syntax: #write [FILE] [<QUIET:BOOLEAN=false>] 
-   
    Writes all aliases, actions, gags, etc to the file specified.
    You can then use the #read command to read this file in and
    restore your session settings.
@@ -1044,7 +1003,6 @@ COMMANDS.WRITE
 COMMANDS.ZAP
 
    syntax: #zap [<SESSION>] 
-   
    This disconnects from the mud and closes the session.  If no
    session is specified, it will close the current session.
 
