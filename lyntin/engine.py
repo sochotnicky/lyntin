@@ -16,7 +16,7 @@
 #
 # copyright (c) Free Software Foundation 2001-2007
 #
-# $Id: engine.py,v 1.35 2007/07/24 00:39:03 willhelm Exp $
+# $Id: engine.py,v 1.36 2007/10/02 22:06:32 willhelm Exp $
 #########################################################################
 """
 This holds the X{engine} which both contains most of the other objects
@@ -258,6 +258,10 @@ class Engine:
           config.options["datadir"], 0,
           "Default directory to find config files etc."))           
 
+    c.add("splitchar", config.CharConfig("splitchar",
+          config.options.get("splitchar", ";"), 0,
+          "The character used to split commands in a single input."))
+
     self._sessions["common"].setupCommonSession()
 
   ### ------------------------------------------
@@ -451,7 +455,8 @@ class Engine:
     if self._managers["config"].get("debugmode") == 1:
       exported.write_message("evaluating: %s" % input)
 
-    inputlist = utils.split_commands(input)
+    inputlist = utils.split_commands(self._managers["config"].get("splitchar"), 
+                                     input)
     if session == None:
       session = self._current_session
 

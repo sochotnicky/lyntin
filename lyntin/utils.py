@@ -16,7 +16,7 @@
 #
 # copyright (c) Free Software Foundation 2001-2007
 #
-# $Id: utils.py,v 1.14 2007/07/24 00:39:03 willhelm Exp $
+# $Id: utils.py,v 1.15 2007/10/02 22:06:32 willhelm Exp $
 #########################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -27,7 +27,8 @@ import string, re, time, types, os
 import ansi, constants
 
 # for finding non-escaped semi-colons in user input
-SEMI_REGEXP = re.compile(r'(?<!\\);')
+SPLIT = ";"
+SPLIT_REGEXP = re.compile(r'(?<!\\);')
 
 TIMESPAN_REGEXP = re.compile(r"^(?P<days>\d+d)?(?P<hours>\d+h)?(?P<minutes>\d+m)?(?P<seconds>\d+s?)?$")
 TIME_REGEXP1=re.compile(r"^(?P<hour>[1-9]|1[0-2])(?P<ampm>a|p)$")
@@ -136,7 +137,6 @@ def filter_cm(text):
   @rtype: string
   """
   return text.replace("\r", "")
-
 
 
 CHOMP_EOL = re.compile("[\r\n]+$")
@@ -367,12 +367,27 @@ def expand_text(filter, fulllist):
 
   return ret
 
-   
-def split_commands(text):
+def __change_command_split(newsplit):
+  global SPLIT, SPLIT_REGEXP
+
+  if not newsplit:
+    SPLIT_REGEXP = None
+  else:
+    SPLIT_REGEXP = re.compile(r'(?<!\\)' + newsplit)
+
+  SPLIT = newsplit
+
+ 
+def split_commands(splitchar, text):
   """
   This method takens in text and parses it into separate commands
-  on the ;.  It accounts for \\; as well as ; in { } which indicate that
-  we shouldn't be splitting there.
+  on the SPLIT.  It accounts for \\SPLIT as well as SPLIT in { } which 
+  indicate that we shouldn't be splitting there.
+
+  SPLIT is defined in SPLIT_REGEXP.
+
+  If SPLIT_REGEXP is empty string or None, then this doesn't split the
+  command.
 
   @param text: the text to split
   @type  text: string
@@ -380,11 +395,18 @@ def split_commands(text):
   @return: the split text
   @rtype: list of strings
   """
-  global SEMI_REGEXP
+  global SPLIT, SPLIT_REGEXP
+
+  if splitchar != SPLIT:
+    __change_command_split(splitchar)
+
+  if not SPLIT_REGEXP:
+    return [text]
+
   marker = 0
   ret = []
 
-  matchob = SEMI_REGEXP.search(text)
+  matchob = SPLIT_REGEXP.search(text)
   while (matchob):
     (b, e) = matchob.span()
     # we count braces--this is a bit interesting since if the entire 
@@ -404,7 +426,7 @@ def split_commands(text):
       ret.append(text[marker:b])
       marker = e
 
-    matchob = SEMI_REGEXP.search(text, e)
+    matchob = SPLIT_REGEXP.search(text, e)
 
   ret.append(text[marker:])
   return ret
