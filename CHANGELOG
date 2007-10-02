@@ -1,0 +1,29 @@
+=========
+CHANGELOG
+=========
+
+:Author: Will Guaraldi
+:Version: $Id: CHANGELOG,v 1.1 2007/10/02 22:12:46 willhelm Exp $
+
+
+Changes between 4.1 and 4.2
+===========================
+
+* added a session_change_hook (thanks Tuomas)
+* fixed line regexp to use ``finditer`` instead of ``split``--much faster
+* fixed the read command to use ``HTTPResponse`` and ``HTTPConnection`` 
+  objects
+* changed the ``if_cmd`` to use python syntax rather than C syntax for ``&&``
+* added handling for horizontal tabs
+* added additional ``loop_cmd`` sytnax::
+
+     #loop {tom,pete,harry} ...
+
+  which allows it to loop over strings
+* moved the UI to the main thread
+* added catching of ``EINTER`` in cursesui
+* updated to GPL 3
+* changed ``setup.py`` to use ``setuptools``
+* added code to allow the user to change the character used for splitting
+  commands in a single input line (``#config splitchar``)
+* added ``CHANGELOG``
