@@ -633,7 +633,7 @@ class Cursesui(base.BaseUI):
     if msg.type == message.ERROR:
       pretext[:0] = [ ("! ", self.attr_error_) ]
     elif msg.type == message.LTDATA:
-      pretext[:0] = [ ("# ", self.attr_lyntin_) ]
+      pretext[:0] = [ ("@ ", self.attr_lyntin_) ]
 
     self._decode_colors(ses, default_attr, line, pretext)
 
