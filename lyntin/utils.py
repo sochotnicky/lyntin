@@ -16,7 +16,7 @@
 #
 # copyright (c) Free Software Foundation 2001-2007
 #
-# $Id: utils.py,v 1.15 2007/10/02 22:06:32 willhelm Exp $
+# $Id: utils.py,v 1.16 2007/11/09 18:40:54 willhelm Exp $
 #########################################################################
 """
 This has a series of utility functions that aren't related to classes 
@@ -373,7 +373,7 @@ def __change_command_split(newsplit):
   if not newsplit:
     SPLIT_REGEXP = None
   else:
-    SPLIT_REGEXP = re.compile(r'(?<!\\)' + newsplit)
+    SPLIT_REGEXP = re.compile(r'(?<!\\)' + re.escape(newsplit))
 
   SPLIT = newsplit
 
