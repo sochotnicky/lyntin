@@ -4,7 +4,7 @@
 #
 # Lyntin is distributed under the GNU General Public License license.  See the
 # file LICENSE for distribution details.
-# $Id: tkui.py,v 1.28 2007/11/09 18:40:54 willhelm Exp $
+# $Id: tkui.py,v 1.29 2007/11/09 20:09:42 willhelm Exp $
 #######################################################################
 """
 This is a tk oriented user interface for lyntin.  Based on
@@ -198,7 +198,7 @@ class Tkui(base.BaseUI):
 
     self.settitle()
 
-    fnt = tkFont.Font(family="Courier", size=10)
+    fnt = tkFont.Font(family="FixedSys", size=10)
 
     self._entry = CommandEntry(self._tk, self, fg='white', bg='black',
                                insertbackground='yellow', font=fnt, 
@@ -823,7 +823,10 @@ class NamedWindow:
     
     self._tk.protocol("WM_DELETE_WINDOW", self.close)
     
-    fontname = "Fixedsys"
+    if os.name == "posix":
+      fontname = "Courier"
+    else:
+      fontname = "Fixedsys"
     fnt = tkFont.Font(family=fontname, size=12)
     
     self._txt = ScrolledText(self._tk, fg="white", bg="black", 
