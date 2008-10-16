@@ -142,42 +142,14 @@ import base, urwid, urwid.curses_display, types, curses
 from lyntin import exported, utils, ansi, event, history
 from lyntin.ui import message
 
+import logging
 
-logs = {'debug': {'filename':'urwid_debug.log','log':None, 'level':0},
-        'error': {'filename':'urwid_error.log','log':None},
-        'info': {'filename':'urwid_info.log','log':None} }
-
-debugging_enabled = False
-
-def get_log(name='debug'):
-  global logs
-  if name in logs:
-    if not logs[name]['log'] or logs[name]['log'].closed:
-      l = file(logs[name]['filename'],'w+')
-      l.write('starting log...')
-      logs[name]['log'] = l
-
-    return logs[name]
-  else:
-    raise Exception("Invalid logname.")
-
-def debug(message, loglevel=1):
-  filename, log, level = get_log('debug').values()
-
-  timestamp = time.strftime('%H:%m:%S %d-%m-%Y',time.localtime())
-  log_message = '[%s] %s\n' % (timestamp, message)
-
-  if not level: level = 1
-    
-  if level > 0 and loglevel > 0 and loglevel <= level:
-    log.write(log_message)
-    log.flush()
+logging.basicConfig(filename='urwidui.log', level=logging.DEBUG)
 
 myui = None
 
 def get_ui_instance():
-  #debug
-  debug('UI instance requested.')
+  logging.debug('UI instance requested.')
 
   global myui
   if myui == None:
@@ -190,11 +162,11 @@ class Color:
   Handles ANSI color decoding/markup
   """
   def __init__(self, ui):
-    #debug
-    debug("Class 'Color' initialized.")
+    logging.debug("Class 'Color' initialized.")
 
     self.ui = ui
     self.unfinished = ''
+    self.color_on = False
     self.colors = [
       'default', 
       'black', 
@@ -214,12 +186,17 @@ class Color:
       'light cyan', 
       'white' ]
 
-    # define the colors that can be used to mark up text
-    index = 0
-    for fg in self.colors[1:]:
-      self.ui.register_palette_entry( index, fg, 'black' )
-      index += 1
+    if self.ui.s:
+        self.colorize()
 
+  def colorize(self):
+      if not self.color_on:
+          # define the colors that can be used to mark up text
+          index = 0
+          for fg in self.colors[1:]:
+              self.ui.register_palette_entry( index, fg, 'black' )
+              index += 1
+          self.color_on = True
 
   def decode(self, text, continue_decode=True):
     """
@@ -283,9 +260,9 @@ class Color:
     if len(a) == 1 and a[0] == 'bold': 
       fg += (len(self.colors) -1)/2
     # report specified but unsupported attributes to the user
-    elif len(a) > 1:
+    #elif len(a) > 1:
       # debug
-      debug(' %s %s' % (str(a), text))
+      #logging.debug(' %s %s' % (str(a), text))
 
     return (fg, text)
 
@@ -295,8 +272,7 @@ class History(history.HistoryManager):
   """
   def __init__(self):
     history.HistoryManager.__init__(self, exported.get_engine())
-    #debug
-    debug("Class 'History' initialized.")
+    logging.debug("Class 'History' initialized.")
 
     self.cursor = 0 
 
@@ -330,8 +306,7 @@ class KeyMode:
   Collection of keys and the commands that each corresponds to
   """
   def __init__(self, keymap={}):
-    #debug
-    debug("Class 'Keymode' initialized.")
+    logging.debug("Class 'Keymode' initialized.")
 
     self.keymap = keymap
     self.auto_revert = True
@@ -342,8 +317,7 @@ class VIkeyModeSet:
   Keymode that emulates VI keybindings
   """
   def __init__(self):
-    #debug
-    debug("Class 'VIKeymodeSet' initialized.")
+    logging.debug("Class 'VIKeymodeSet' initialized.")
 
     self.modes = {}
     self.modes['command'] = KeyMode()
@@ -407,8 +381,7 @@ class VIkeyModeSet:
 
 class CommandModeManager:
   def __init__(self):
-    #debug
-    debug("Class 'CommandModeManager' initialized.")
+    logging.debug("Class 'CommandModeManager' initialized.")
 
     self.default_mode = 'default'
     self.current_mode = self.default_mode
@@ -465,8 +438,7 @@ class CommandEdit(urwid.Edit, History):
     urwid.Edit.__init__(self,edit_prompt)
     History.__init__(self)
 
-    #debug
-    debug("Class 'CommandEdit' initialized.")
+    logging.debug("Class 'CommandEdit' initialized.")
 
     self.keymode = CommandModeManager()
     self.copy_buffer = ''
@@ -540,8 +512,7 @@ class CommandEdit(urwid.Edit, History):
       if not text[end].isspace():
         word_boundaries.append(end)
 
-      # debug
-      debug('word boundaries: %s' % str(word_boundaries))
+      logging.debug('word boundaries: %s' % str(word_boundaries))
 
     return word_boundaries
 
@@ -558,9 +529,8 @@ class CommandEdit(urwid.Edit, History):
       else:
         word_endings.append(word_boundaries[x])
 
-    # debug
-    debug('word beginnnings: %s' % str(word_beginnings))
-    debug('word ends: %s' % str(word_endings))
+    logging.debug('word beginnnings: %s' % str(word_beginnings))
+    logging.debug('word ends: %s' % str(word_endings))
 
     return (word_beginnings, word_endings)
 
@@ -585,8 +555,7 @@ class CommandEdit(urwid.Edit, History):
     if upper < lower:
       lessthan = True
 
-    # debug
-    debug('lower bound: %i, upper bound: %i' % (lower, upper))
+    logging.debug('lower bound: %i, upper bound: %i' % (lower, upper))
 
     # return either the nearest upper boundary or the nearest lower boundary
     if lessthan: 
@@ -595,28 +564,23 @@ class CommandEdit(urwid.Edit, History):
       return upper
     
   def _bounds_check(self, index):
-    # debug
-    debug('bounds checking index: %i' % index)
+    logging.debug('bounds checking index: %i' % index)
 
     if index < 0:
-      # debug
-      debug('index < 0, new index: 0')
+      logging.debug('index < 0, new index: 0')
       return 0
     elif index > self.end: 
-      # debug
-      debug('index > %i (length of edit text), new index: %i' % (self.end, self.end))
+      logging.debug('index > %i (length of edit text), new index: %i' % (self.end, self.end))
       return self.end
     else: 
-      # debug
-      debug('index within bounds')
+      logging.debug('index within bounds')
       return index
 
         
   def keypress(self, size, key):
     function = self.keymode.keyAction(key)
 
-    #debug
-    debug("Widget CommandEdit handling key '%s' with function '%s'" % (key,function))
+    logging.debug("Widget CommandEdit handling key '%s' with function '%s'" % (key,function))
 
     if self.function_map.has_key(function): 
       self.function_map[function]()
@@ -673,8 +637,7 @@ class CommandEdit(urwid.Edit, History):
       elif boundary_type == 'ending':
         word_boundaries = word_endings
 
-    # debug
-    debug('start pos: %i, boundaries: %s' % (start_pos, str(word_boundaries)))
+    logging.debug('start pos: %i, boundaries: %s' % (start_pos, str(word_boundaries)))
      
     nearest = self._find_nearest_boundary(start_pos, word_boundaries, lessthan)
 
@@ -848,8 +811,7 @@ class CommandEdit(urwid.Edit, History):
     self.end = len(self.edit_text)
 
   def set_edit_pos(self, pos):
-    # debug
-    debug('text: %s, old pos: %s, new pos: %s' % (self.edit_text,self.edit_pos, pos))
+    logging.debug('text: %s, old pos: %s, new pos: %s' % (self.edit_text,self.edit_pos, pos))
     self.end = len(self.edit_text)
     self.edit_pos = self._bounds_check(pos)
 
@@ -864,8 +826,7 @@ class UIWindow:
     """
     Initialize the UIWindow
     """
-    #debug
-    debug("Class 'UIWindow' initialized.")
+    logging.debug("Class 'UIWindow' initialized.")
 
     self.ui = ui
 
@@ -908,10 +869,9 @@ class UIWindow:
     self.items[len(self.items)-2] = urwid.Text(text_out)
     self.items[len(self.items)-1] = self.blank
     
-    # debug
     scroll_len = len(self.items)
     if scroll_len % 10 == 0:
-      debug('Scrollback buffer length: %i' % scroll_len)
+      logging.debug('Scrollback buffer length: %i' % scroll_len)
 
     #widget, pos = self.listbox.get_focus()
     #self.listbox.set_focus( pos+2, coming_from='above' )
@@ -928,8 +888,7 @@ class UIWindow:
 #      self.function_map[function]()
 
     for k in keys:
-      #debug
-      debug("Widget UIWindow recieved key '%s'" % k)
+      logging.debug("Widget UIWindow recieved key '%s'" % k)
       self.frame.keypress( size, k )
 
     return True
@@ -962,8 +921,7 @@ class UISession(UIWindow):
     """
     UIWindow.__init__(self,ui,header_text)
 
-    #debug
-    debug("Class 'UISession' initialized.")
+    logging.debug("Class 'UISession' initialized.")
 
     # session
     self.session = session
@@ -997,8 +955,7 @@ class UISession(UIWindow):
  
   def _changemode_hook(self, name):
     self.header.set_text('%s [mode %s]' % (self.header_text, name))
-    #debug
-    debug('changing to mode %s' % name)
+    logging.debug('changing to mode %s' % name)
 
    
 class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
@@ -1011,8 +968,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     """
     base.BaseUI.__init__(self)
 
-    #debug
-    debug("Class 'UrwidUI' initialized.")
+    logging.debug("Class 'UrwidUI' initialized.")
 
     self.WindowWriteError = Exception('Unable to write to specified window.')
     self.WindowNameError = Exception('Window with specified name already exists')
@@ -1037,14 +993,14 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     except self.WindowAbsentError:
       open_window(new.getName(),new)
     except Exception, e:
-      exported.write_error(str(e))
+        logging.exception(e)
+        exported.write_error(str(e))
 
   def screenIsReady(self):
     isReady = True
     if not self.s:
       isReady = False
-      #debug
-      debug('screen is not ready')
+      logging.debug('screen is not ready')
 
     return isReady
 
@@ -1052,8 +1008,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     if self.windows.has_key(name):
       raise self.WindowNameError
     else:
-      #debug
-      debug('Opening window %s' % name)
+      logging.debug('Opening window %s' % name)
       if not ses:
         #self.windows[name] = UIWindow(self, 'Window: %s' % name)
         self.windows[name] = UISession(self, 'Window: %s' % name)
@@ -1061,14 +1016,14 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         self.windows[name] = UISession(self, 'Session: %s' % ses.getName())
 
       if focus:
+        self.windows[name].color.colorize()
         self.focus_window(name)
 
   def close_window(self, name):
     if self.windows.has_key(name):
       ses = exported.get_session(name)
 
-      #debug
-      debug('closing window %s' % name)
+      logging.debug('closing window %s' % name)
 
       if ses and ses.isConnected():
         exported.write_error("window '%s' still has an active session associated with it." % name)
@@ -1077,14 +1032,12 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         if ses:
           exported.get_engine().closeSession(ses)
           exported.write_message('closing session %s' % ses.getName())
-          #debug
-          debug('closing session %s' % ses.getName())
+          logging.info('closing session %s' % ses.getName())
         exported.write_message('closing window %s' % name)
         self.windows.pop(name) 
         
   def write_to_window(self, name, text, ses=None, focus=True):
-    #debug
-    debug('writing to window %s' % name)
+    logging.debug('writing to window %s' % name)
 
     if self.windows.has_key(name):
       self.windows[name].append(text)
@@ -1094,9 +1047,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
   def focus_window(self, name):
     if self.windows.has_key(name):
-      #debug
       if self.focus != name:
-        debug('change focus from %s to %s' % (self.focus,name))
+        logging.debug('change focus from %s to %s' % (self.focus,name))
         
       self.focus = name
       # sometimes on startup lyntin writes to the ui before urwid/curses
@@ -1119,25 +1071,23 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
     exported.write_message("For urwidui help, type \"%shelp urwidui\"." % exported.get_config('commandchar', defaultvalue='#'))
 
-    #debug
-    debug('Running UI.')
+    logging.debug('Running UI.')
 
     try:
 
       self.run_wrapper(self.main)
-      debug('run_wrapper terminated.')
+      logging.debug('run_wrapper terminated.')
       event.ShutdownEvent().enqueue()
 
     except SystemExit:
       print 'Thanks for using UrwidUI!'
       exported.write_traceback()
-      print e
       event.ShutdownEvent().enqueue()
 
     except Exception, e:
-       exported.write_traceback()
-       print e
-       event.ShutdownEvent().enqueue()
+        logging.exception(e)
+        exported.write_traceback()
+        event.ShutdownEvent().enqueue()
 
   def main(self):
     """
@@ -1154,14 +1104,13 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         self.focus_window(self.focus)
 
         if not self.windows[self.focus].handleInput():
-          #debug
-          debug('end of main loop')
+          logging.debug('end of main loop')
           self.shutdown(args=None)
 
       except Exception, e:
-        exported.write_traceback()
-        print e
-        event.ShutdownEvent().enqueue()
+          logging.exception(e)
+          exported.write_traceback()
+          event.ShutdownEvent().enqueue()
 
 
   def write(self, args):
@@ -1181,7 +1130,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
     if type(msg) == types.StringType:
       msg = message.Message(msg, message.LTDATA)
-      debug("ui message: message is a plain string")
+      logging.debug("ui message: message is a plain string")
 
     line = msg.data
     ses = msg.session
@@ -1193,13 +1142,17 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
       else:
         pretext = "lyntin: " + pretext
         if msg.type == message.LTDATA:
-          debug("ui message: message is LTDATA")
+          logging.debug("ui message: message is LTDATA")
+          pass
         elif msg.type == message.USERDATA:
-          debug("ui message: message is USERDATA")
+          logging.debug("ui message: message is USERDATA")
+          pass
     elif msg.type == message.MUDDATA:
-      debug("ui message: message is MUDDATA")
+      logging.debug("ui message: message is MUDDATA")
+      pass
     else:
-      debug("ui message: message is an unanticipated type: %s" % msg.type)
+      logging.debug("ui message: message is an unanticipated type: %s" % msg.type)
+      pass
       
 
 
@@ -1212,10 +1165,10 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     # ------------------------------------- #
 
     if ses == None:
-      debug("session: Session object is Null.")
+      logging.debug("session: Session object is Null.")
       if exported.get_current_session() == None:
         ses = exported.get_session('common')
-        debug("session: Current session is Null. Session set to common.")
+        logging.debug("session: Current session is Null. Session set to common.")
       else:
         ses = exported.get_current_session()
 
@@ -1230,8 +1183,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     @param args: it's an empty tuple--we ignore this
     @type  args: tuple of 0 length
     """
-    #debug
-    debug('shutting down...')
+    logging.info('shutting down...')
     curses.endwin()
     self.shutdownflag = True
 
@@ -1267,7 +1219,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     """
     from lyntin import event
     input = utils.chomp(input)
-    debug('Recieving input: "%s"' % input)
+    logging.debug('Recieving input: "%s"' % input)
     event.InputEvent(input).enqueue()
 
 
