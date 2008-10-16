@@ -813,7 +813,7 @@ class CommandEdit(urwid.Edit, History):
   def set_edit_pos(self, pos):
     logging.debug('text: %s, old pos: %s, new pos: %s' % (self.edit_text,self.edit_pos, pos))
     self.end = len(self.edit_text)
-    self.edit_pos = self._bounds_check(pos)
+    super(CommandEdit, self).set_edit_pos(self._bounds_check(pos))
 
   def paste(self):
     self.insert_move_right(self.copy_buffer)
