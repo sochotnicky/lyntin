@@ -610,7 +610,7 @@ class CommandEdit(urwid.Edit, History):
 
   def _move_char(self, increment=1):
     start_pos = self.edit_pos 
-    end_pos = self.edit_pos + increment
+    end_pos = start_pos + increment
     self.set_edit_pos(end_pos)
 
     return (start_pos, end_pos)
