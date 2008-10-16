@@ -831,7 +831,7 @@ class UIWindow:
     self.ui = ui
 
     # color management
-    self.color = Color(ui)
+    self.color = ui.color 
 
     # experimental
     #self.lines = []
@@ -983,6 +983,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     exported.hook_register("shutdown_hook", self.shutdown)
     exported.hook_register("to_user_hook", self.write)
     self.shutdownflag = False
+
+    self.color = Color(self)
 
   def _session_change(self, args):
     new = args['new']
