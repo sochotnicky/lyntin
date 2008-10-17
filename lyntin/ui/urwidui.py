@@ -348,7 +348,7 @@ class VIkeyModeSet:
       'home': 'move to beginning of line',
       'end': 'move to end of line',
       'up': 'history previous',
-      'down': 'history_next',
+      'down': 'history next',
       'ctrl p': 'history previous',
       'ctrl n': 'history next',
       'esc': 'mode command',
