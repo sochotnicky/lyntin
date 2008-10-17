@@ -9,7 +9,7 @@
 #######################################################################
 if __name__ == '__main__':
   import lyntin.engine
-  lyntin.engine.main({"ui": "text"})
+  lyntin.engine.main({'ui': 'urwid'})
 
 # Local variables:
 # mode:python
