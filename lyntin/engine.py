@@ -124,6 +124,7 @@ X{session_change_hook}::
 """
 import Queue, thread, sys, traceback, os.path
 from threading import Thread
+import logging
 
 from lyntin import config, session, utils, event, exported, helpmanager, history, commandmanager, constants
 
@@ -933,7 +934,7 @@ class Engine:
     return data
 
 
-def main(defaultoptions={}):
+def main(*arguments, **kwargs):
   """
   This parses the command line arguments and makes sure they're all valid,
   instantiates a ui, does some setup, spins off an engine thread, and
@@ -953,27 +954,17 @@ def main(defaultoptions={}):
 
     locale.setlocale(locale.LC_ALL, '')
 
-    config.options.update(defaultoptions)
+    if 'defaultoptions' in kwargs:
+      config.options.update(kwargs.pop('defaultoptions'))
+      
 
-    # read through options and arguments
-    optlist = utils.parse_args(sys.argv[1:])
-
-    for mem in optlist:
-      if mem[0] == '--help':
-        print constants.HELPTEXT
-        sys.exit(0)
-
-      elif mem[0] == '--version':
-        print constants.VERSION
-        sys.exit(0)
-
-      elif mem[0] in ["--configuration", "-c"]:
+    if 'configfile' in kwargs:
         # ini files OVERRIDE the default options
         # they can provide multiple ini files, but each new
         # ini file will OVERRIDE the contents of the previous ini file
         # where the two files intersect.
         parser = ConfigParser.ConfigParser()
-        parser.read([mem[1]])
+        parser.read(kwargs.pop('configfile'))
 
         newoptions = {}
         for s in parser.sections():
@@ -986,19 +977,17 @@ def main(defaultoptions={}):
             
         config.options.update(newoptions)
 
-      else:
-        opt = mem[0]
-        while opt.startswith("-"):
-          opt = opt[1:]
-
+    for opt in kwargs: 
+        confdata = kwargs[opt]
+        
         if len(opt) > 0:
           if config.options.has_key(opt):
             if type(config.options[opt]) is list:
-              config.options[opt].append(mem[1])
+              config.options[opt].append(confdata)
             else:
-              config.options[opt] = mem[1]
+              config.options[opt] = confdata
           else:
-            config.options[opt] = [mem[1]]
+            config.options[opt] = confdata
 
     for mem in ["datadir", "ui", "commandchar"]:
       if config.options.has_key(mem) and type(config.options[mem]) is list:
