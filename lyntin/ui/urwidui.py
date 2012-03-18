@@ -838,16 +838,14 @@ class UIWindow:
 
     # window elements
     self.header_text = '{ UrwidUI }   %s' % header_text
-    self.items = {}
+    self.items = []
     self.output = urwid.Text('Welcome to Urwid UI for Lyntin.\n')
     self.blank = urwid.Divider('_')
-    self.items[0] = self.output
-    self.items[1] = self.blank
+    self.items.append(self.output)
+    self.items.append(self.blank)
     self.listbox = urwid.ListBox(self.items)
     self.header = urwid.Text(self.header_text)
-    self.frame = urwid.Frame(self.listbox, urwid.AttrWrap(self.header, 'header'))
-    widget, pos = self.listbox.get_focus()
-    self.listbox.set_focus( pos+2, coming_from='above' )
+    self.frame = urwid.Frame(self.listbox, header=self.header)
 
   def append(self, text):
     """
@@ -858,27 +856,17 @@ class UIWindow:
     text_out = self.color.decode(text)
     if not text_out:
       return
-    #for x in text_out :
-    #  self.lines.append(x)
 
-    # limit scrollback length
-    #scroll_length = len(self.items)
-    #if scroll_length  > 100:
-    #  pass
-      #exported.write_message('scroll_length: %i, show_len: %i' % (scroll_length, show_len))
-      #self.items = self.items[show_len:]
-
-    self.items[len(self.items)-2] = urwid.Text(text_out)
-    self.items[len(self.items)-1] = self.blank
+    self.items.append(urwid.Text(text_out))
 
     scroll_len = len(self.items)
     if scroll_len % 10 == 0:
       logging.debug('Scrollback buffer length: %i' % scroll_len)
+    widget, pos = self.listbox.get_focus()
+    self.listbox.set_focus( pos+1, coming_from='above' )
 
     if self.ui.s:
       self.draw()
-    #widget, pos = self.listbox.get_focus()
-    #self.listbox.set_focus( pos+2, coming_from='above' )
 
   def handleInput(self):
     """
@@ -886,10 +874,6 @@ class UIWindow:
     """
     keys = self.getKeys()
     size = self.getSize()
-
-#    function = self.keymode.keyAction(key)
-#    if self.function_map.has_key(function):
-#      self.function_map[function]()
 
     for k in keys:
       logging.debug("Widget UIWindow recieved key '%s'" % k)
@@ -935,9 +919,8 @@ class UISession(UIWindow):
 
     # window elements
     self.input = CommandEdit(edit_prompt=('footer','Lyntin >> '))
-    self.items[len(self.items)] = urwid.AttrWrap(self.input, 'footer')
-    widget, pos = self.listbox.get_focus()
-    self.listbox.set_focus( pos+2, coming_from='above' )
+    self.frame.set_footer(self.input)
+    self.frame.set_focus("footer")
 
     # editing
     self.input.keymode.modes = VIkeyModeSet().modes
@@ -952,10 +935,6 @@ class UISession(UIWindow):
     @param text: string containing a line of text to be added to the session window
     """
     UIWindow.append(self, text)
-
-    self.items[len(self.items)] = self.input
-    widget, pos = self.listbox.get_focus()
-    self.listbox.set_focus( pos+2, coming_from='above' )
 
   def _changemode_hook(self, name):
     self.header.set_text('%s [mode %s]' % (self.header_text, name))
