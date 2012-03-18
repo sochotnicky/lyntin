@@ -1,7 +1,7 @@
 #######################################################################
 # copyright (c) Free Software Foundation 2005
 #
-# UrwidUI is distributed under the GNU General Public License license.  
+# UrwidUI is distributed under the GNU General Public License license.
 # See http://www.gnu.org/licenses/gpl.txt for distribution details.
 #######################################################################
 """
@@ -23,31 +23,31 @@ To be implemented:
   + per-session keybindings
 
 Credits:
-  I stole some code & ideas from textui (general stuff) and  
+  I stole some code & ideas from textui (general stuff) and
   cursesui (ansi color handling) written by willg & glassnake
   respectively. Everything else was written by davidc (me).
 
-Notes: 
+Notes:
 
   Urwid toolkit issue:
-  
+
   Due to an issue with urwid 0.8.7 or lower, you have to wait approx.
   one second after you hit <Esc> before urwid decides that you really
   do want to just hit <Esc> and are not entering a control sequence.
-  I've talked with the urwid maintainer (ian ward, ian at exess.org) 
-  and he says that these problems will be fixed in the next release. 
+  I've talked with the urwid maintainer (ian ward, ian at exess.org)
+  and he says that these problems will be fixed in the next release.
   In the mean time, he's released a patch with a rework of urwid's
-  input handling that addresses this issue. 
+  input handling that addresses this issue.
 
     the patch:
 
        http://excess.org/urwid/patch-0.8.7.2.diff
 
   UI windows:
-  
+
   There's no good way to tie the closing of a session associated window,
-  to the zapping of one (without modifying/replacing zap), so for now, 
-  when you zap a session, the window remains, and you have to close it 
+  to the zapping of one (without modifying/replacing zap), so for now,
+  when you zap a session, the window remains, and you have to close it
   separately.
 
   Currently, the only way one can use use windows in any way other than
@@ -57,9 +57,9 @@ Notes:
   lyntin itself...we'll see (I haven't really looked at it much).
 
   Other:
-  
+
   There seems to be some UI lockup bug that I haven't been able to track
-  down. It happens sporadically for me...hopefully it wont for you. If 
+  down. It happens sporadically for me...hopefully it wont for you. If
   it does, and you've got some ideas as to what it might be, please let
   me know.
 
@@ -95,23 +95,23 @@ __license__ = "GPL"
 __url__ = "http://www.zettazebra.com/files/urwidui.py"
 
 HELP = """
-The urwidui is a simple UI for the text terminal. 
+The urwidui is a simple UI for the text terminal.
 
 General keybindings:
 
-  To scroll, use PageUp/PageDown 
+  To scroll, use PageUp/PageDown
 
 Commandline editing:
 
-  UrwidUI implements VI-like keybindings (VI is a ubiquitous text editor 
+  UrwidUI implements VI-like keybindings (VI is a ubiquitous text editor
   for Unix operating systems) for the purposes of commandline editing.
 
-  To make things easy for those who are not familiar with VI, UrwidUI 
+  To make things easy for those who are not familiar with VI, UrwidUI
   starts out in insert mode (the kind of editing most people expect)
 
   Insert Mode:
 
-    Use Ctrl-p/Ctrl-n (previous/next) or the up/down arrow keys to 
+    Use Ctrl-p/Ctrl-n (previous/next) or the up/down arrow keys to
     navigate the command history
 
     Home/End takes you to the beginning & end of a line
@@ -122,16 +122,16 @@ Commandline editing:
 
   Command Mode:
 
-    i switches to 'insert' mode 
+    i switches to 'insert' mode
 
-    k/j (previous/next) navigates the command history 
+    k/j (previous/next) navigates the command history
 
     d[dwb^$] 'd' followed by one of the letters in brackets deletes
     some portion of the current line
 
     y[dwb^$] 'd' followed by one of the letters in brackets copies
     some portion of the current line
-    
+
     p pastes the last deleted/copied item at the current cursor position
 
     x deletes a character at the current cursor position
@@ -168,22 +168,22 @@ class Color:
     self.unfinished = ''
     self.color_on = False
     self.colors = [
-      'default', 
-      'black', 
-      'dark red', 
-      'dark green', 
-      'brown', 
-      'dark blue', 
-      'dark magenta', 
-      'dark cyan', 
-      'light gray', 
-      'dark gray', 
-      'light red', 
-      'light green', 
-      'yellow', 
-      'light blue', 
-      'light magenta', 
-      'light cyan', 
+      'default',
+      'black',
+      'dark red',
+      'dark green',
+      'brown',
+      'dark blue',
+      'dark magenta',
+      'dark cyan',
+      'light gray',
+      'dark gray',
+      'light red',
+      'light green',
+      'yellow',
+      'light blue',
+      'light magenta',
+      'light cyan',
       'white' ]
 
     if self.ui.s:
@@ -202,7 +202,7 @@ class Color:
     """
     Take given ANSI colored text and produce an object usable by UrwidUI
     """
-    text_out = [] 
+    text_out = []
     attribute = []
 
     if continue_decode and len(self.unfinished) > 0:
@@ -236,28 +236,28 @@ class Color:
 
           foreground = current_color[ansi.PLACE_FG] - 30
           background = current_color[ansi.PLACE_BG] - 40
-          
+
           text_out.append(self.getMarkup(t, (foreground, background, attribute) ))
 
           # prevent attributes from carrying over to text with out any set
           attribute = []
 
     self.unfinished = (current_color, leftover_color)
-          
+
     return text_out
 
 
   def getMarkup(self, text, color):
     """
-    Translate ANSI color markup to Urwid markup  
+    Translate ANSI color markup to Urwid markup
     """
-    fg, bg, a = color 
+    fg, bg, a = color
 
     # get around the default colorpair -1, which ncurses is complaining about for some reason
     if fg < 0: fg = 7
-    
+
     # its a bold attribute, so use bold colors
-    if len(a) == 1 and a[0] == 'bold': 
+    if len(a) == 1 and a[0] == 'bold':
       fg += (len(self.colors) -1)/2
     # report specified but unsupported attributes to the user
     #elif len(a) > 1:
@@ -274,7 +274,7 @@ class History(history.HistoryManager):
     history.HistoryManager.__init__(self, exported.get_engine())
     logging.debug("Class 'History' initialized.")
 
-    self.cursor = 0 
+    self.cursor = 0
 
   def setCursor(self, pos=-1):
     """
@@ -283,11 +283,11 @@ class History(history.HistoryManager):
     if pos > 0 and pos < len(self._history)-1 :
       self.cursor = pos
     else:
-      self.cursor = 0 
+      self.cursor = 0
 
   def next(self):
     """
-    Move to the following point in history 
+    Move to the following point in history
     """
     next = self._history[self.cursor]
     self.setCursor(self.cursor -1)
@@ -311,7 +311,7 @@ class KeyMode:
     self.keymap = keymap
     self.auto_revert = True
     self.command_keys_only = True
-    
+
 class VIkeyModeSet:
   """
   Keymode that emulates VI keybindings
@@ -358,7 +358,7 @@ class VIkeyModeSet:
     }
     self.modes['insert'].auto_revert = False
     self.modes['insert'].command_keys_only = False
- 
+
     self.modes['copy'] = KeyMode()
     self.modes['copy'].keymap = {
      'y': 'copy line',
@@ -368,7 +368,7 @@ class VIkeyModeSet:
      'b': 'copy to previous beginning of word',
      'e': 'copy to next end of word',
     }
-    
+
     self.modes['delete'] = KeyMode()
     self.modes['delete'].keymap = {
      'd': 'delete line',
@@ -397,7 +397,7 @@ class CommandModeManager:
         self.previous_mode = name
 
       self.default_mode = name
-    
+
   def addMode(self, name, keymode=KeyMode()):
     self.modes[name] = keymode
 
@@ -428,11 +428,11 @@ class CommandModeManager:
 
   def registerChangeModeHook(self, func=None):
     if not func == None:
-      self.changemode_hook = func 
+      self.changemode_hook = func
 
   def unregisterChangeModeHook(self):
     self.changemode_hook = None
-       
+
 class CommandEdit(urwid.Edit, History):
   def __init__(self, edit_prompt=''):
     urwid.Edit.__init__(self,edit_prompt)
@@ -485,7 +485,7 @@ class CommandEdit(urwid.Edit, History):
     for c in text:
       if c.isspace(): spaces.append(n)
       n += 1
-       
+
     return spaces
 
   def _find_word_boundaries(self, text):
@@ -501,7 +501,7 @@ class CommandEdit(urwid.Edit, History):
 
       # find all the characters on the edges of the whitespace
       for i in whitespace:
-        # if an index is both the start and end of a word, 
+        # if an index is both the start and end of a word,
         # it will be added twice. this is important.
         if i != 0 and not text[i-1].isspace():
           word_boundaries.append(i-1)
@@ -536,53 +536,53 @@ class CommandEdit(urwid.Edit, History):
 
 
   def _find_nearest_boundary(self, pos,  boundaries, lessthan = False):
-    #if pos in boundaries: 
+    #if pos in boundaries:
     #  return boundaries.index(pos)
 
     end = len(boundaries)
     lower = 0
-    upper = 0 
+    upper = 0
     for x in range(0, end):
       if pos > boundaries[x]:
-        lower = boundaries[x] 
+        lower = boundaries[x]
       elif pos == boundaries[x]:
-        upper = boundaries[x] 
+        upper = boundaries[x]
       elif pos < boundaries[x]:
-        upper = boundaries[x] 
+        upper = boundaries[x]
         break
-    
-    # start position is greater than the highest boundary 
+
+    # start position is greater than the highest boundary
     if upper < lower:
       lessthan = True
 
     logging.debug('lower bound: %i, upper bound: %i' % (lower, upper))
 
     # return either the nearest upper boundary or the nearest lower boundary
-    if lessthan: 
+    if lessthan:
       return lower
     else:
       return upper
-    
+
   def _bounds_check(self, index):
     logging.debug('bounds checking index: %i' % index)
 
     if index < 0:
       logging.debug('index < 0, new index: 0')
       return 0
-    elif index > self.end: 
+    elif index > self.end:
       logging.debug('index > %i (length of edit text), new index: %i' % (self.end, self.end))
       return self.end
-    else: 
+    else:
       logging.debug('index within bounds')
       return index
 
-        
+
   def keypress(self, size, key):
     function = self.keymode.keyAction(key)
 
     logging.debug("Widget CommandEdit handling key '%s' with function '%s'" % (key,function))
 
-    if self.function_map.has_key(function): 
+    if self.function_map.has_key(function):
       self.function_map[function]()
     elif function == 'free input':
       # keep from entering unbound meta keys, etc.
@@ -609,7 +609,7 @@ class CommandEdit(urwid.Edit, History):
   # -- [ movement ] -- #
 
   def _move_char(self, increment=1):
-    start_pos = self.edit_pos 
+    start_pos = self.edit_pos
     end_pos = start_pos + increment
     self.set_edit_pos(end_pos)
 
@@ -618,7 +618,7 @@ class CommandEdit(urwid.Edit, History):
   def _move_word_boundary(self, increment=1, boundary_type='all'):
     btypes = ['all', 'beginning', 'ending']
     assert boundary_type in btypes, "Boundary type must be one of: %s" % str(btypes)
-    
+
     start_pos = self.edit_pos
     end_pos = start_pos
     nearest = start_pos
@@ -638,7 +638,7 @@ class CommandEdit(urwid.Edit, History):
         word_boundaries = word_endings
 
     logging.debug('start pos: %i, boundaries: %s' % (start_pos, str(word_boundaries)))
-     
+
     nearest = self._find_nearest_boundary(start_pos, word_boundaries, lessthan)
 
     # don't allow wrapping
@@ -652,7 +652,7 @@ class CommandEdit(urwid.Edit, History):
   def _move_line_boundary(self, increment=1):
     start_pos = self.edit_pos
     end_pos = self.end
-    
+
     if increment < 0:
       end_pos = self.beginning
 
@@ -662,7 +662,7 @@ class CommandEdit(urwid.Edit, History):
 
   def move_to_eol(self):
     self._move_line_boundary(1)
-    
+
   def move_to_bol(self):
     self._move_line_boundary(-1)
 
@@ -740,7 +740,7 @@ class CommandEdit(urwid.Edit, History):
     self.copy_buffer = self.edit_text[start:]
     self.set_edit_pos(start)
     self.set_edit_text(self.edit_text[:start])
-    
+
   def delete_to_bol(self):
     start, end = self._move_line_boundary(-1)
     self.copy_buffer = self.edit_text[:start]
@@ -802,7 +802,7 @@ class CommandEdit(urwid.Edit, History):
     self.insert_text(text)
     move_len = 0
     if self.edit_pos <= 0:
-      move_len = len(text) 
+      move_len = len(text)
     self.end = len(self.edit_text)
     self.set_edit_pos(self.edit_pos + move_len)
 
@@ -831,12 +831,12 @@ class UIWindow:
     self.ui = ui
 
     # color management
-    self.color = ui.color 
+    self.color = ui.color
 
     # experimental
     #self.lines = []
 
-    # window elements 
+    # window elements
     self.header_text = '{ UrwidUI }   %s' % header_text
     self.items = {}
     self.output = urwid.Text('Welcome to Urwid UI for Lyntin.\n')
@@ -848,7 +848,7 @@ class UIWindow:
     self.frame = urwid.Frame(self.listbox, urwid.AttrWrap(self.header, 'header'))
     widget, pos = self.listbox.get_focus()
     self.listbox.set_focus( pos+2, coming_from='above' )
-    
+
   def append(self, text):
     """
     Add text to the window
@@ -858,33 +858,33 @@ class UIWindow:
     text_out = self.color.decode(text)
     #for x in text_out :
     #  self.lines.append(x)
-    
+
     # limit scrollback length
     #scroll_length = len(self.items)
     #if scroll_length  > 100:
     #  pass
       #exported.write_message('scroll_length: %i, show_len: %i' % (scroll_length, show_len))
       #self.items = self.items[show_len:]
-      
+
     self.items[len(self.items)-2] = urwid.Text(text_out)
     self.items[len(self.items)-1] = self.blank
-    
+
     scroll_len = len(self.items)
     if scroll_len % 10 == 0:
       logging.debug('Scrollback buffer length: %i' % scroll_len)
 
     #widget, pos = self.listbox.get_focus()
     #self.listbox.set_focus( pos+2, coming_from='above' )
- 
+
   def handleInput(self):
     """
     Handle keystrokes as they are entered
     """
     keys = self.getKeys()
     size = self.getSize()
-    
+
 #    function = self.keymode.keyAction(key)
-#    if self.function_map.has_key(function): 
+#    if self.function_map.has_key(function):
 #      self.function_map[function]()
 
     for k in keys:
@@ -929,7 +929,7 @@ class UISession(UIWindow):
     # history managment
     self.history = History()
 
-    # window elements 
+    # window elements
     self.input = CommandEdit(edit_prompt=('footer','Lyntin >> '))
     self.items[len(self.items)] = urwid.AttrWrap(self.input, 'footer')
     widget, pos = self.listbox.get_focus()
@@ -948,16 +948,16 @@ class UISession(UIWindow):
     @param text: string containing a line of text to be added to the session window
     """
     UIWindow.append(self, text)
-      
+
     self.items[len(self.items)] = self.input
     widget, pos = self.listbox.get_focus()
     self.listbox.set_focus( pos+2, coming_from='above' )
- 
+
   def _changemode_hook(self, name):
     self.header.set_text('%s [mode %s]' % (self.header_text, name))
     logging.debug('changing to mode %s' % name)
 
-   
+
 class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
   """
   User interface for Lyntin based on the urwid UI toolkit
@@ -1036,8 +1036,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
           exported.write_message('closing session %s' % ses.getName())
           logging.info('closing session %s' % ses.getName())
         exported.write_message('closing window %s' % name)
-        self.windows.pop(name) 
-        
+        self.windows.pop(name)
+
   def write_to_window(self, name, text, ses=None, focus=True):
     logging.debug('writing to window %s' % name)
 
@@ -1051,7 +1051,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     if self.windows.has_key(name):
       if self.focus != name:
         logging.debug('change focus from %s to %s' % (self.focus,name))
-        
+
       self.focus = name
       # sometimes on startup lyntin writes to the ui before urwid/curses
       # can get set up. lets avoid crashes.
@@ -1094,15 +1094,15 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
   def main(self):
     """
     Main loop of the UrwidUI
-    
-    keystrokes, drawing & updating the screen, and display of the 
+
+    keystrokes, drawing & updating the screen, and display of the
     appropriate session are all handled here
     """
-    
+
     while not self.shutdownflag:
       try:
         ses = exported.get_current_session()
-        
+
         self.focus_window(self.focus)
 
         if not self.windows[self.focus].handleInput():
@@ -1117,8 +1117,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
   def write(self, args):
     """
-    Writes output to the user.  Output can come from the mud, 
-    Lyntin, or even user input being printed to the screen.  If 
+    Writes output to the user.  Output can come from the mud,
+    Lyntin, or even user input being printed to the screen.  If
     the message argument is a String object rather than a Message
     object, the ui should assume it's Lyntin output.
 
@@ -1155,7 +1155,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     else:
       logging.debug("ui message: message is an unanticipated type: %s" % msg.type)
       pass
-      
+
 
 
     # perhaps we'll let the user turn colors off, if they like
@@ -1178,7 +1178,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
   def shutdown(self, args):
     """
-    Tells the user interface thread to shutdown.  This is 
+    Tells the user interface thread to shutdown.  This is
     registered with the shutdown_hook.  Implement this method
     if you have shutdown stuff to do.
 
@@ -1212,7 +1212,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
   def handleinput(self, input):
     """
-    Nicely handles enqueuing of input events.  Also deals with things 
+    Nicely handles enqueuing of input events.  Also deals with things
     like CR and LF.  Call this method with input that's just been
     polled from the user.
 
@@ -1234,9 +1234,9 @@ def window_cmd(ses, args, input):
   Manages windows
 
     #window open      - open a new window
-    #window close     - close a window 
-    #window focus     - bring a window to the forefront 
-    #window unfocus   - switch to the current session 
+    #window close     - close a window
+    #window focus     - bring a window to the forefront
+    #window unfocus   - switch to the current session
     #window write     - send text to a window
 
   category: urwidui
@@ -1276,7 +1276,7 @@ commands_dict["window"] = (window_cmd, 'action windowname= text=')
 def zap_cmd(ses, args, input):
   """
   This disconnects from the mud, closes the session, and any
-  associated windw.  If no session is specified, it will 
+  associated windw.  If no session is specified, it will
   close the current session.
 
   category: commands
@@ -1291,7 +1291,7 @@ def zap_cmd(ses, args, input):
 
   if exported.myengine.closeSession(ses):
     # close the session window
-    ui.close_window(sesname) 
+    ui.close_window(sesname)
     exported.write_message("zap: session %s zapped!" % ses.getName())
   else:
     exported.write_message("zap: session %s cannot be zapped!" % ses.getName())
@@ -1312,9 +1312,9 @@ def debug_cmd(ses, args, input):
   else:
     debugging_enabled = True
     exported.write_message('Debugging enabled.')
-    
+
 commands_dict["debug"] = (debug_cmd, '')
-  
+
 
 def load_commands(args):
   from lyntin.modules import modutils
