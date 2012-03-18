@@ -856,6 +856,8 @@ class UIWindow:
     @param text: string containing a line of text to be added to the window
     """
     text_out = self.color.decode(text)
+    if not text_out:
+      return
     #for x in text_out :
     #  self.lines.append(x)
 
