@@ -875,6 +875,8 @@ class UIWindow:
     if scroll_len % 10 == 0:
       logging.debug('Scrollback buffer length: %i' % scroll_len)
 
+    if self.ui.s:
+      self.draw()
     #widget, pos = self.listbox.get_focus()
     #self.listbox.set_focus( pos+2, coming_from='above' )
 
