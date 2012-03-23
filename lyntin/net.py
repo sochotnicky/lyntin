@@ -322,10 +322,7 @@ class SocketCommunicator:
       sock = None
       for family, socktype, proto, canonname, sockaddr in ipaddresses:
         try:
-          if family == socket.AF_INET6:
-            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-          else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          sock = socket.socket(family, socket.SOCK_STREAM)
           sock.connect(sockaddr)
         except socket.error, msg:
           # we might not be able to connect
