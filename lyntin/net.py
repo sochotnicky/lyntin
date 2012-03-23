@@ -120,6 +120,7 @@ X{net_handle_telnet_option}::
 
 """
 import socket, select, re, os
+from socket import gaierror
 
 from lyntin import event, config, exported
 from lyntin.ui import message
@@ -316,8 +317,19 @@ class SocketCommunicator:
     @type  sessionname: string
     """
     if not self._sock:
-      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      sock.connect((host, port))
+      try:
+        ipaddresses = socket.getaddrinfo(host, port, socket.AF_INET6)
+        self.ipv6 = True
+      except gaierror, e:
+        ipaddresses = socket.getaddrinfo(host, port, socket.AF_INET)
+        self.ipv6 = False
+
+      sock = None
+      if ipaddresses[0][0] == socket.AF_INET6:
+          sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+      else:
+          sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      sock.connect(ipaddresses[0][4])
       sock.setblocking(1)
 
       self._host = host
