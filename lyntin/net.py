@@ -317,21 +317,25 @@ class SocketCommunicator:
     @type  sessionname: string
     """
     if not self._sock:
-      try:
-        ipaddresses = socket.getaddrinfo(host, port, socket.AF_INET6)
-        self.ipv6 = True
-      except gaierror, e:
-        ipaddresses = socket.getaddrinfo(host, port, socket.AF_INET)
-        self.ipv6 = False
+      ipaddresses = socket.getaddrinfo(host, port)
 
       sock = None
-      if ipaddresses[0][0] == socket.AF_INET6:
-          sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-      else:
-          sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      sock.connect(ipaddresses[0][4])
-      sock.setblocking(1)
+      for family, socktype, proto, canonname, sockaddr in ipaddresses:
+        try:
+          if family == socket.AF_INET6:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+          else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          sock.connect(sockaddr)
+        except socket.error, msg:
+          # we might not be able to connect
+          sock = None
 
+      if not sock:
+          raise Exception("No IP address for %s usable, verify your"
+                  " connection" % host)
+
+      sock.setblocking(1)
       self._host = host
       self._port = port
       self._sock = sock
