@@ -1059,6 +1059,32 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     else:
       raise self.WindowAbsentError
 
+  def next_window(self):
+    found_cur = False
+    for ind in range(len(self.windows)):
+      wname, win = self.windows[ind]
+      if win == self.focus:
+        found_cur = True
+        if ind == len(self.windows) - 1:
+          self.focus_window(self.windows[0][0])
+        continue
+      if found_cur:
+        self.focus_window(wname)
+        return
+
+  def prev_window(self):
+    found_cur = False
+    for ind in reversed(range(len(self.windows))):
+      wname, win = self.windows[ind]
+      if win == self.focus:
+        found_cur = True
+        if ind == len(self.windows) - 1:
+          self.focus_window(self.windows[0][0])
+        continue
+      if found_cur:
+        self.focus_window(wname)
+        return
+
   def runui(self):
     global HELP
     exported.add_help("urwidui", HELP)
@@ -1263,6 +1289,10 @@ def window_cmd(ses, args, input):
       ui.focus_window(windowname)
   elif action == 'unfocus':
     ui.focus_window(ses.getName())
+  elif action == 'prev':
+    ui.prev_window()
+  elif action == 'next':
+    ui.next_window()
   elif action == 'write':
     if windowname != '':
       ui.write_to_window(windowname,text,focus=False)
