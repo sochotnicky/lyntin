@@ -960,8 +960,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     urwid.curses_display.Screen.__init__(self)
     self.register_palette([('header','white','dark red','standout'),('footer','white','dark blue','bold')])
 
-    self.windows = {}
-    self.focus=''
+    self.windows = []
+    self.focus=None
     exported.hook_register("session_change_hook", self._session_change)
     exported.hook_register("shutdown_hook", self.shutdown)
     exported.hook_register("to_user_hook", self.write)
@@ -989,23 +989,30 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
 
     return isReady
 
+  def get_window(self, name):
+    for wname, win in self.windows:
+      if name == wname:
+        return win
+    return None
+
   def open_window(self, name, ses=None, focus=True):
-    if self.windows.has_key(name):
+    if self.get_window(name):
       raise self.WindowNameError
     else:
       logging.debug('Opening window %s' % name)
       if not ses:
-        #self.windows[name] = UIWindow(self, 'Window: %s' % name)
-        self.windows[name] = UISession(self, 'Window: %s' % name)
+        self.windows.append((name,
+                             UISession(self, 'Window: %s' % name)))
       else:
-        self.windows[name] = UISession(self, 'Session: %s' % ses.getName())
+        self.windows.append((name,
+                             UISession(self, 'Session: %s' % ses.getName())))
 
       if focus:
-        self.windows[name].color.colorize()
+        self.windows[-1][1].color.colorize()
         self.focus_window(name)
 
   def close_window(self, name):
-    if self.windows.has_key(name):
+    if self.get_window(name):
       ses = exported.get_session(name)
 
       logging.debug('closing window %s' % name)
@@ -1019,27 +1026,36 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
           exported.write_message('closing session %s' % ses.getName())
           logging.info('closing session %s' % ses.getName())
         exported.write_message('closing window %s' % name)
-        self.windows.pop(name)
+        for wname, win in self.windows:
+          if name == wname:
+            self.windows.remove((wname, win))
+        self.focus_window(self.prev_focus)
+
 
   def write_to_window(self, name, text, ses=None, focus=True):
     logging.debug('writing to window %s' % name)
-
-    if self.windows.has_key(name):
-      self.windows[name].append(text)
+    win = self.get_window(name)
+    if win:
+      win.append(text)
     else:
       self.open_window(name, ses, focus)
-      self.windows[name].append(text)
+      self.windows[-1][1].append(text)
 
   def focus_window(self, name):
-    if self.windows.has_key(name):
-      if self.focus != name:
-        logging.debug('change focus from %s to %s' % (self.focus,name))
+    if isinstance(name, basestring):
+      win = self.get_window(name)
+    else:
+      win = name
+    if win:
+      if self.focus != win:
+        self.prev_focus = self.focus
+        logging.debug('change focus from %s to %s' % (self.focus, win))
 
-      self.focus = name
+      self.focus = win
       # sometimes on startup lyntin writes to the ui before urwid/curses
       # can get set up. lets avoid crashes.
       if self.screenIsReady():
-        self.windows[name].draw()
+        win.draw()
     else:
       raise self.WindowAbsentError
 
@@ -1052,7 +1068,7 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     if ses == None:
       ses = exported.get_session('common')
 
-    self.focus = ses.getName()
+    self.focus_window(ses.getName())
 
     exported.write_message("For urwidui help, type \"%shelp urwidui\"." % exported.get_config('commandchar', defaultvalue='#'))
 
@@ -1085,13 +1101,12 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
     while not self.shutdownflag:
       try:
         ses = exported.get_current_session()
+        if self.screenIsReady():
+          self.focus.draw()
 
-        self.focus_window(self.focus)
-
-        if not self.windows[self.focus].handleInput():
+        if not self.focus.handleInput():
           logging.debug('end of main loop')
           self.shutdown(args=None)
-
       except Exception, e:
           logging.exception(e)
           exported.write_traceback()
