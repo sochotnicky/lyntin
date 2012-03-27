@@ -876,6 +876,9 @@ class UIWindow:
     size = self.getSize()
 
     for k in keys:
+      if k in ['page up','page down']:
+        self.listbox.keypress(size, k)
+        continue
       logging.debug("Widget UIWindow recieved key '%s'" % k)
       self.frame.keypress( size, k )
 
