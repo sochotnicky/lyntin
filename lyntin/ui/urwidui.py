@@ -749,6 +749,8 @@ class CommandEdit(urwid.Edit, History):
 
   def delete_left(self):
     start, end = self._move_char(-1)
+    if start == 0:
+      return
     self.copy_buffer = self.edit_text[end:start]
     self.set_edit_pos(end)
     self.set_edit_text(self.edit_text[:end] + self.edit_text[start:])
