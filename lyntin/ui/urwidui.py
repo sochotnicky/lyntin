@@ -847,6 +847,12 @@ class UIWindow:
     self.header = urwid.Text(self.header_text)
     self.frame = urwid.Frame(self.listbox, header=self.header)
 
+    self.sidebar_items = [self.header]
+    self.listbox_sidebar = urwid.ListBox(self.sidebar_items)
+    self.columns = None
+
+    self.current_main = self.frame
+
   def append(self, text):
     """
     Add text to the window
@@ -881,7 +887,6 @@ class UIWindow:
         continue
       logging.debug("Widget UIWindow recieved key '%s'" % k)
       self.frame.keypress( size, k )
-
     return True
 
   def draw(self):
@@ -892,15 +897,27 @@ class UIWindow:
     self.ui.s.timeout(0)
 
   def getCanvas(self):
-    return self.frame.render( self.getSize(), self.ui )
+    return self.current_main.render( self.getSize(), self.ui )
 
   def getSize(self):
     return self.ui.get_cols_rows()
 
   def getKeys(self):
     keys, raw_keys = self.ui.get_input(raw_keys=True)
-
     return keys
+
+  def open_sidebar(self, width):
+    if self.columns:
+      return
+    self.columns = urwid.Columns([('fixed', width, self.listbox_sidebar),
+                                  self.frame])
+    self.current_main = self.columns
+
+  def close_sidebar(self):
+    if self.columns:
+      self.current_main = self.frame
+      self.columns = None
+
 
 class UISession(UIWindow):
   """
@@ -1088,6 +1105,14 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
         self.focus_window(wname)
         return
 
+  def open_sidebar(self, width):
+    if self.focus:
+      self.focus.open_sidebar(width)
+
+  def close_sidebar(self):
+    if self.focus:
+      self.focus.close_sidebar()
+
   def runui(self):
     global HELP
     exported.add_help("urwidui", HELP)
@@ -1265,6 +1290,8 @@ def window_cmd(ses, args, input):
     #window focus     - bring a window to the forefront
     #window unfocus   - switch to the current session
     #window write     - send text to a window
+    #window next      - move to next open window
+    #window prev      - move to previous open window
 
   category: urwidui
   """
@@ -1303,6 +1330,22 @@ def window_cmd(ses, args, input):
     exported.write_message('Invalid window action:  %s' % action)
 
 commands_dict["window"] = (window_cmd, 'action windowname= text=')
+
+def sidebar_cmd(ses, args, input):
+  """
+  Manages creation and destruction of sidebars for current window
+  """
+
+  ui = get_ui_instance()
+  action = args['action']
+  width = args['width']
+  if action == 'open':
+    ui.open_sidebar(int(width))
+  elif action == 'close':
+    ui.close_sidebar()
+  else:
+    exported.write_message('Invalid sidebar action:  %s' % action)
+commands_dict["sidebar"] = (sidebar_cmd, 'action width=')
 
 def zap_cmd(ses, args, input):
   """
