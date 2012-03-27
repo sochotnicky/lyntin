@@ -882,11 +882,15 @@ class UIWindow:
     size = self.getSize()
 
     for k in keys:
+      logging.debug("Widget UIWindow recieved key '%s'" % k)
       if k in ['page up','page down']:
         self.listbox.keypress(size, k)
-        continue
-      logging.debug("Widget UIWindow recieved key '%s'" % k)
-      self.frame.keypress( size, k )
+      elif k == 'shift left':
+        self.ui.prev_window()
+      elif k == 'shift right':
+        self.ui.next_window()
+      else:
+        self.frame.keypress( size, k )
     return True
 
   def draw(self):
