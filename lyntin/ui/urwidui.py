@@ -1098,8 +1098,8 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
       wname, win = self.windows[ind]
       if win == self.focus:
         found_cur = True
-        if ind == len(self.windows) - 1:
-          self.focus_window(self.windows[0][0])
+        if ind == 0:
+          self.focus_window(self.windows[len(self.windows)-1][0])
         continue
       if found_cur:
         self.focus_window(wname)
