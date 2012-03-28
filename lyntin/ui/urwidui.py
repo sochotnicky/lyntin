@@ -1356,18 +1356,20 @@ commands_dict["sidebar"] = (sidebar_cmd, 'action width=')
 def zap_cmd(ses, args, input):
   """
   This disconnects from the mud, closes the session, and any
-  associated windw.  If no session is specified, it will
-  close the current session.
+  associated window.
 
   category: commands
   """
   sesname = args["session"]
-  ui = exported.get_engine().getUI()
-  if sesname:
-    ses = exported.myengine.getSession(sesname)
-    if ses == None:
-      exported.write_error("zap: session %s does not exist." % sesname)
+  if not sesname:
+      exported.write_error("zap: need session name as argument")
       return
+  ui = exported.get_engine().getUI()
+  ses = None
+  ses = exported.myengine.getSession(sesname)
+  if ses == None:
+    exported.write_error("zap: session %s does not exist." % sesname)
+    return
 
   if exported.myengine.closeSession(ses):
     # close the session window
