@@ -1052,10 +1052,11 @@ class UrwidUI(base.BaseUI,urwid.curses_display.Screen):
           exported.write_message('closing session %s' % ses.getName())
           logging.info('closing session %s' % ses.getName())
         exported.write_message('closing window %s' % name)
-        for wname, win in self.windows:
+        self.focus_window("common")
+        for ind in range(len(self.windows)):
+          wname, win = self.windows[ind]
           if name == wname:
-            self.windows.remove((wname, win))
-        self.focus_window(self.prev_focus)
+            self.windows.pop(ind)
 
 
   def write_to_window(self, name, text, ses=None, focus=True):
