@@ -1317,12 +1317,18 @@ def window_cmd(ses, args, input):
   elif action == 'open':
     if windowname != '':
       ui.open_window(windowname)
+    else:
+      exported.write_message('window: Need window to name to open')
   elif action == 'close':
     if windowname != '':
       ui.close_window(windowname)
+    else:
+      exported.write_message('window: Need window to name to close')
   elif action == 'focus':
     if windowname != '':
       ui.focus_window(windowname)
+    else:
+      exported.write_message('window: Need window to name to focus')
   elif action == 'unfocus':
     ui.focus_window(ses.getName())
   elif action == 'prev':
@@ -1332,6 +1338,8 @@ def window_cmd(ses, args, input):
   elif action == 'write':
     if windowname != '':
       ui.write_to_window(windowname,text,focus=False)
+    else:
+      exported.write_message('window: Need window to name to write to')
   else:
     exported.write_message('Invalid window action:  %s' % action)
 
